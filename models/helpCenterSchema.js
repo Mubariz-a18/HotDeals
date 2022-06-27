@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 
 const helpCenterSchema = mongoose.Schema({
-  user_id: [
+  user_id: 
     {
       type: mongoose.Schema.Types.ObjectId,
     },
-  ],
   phone_number: {
     type: Number,
   },
