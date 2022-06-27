@@ -17,5 +17,9 @@ exports.petValidation = async function (req, res, next) {
         error: "Category should be a String",
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    return res.status(500).send({
+        error:"error in Ads middleware"
+    })
+  }
 };
