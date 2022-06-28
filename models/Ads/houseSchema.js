@@ -3,102 +3,79 @@ const mongoose = require("mongoose");
 const houseSchema = mongoose.Schema({
   category: {
     type: String,
-    required: true,
   },
   sub_category: {
     type: String,
-    required: true,
   },
   facing: {
     type: String,
-    required: true,
   },
   dimension_length: {
     type: String,
-    required: true,
   },
   dimension_breadth: {
     type: String,
-    required: true,
   },
   area: {
     type: Number,
-    required: true,
   },
   carpet_area: {
     type: Number,
-    required: true,
   },
   beds: {
     type: Number,
-    required: true,
   },
   baths: {
     type: Number,
-    required: true,
   },
 
   furnishing_type: {
     type: String,
-    required: true,
   },
   balconies: {
     type: Number,
-    required: true,
   },
   gated_community: {
     type: String,
-    required: true,
   },
   property_floor_no: {
     type: Number,
-    required: true,
   },
   number_of_floors: {
     type: Number,
-    required: true,
   },
   car_parking: {
     type: String,
-    required: true,
   },
   bike_parking: {
     type: String,
-    required: true,
   },
   amenities: [
     {
       type: String,
-      required: true,
     },
   ],
   nearly_by: [
     {
       type: String,
-      required: true,
     },
   ],
   registration: {
     type: String,
-    required: true,
   },
   distance_from_main_road: {
     type: Number,
-    required: true,
   },
   front_road: {
     type: String,
-    required: true,
   },
   special_mention: [
     {
       type: String,
-      required: true,
     },
   ],
   description: {
     type: String,
-    required: true,
   },
   tile: [
     {
@@ -108,13 +85,11 @@ const houseSchema = mongoose.Schema({
   ad_present_location: [
     {
       type: String,
-      required: true,
     },
   ],
   ad_posted_location: [
     {
       type: String,
-      required: true,
     },
   ],
 
@@ -134,7 +109,7 @@ const houseSchema = mongoose.Schema({
       type: String,
     },
     report_date: {
-      type: String,
+      type: Date,
     },
   },
   ad_status: {
@@ -146,7 +121,7 @@ const houseSchema = mongoose.Schema({
     default: "free",
   },
   ad_expire_date: {
-    type: String,
+    type: Date,
   },
   ad_promoted: {
     type: String,
@@ -157,10 +132,9 @@ const houseSchema = mongoose.Schema({
     default: "",
   },
   ad_promoted_date: {
-    type: String,
+    type: Date,
   },
 });
-
 
 const House = mongoose.model("House", houseSchema, "ads");
 

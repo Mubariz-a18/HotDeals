@@ -59,7 +59,7 @@ const homeApplianceSchema = mongoose.Schema({
       type: String,
     },
     report_date: {
-      type: String,
+      type: Date,
     },
   },
   ad_status: {
@@ -71,7 +71,7 @@ const homeApplianceSchema = mongoose.Schema({
     default: "free",
   },
   ad_expire_date: {
-    type: String,
+    type: Date,
   },
   ad_promoted: {
     type: String,
@@ -82,7 +82,7 @@ const homeApplianceSchema = mongoose.Schema({
     default: "",
   },
   ad_promoted_date: {
-    type: String,
+    type: Date,
   },
 });
 

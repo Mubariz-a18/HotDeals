@@ -3,46 +3,38 @@ const mongoose = require("mongoose");
 const petSchema = mongoose.Schema({
   category: {
     type: String,
-    required: true,
   },
   sub_category: {
     type: String,
-    required: true,
   },
   animal: {
     type: String,
-    required: true,
   },
   breed: {
     type: String,
-    required: true,
   },
   condition: {
     type: String,
-    required: true,
   },
   description: {
     type: String,
-    required: true,
   },
   special_mention:[ {
     type: String,
-    required: true,
   }],
-  tile: {
+  tile: [{
     type: String,
-    required: true,
-  },
+  }],
   ad_present_location: [
     {
       type: String,
-      required: true,
+
     },
   ],
   ad_posted_location: [
     {
       type: String,
-      required: true,
+
     },
   ],
 
@@ -62,7 +54,7 @@ const petSchema = mongoose.Schema({
         type: String,
       },
       report_date: {
-        type: String,
+        type: Date,
       },
     },
     ad_status:{
@@ -74,7 +66,7 @@ const petSchema = mongoose.Schema({
       default:"free"
     },
     ad_expire_date:{
-      type:String
+      type:Date
     },
     ad_promoted:{
       type:String
@@ -85,7 +77,7 @@ const petSchema = mongoose.Schema({
       default:""
     },
     ad_promoted_date:{
-      type:String
+      type:Date
     }
 });
 

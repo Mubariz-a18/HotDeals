@@ -3,15 +3,13 @@ const mongoose = require("mongoose");
 const bookSchema = mongoose.Schema({
   category: {
     type: String,
-    required: true,
-    index:true,
-    text:true
+    index: true,
+    text: true,
   },
   sub_category: {
     type: String,
-    required: true,
-    index:true,
-    text:true
+    index: true,
+    text: true,
   },
   book_name: {
     type: String,
@@ -56,7 +54,7 @@ const bookSchema = mongoose.Schema({
       type: String,
     },
     report_date: {
-      type: String,
+      type: Date,
     },
   },
   ad_status: {
@@ -68,7 +66,7 @@ const bookSchema = mongoose.Schema({
     default: "free",
   },
   ad_expire_date: {
-    type: String,
+    type: Date,
   },
   ad_promoted: {
     type: String,
@@ -79,7 +77,7 @@ const bookSchema = mongoose.Schema({
     default: "",
   },
   ad_promoted_date: {
-    type: String,
+    type: Date,
   },
 });
 
