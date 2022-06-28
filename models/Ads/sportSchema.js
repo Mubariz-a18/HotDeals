@@ -3,11 +3,9 @@ const mongoose = require("mongoose");
 const sportSchema = mongoose.Schema({
   category: {
     type: String,
-    required: true,
   },
   sub_category: {
     type: String,
-    required: true,
   },
   type: {
     type: String,
@@ -59,7 +57,7 @@ const sportSchema = mongoose.Schema({
       type: String,
     },
     report_date: {
-      type: String,
+      type: Date,
     },
   },
   ad_status: {
@@ -71,7 +69,7 @@ const sportSchema = mongoose.Schema({
     default: "free",
   },
   ad_expire_date: {
-    type: String,
+    type: Date,
   },
   ad_promoted: {
     type: String,
@@ -82,7 +80,7 @@ const sportSchema = mongoose.Schema({
     default: "",
   },
   ad_promoted_date: {
-    type: String,
+    type: Date,
   },
 });
 
