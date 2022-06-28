@@ -18,7 +18,10 @@ const io = require("socket.io")(server, {
 const Conversation = require("./models/converstionSchema");
 const User = require("./models/Users");
 const router = require("./routes/index");
+const profileRouter = require('./routes/profile.routes')
+const AdRouter = require('./routes/ad.routes')
 const { findOne } = require("./models/converstionSchema");
+const { application } = require("express");
 // const chatController = require("./controllers/chatController").chatController;
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
@@ -44,6 +47,9 @@ app.use(cors());
     console.log("error: " + err);
   }
 })();
+
+app.use(profileRouter);
+app.use(AdRouter);
 
 app.use("/", router);
 

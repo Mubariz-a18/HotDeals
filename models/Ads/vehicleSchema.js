@@ -2,83 +2,65 @@ const mongoose = require("mongoose");
 
 const vehicleSchema = mongoose.Schema({
   category: {
-    type: String,
-    required: true,
+    type: String
   },
   sub_category: {
-    type: String,
-    required: true,
+    type: String
   },
   make: {
-    type: String,
-    required: true,
+    type: String
   },
   model: {
-    type: String,
-    required: true,
+    type: String
   },
   colour: {
-    type: String,
-    required: true,
+    type: String
   },
   condition: {
-    type: String,
-    required: true,
+    type: String
   },
   transmission: {
-    type: String,
-    required: true,
+    type: String
   },
   year_of_make: {
-    type: String,
-    required: true,
+    type: String
   },
   year_of_purchase: {
-    type: String,
-    required: true,
+    type: String
   },
   mileage: {
-    type: String,
-    required: true,
+    type: String
   },
   contact_of_owner: {
-    type: String,
-    required: true,
+    type: String
   },
   accidental: {
     type: Boolean,
     default: false,
   },
   vehicle_registered_at: {
-    type: String,
-    required: true,
+    type: String
   },
   vehicle_present_at: {
-    type: String,
-    required: true,
+    type: String
   },
-  special_mention: {
-    type: String,
-    required: true,
-  },
+  special_mention:[ {
+    type: String
+  }],
   description: {
-    type: String,
-    required: true,
+    type: String
   },
-  tile: {
-    type: String,
-    required: true,
-  },
+  tile: [{
+    type: String
+  }],
   ad_present_location: [
     {
       type: String,
-      required: true,
     },
   ],
   ad_posted_location: [
     {
       type: String,
-      required: true,
     },
   ],
 
@@ -98,7 +80,7 @@ const vehicleSchema = mongoose.Schema({
       type: String,
     },
     report_date: {
-      type: String,
+      type: Date,
     },
   },
   ad_status: {
@@ -110,7 +92,7 @@ const vehicleSchema = mongoose.Schema({
     default: "free",
   },
   ad_expire_date: {
-    type: String,
+    type: Date,
   },
   ad_promoted: {
     type: String,
@@ -121,7 +103,7 @@ const vehicleSchema = mongoose.Schema({
     default: "",
   },
   ad_promoted_date: {
-    type: String,
+    type: Date,
   },
 });
 

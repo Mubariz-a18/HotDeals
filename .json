@@ -14,11 +14,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Vehicle",
@@ -34,20 +34,20 @@
     "contact_of_owner": "9462445893",
     "vehicle_registered_at": "Andhra Pradesh",
     "vehicle_present_at": "Telengana",
-    "special_mention": "dummy Mention",
+    "special_mention": ["dummy mention"],
     "description": "dummy Description",
-    "tile": "Vehicle",
+    "tile": ["Vehicle"],
     "ad_present_location": ["Hyderaad"],
     "ad_posted_location": ["Madhapur"],
     "reported_ad_count": 12,
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Housing",
@@ -80,11 +80,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Electronic",
@@ -104,11 +104,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "HomeAppliance",
@@ -128,11 +128,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "KitchenAppliance",
@@ -152,11 +152,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Fashion",
@@ -175,11 +175,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Sport",
@@ -198,11 +198,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Furniture",
@@ -220,11 +220,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "ArtAndAntique",
@@ -239,11 +239,11 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   },
   {
     "category": "Book",
@@ -258,10 +258,10 @@
     "reported_by": {
       "user_id": "123456",
       "reason": "dummy reason",
-      "report_date": "22/2022"
+      "report_date": "2020-07-10 15:00:00.000"
     },
-    "ad_expire_date": "23/2022",
+    "ad_expire_date": "2020-07-10 15:00:00.000",
     "ad_promoted": "24/2022",
-    "ad_promoted_date": "26/2022"
+    "ad_promoted_date": "2020-07-10 15:00:00.000"
   }
 ]
