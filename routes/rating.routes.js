@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const verifyToken = require('../../utils/verifyToken').verifyJwtToken;
+const RatingCotroller = require('../controllers/Rating/rating.controller');
 const Validator = require('../middlewares/validatorMiddleware');
-const AlertController = require('../controllers/Alert/alert.controller')
 
-router.post('/api/createAlert',verifyToken,Validator("AlertValidator"),AlertController.apiCreateAlert);
+router.post('/api/createRating',verifyToken,RatingCotroller.apiCreateRating);
 
 module.exports = router;

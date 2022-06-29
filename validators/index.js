@@ -1,8 +1,13 @@
 const userProfileValidator = require('./userProfile.validator');
 const adsValidator = require('./Ads.Validator');
-const alertValidator = require('./alert.validator')
+const SchemaValidator = require('./Schema.Validator')
 module.exports = {
     updatePofile:userProfileValidator.userSchema,
     CreateAdsValidator:adsValidator.commonFieldSchema,
-    createAlertValidator:alertValidator.alertSchema
+    AlertValidator:SchemaValidator.alertSchema,
+    complainValidator:SchemaValidator.complainSchema,
+    HelpValidator:SchemaValidator.helpCenterSchema,
+    CreditValidator:SchemaValidator.creditSchema,
+    OTPValidator:SchemaValidator.otpSchema
+    
 }

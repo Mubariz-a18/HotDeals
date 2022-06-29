@@ -3,8 +3,8 @@ const router = express.Router();
 
 const verifyToken = require('../../utils/verifyToken').verifyJwtToken;
 const Validator = require('../middlewares/validatorMiddleware');
-const AlertController = require('../controllers/Alert/alert.controller')
+const ComplainController = require('../controllers/Complain/complain.controller')
 
-router.post('/api/createAlert',verifyToken,Validator("AlertValidator"),AlertController.apiCreateAlert);
+router.post('/api/createComplain',verifyToken,Validator("complainValidator"),ComplainController.apiCreateComplain);
 
 module.exports = router;
