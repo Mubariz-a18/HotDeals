@@ -25,9 +25,6 @@ let commonFieldSchema = Joi.object().keys({
   ad_promoted_date: Joi.date().iso().required(),
 }).options({allowUnknown: true});;
 
-let petSchema = Joi.object().keys({
-
-})
 
 module.exports = {
     commonFieldSchema,

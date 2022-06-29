@@ -20,6 +20,11 @@ const User = require("./models/Users");
 const router = require("./routes/index");
 const profileRouter = require('./routes/profile.routes')
 const AdRouter = require('./routes/ad.routes')
+const AlertRouter = require('./routes/alert.routes')
+const ComplainRouter = require('./routes/complain.routes')
+const HelpRouter = require('./routes/help.routes')
+const CreditRouter = require('./routes/credit.routes')
+const RatingRouter = require('./routes/rating.routes')
 const { findOne } = require("./models/converstionSchema");
 const { application } = require("express");
 // const chatController = require("./controllers/chatController").chatController;
@@ -50,6 +55,11 @@ app.use(cors());
 
 app.use(profileRouter);
 app.use(AdRouter);
+app.use(AlertRouter);
+app.use(ComplainRouter);
+app.use(HelpRouter);
+app.use(CreditRouter);
+app.use(RatingRouter)
 
 app.use("/", router);
 
