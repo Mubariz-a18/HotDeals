@@ -30,7 +30,7 @@ module.exports = class AdService {
         breed: bodyData.breed,
         condition: bodyData.condition,
         description: bodyData.description,
-        special_mentions: bodyData.special_mention,
+        special_mention: bodyData.special_mention,
         tile: bodyData.tile,
         ad_present_location: bodyData.ad_present_location,
         ad_posted_location: bodyData.ad_posted_location,
@@ -42,6 +42,7 @@ module.exports = class AdService {
         ad_status: bodyData.ad_status,
         ad_type: bodyData.ad_type,
       });
+      console.log("here:" + adDoc);
 
       const updateUser = await User.findByIdAndUpdate(userId, {
         $push: {
@@ -83,7 +84,7 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
         ad_status: bodyData.ad_status,
         ad_type: bodyData.ad_type,
-      })
+      });
 
       const updateUser = await User.findByIdAndUpdate(userId, {
         $push: {
@@ -98,41 +99,41 @@ module.exports = class AdService {
       console.log("Inside Housing in AdService");
       console.log(userId);
       const adDoc = await House.create({
-        category:bodyData.category,
-        sub_category:bodyData.sub_category,
-        facing:bodyData.facing,
-        dimension_length:bodyData.dimension_length,
-        dimension_breadth:bodyData.dimension_breadth,
-        area:bodyData.area,
-        carpet_area:bodyData.carpet_area,
-        beds:bodyData.beds,
-        baths:bodyData.baths,
-        furnishing_type:bodyData.furnishing_type,
-        balconies:bodyData.balconies,
-        gated_community:bodyData.gated_community,
-        property_floor_no:bodyData.property_floor_no,
-        number_of_floors:bodyData.number_of_floors,
-        car_parking:bodyData.car_parking,
-        bike_parking:bodyData.bike_parking,
-        amenities:bodyData.amenities,
-        nearly_by:bodyData.nearly_by,
-        registration:bodyData.registration,
-        distance_from_main_road:bodyData.distance_from_main_road,
-        front_road:bodyData.front_road,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        facing: bodyData.facing,
+        dimension_length: bodyData.dimension_length,
+        dimension_breadth: bodyData.dimension_breadth,
+        area: bodyData.area,
+        carpet_area: bodyData.carpet_area,
+        beds: bodyData.beds,
+        baths: bodyData.baths,
+        furnishing_type: bodyData.furnishing_type,
+        balconies: bodyData.balconies,
+        gated_community: bodyData.gated_community,
+        property_floor_no: bodyData.property_floor_no,
+        number_of_floors: bodyData.number_of_floors,
+        car_parking: bodyData.car_parking,
+        bike_parking: bodyData.bike_parking,
+        amenities: bodyData.amenities,
+        nearly_by: bodyData.nearly_by,
+        registration: bodyData.registration,
+        distance_from_main_road: bodyData.distance_from_main_road,
+        front_road: bodyData.front_road,
 
-        special_mention:bodyData.special_mention,
-        description:bodyData.description,
-        tile:bodyData.tile,
-        ad_present_location:bodyData.ad_present_location,
-        ad_posted_location:bodyData.ad_posted_location,
-        reported_ad_count:bodyData.reported_ad_count,
-        reported_by:bodyData.reported_by,
-        ad_expire_date:bodyData.ad_expire_date,
-        ad_promoted:bodyData.ad_promoted,
-        ad_promoted_date:bodyData.ad_promoted_date,
+        special_mention: bodyData.special_mention,
+        description: bodyData.description,
+        tile: bodyData.tile,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: bodyData.reported_by,
+        ad_expire_date: bodyData.ad_expire_date,
+        ad_promoted: bodyData.ad_promoted,
+        ad_promoted_date: bodyData.ad_promoted_date,
         ad_status: bodyData.ad_status,
         ad_type: bodyData.ad_type,
-      })
+      });
 
       const updateUser = await User.findByIdAndUpdate(userId, {
         $push: {
@@ -213,23 +214,23 @@ module.exports = class AdService {
       console.log(userId);
       let adDoc = await KitchenAppliance.create({
         category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          device: bodyData.device,
-          brand: bodyData.brand,
-          colour: bodyData.colour,
-          year: bodyData.year,
-          state: bodyData.state,
+        sub_category: bodyData.sub_category,
+        device: bodyData.device,
+        brand: bodyData.brand,
+        colour: bodyData.colour,
+        year: bodyData.year,
+        state: bodyData.state,
 
-          special_mention: bodyData.special_mention,
-          description: bodyData.description,
-          tile: bodyData.tile,
-          ad_present_location: bodyData.ad_present_location,
-          ad_posted_location: bodyData.ad_posted_location,
-          reported_ad_count: bodyData.reported_ad_count,
-          reported_by: bodyData.reported_by,
-          ad_expire_date: bodyData.ad_expire_date,
-          ad_promoted: bodyData.ad_promoted,
-          ad_promoted_date: bodyData.ad_promoted_date,
+        special_mention: bodyData.special_mention,
+        description: bodyData.description,
+        tile: bodyData.tile,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: bodyData.reported_by,
+        ad_expire_date: bodyData.ad_expire_date,
+        ad_promoted: bodyData.ad_promoted,
+        ad_promoted_date: bodyData.ad_promoted_date,
       });
 
       const updateUser = await User.findByIdAndUpdate(userId, {
@@ -278,21 +279,21 @@ module.exports = class AdService {
       console.log(userId);
       let adDoc = await Sport.create({
         category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          type: bodyData.type,
-          colour: bodyData.colour,
-          year: bodyData.year,
-          state: bodyData.state,
+        sub_category: bodyData.sub_category,
+        type: bodyData.type,
+        colour: bodyData.colour,
+        year: bodyData.year,
+        state: bodyData.state,
 
-          special_mention: bodyData.special_mention,
-          description: bodyData.description,
-          tile: bodyData.tile,
-          ad_present_location: bodyData.ad_present_location,
-          ad_posted_location: bodyData.ad_posted_location,
-          reported_ad_count: bodyData.reported_ad_count,
-          reported_by: bodyData.reported_by,
-          ad_expire_date: bodyData.ad_expire_date,
-          ad_promoted: bodyData.ad_promoted,
+        special_mention: bodyData.special_mention,
+        description: bodyData.description,
+        tile: bodyData.tile,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: bodyData.reported_by,
+        ad_expire_date: bodyData.ad_expire_date,
+        ad_promoted: bodyData.ad_promoted,
       });
 
       const updateUser = await User.findByIdAndUpdate(userId, {
@@ -309,21 +310,21 @@ module.exports = class AdService {
       console.log(userId);
       let adDoc = await Furniture.create({
         category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          colour: bodyData.colour,
-          year: bodyData.year,
-          state: bodyData.state,
+        sub_category: bodyData.sub_category,
+        colour: bodyData.colour,
+        year: bodyData.year,
+        state: bodyData.state,
 
-          special_mention: bodyData.special_mention,
-          description: bodyData.description,
-          tile: bodyData.tile,
-          ad_present_location: bodyData.ad_present_location,
-          ad_posted_location: bodyData.ad_posted_location,
-          reported_ad_count: bodyData.reported_ad_count,
-          reported_by: bodyData.reported_by,
-          ad_expire_date: bodyData.ad_expire_date,
-          ad_promoted: bodyData.ad_promoted,
-          ad_promoted_date: bodyData.ad_promoted_date,
+        special_mention: bodyData.special_mention,
+        description: bodyData.description,
+        tile: bodyData.tile,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: bodyData.reported_by,
+        ad_expire_date: bodyData.ad_expire_date,
+        ad_promoted: bodyData.ad_promoted,
+        ad_promoted_date: bodyData.ad_promoted_date,
       });
 
       const updateUser = await User.findByIdAndUpdate(userId, {
@@ -369,18 +370,18 @@ module.exports = class AdService {
       console.log(userId);
       let adDoc = await Book.create({
         category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          genre: bodyData.genre,
-          special_mention: bodyData.special_mention,
-          description: bodyData.description,
-          tile: bodyData.tile,
-          ad_present_location: bodyData.ad_present_location,
-          ad_posted_location: bodyData.ad_posted_location,
-          reported_ad_count: bodyData.reported_ad_count,
-          reported_by: bodyData.reported_by,
-          ad_expire_date: bodyData.ad_expire_date,
-          ad_promoted: bodyData.ad_promoted,
-          ad_promoted_date: bodyData.ad_promoted_date,
+        sub_category: bodyData.sub_category,
+        genre: bodyData.genre,
+        special_mention: bodyData.special_mention,
+        description: bodyData.description,
+        tile: bodyData.tile,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: bodyData.reported_by,
+        ad_expire_date: bodyData.ad_expire_date,
+        ad_promoted: bodyData.ad_promoted,
+        ad_promoted_date: bodyData.ad_promoted_date,
       });
 
       const updateUser = await User.findByIdAndUpdate(userId, {

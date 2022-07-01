@@ -4,6 +4,9 @@ const cors = require("cors");
 var bodyParser = require("body-parser");
 const app = express();
 const mongoose = require("mongoose");
+const Sentry = require("@sentry/node");
+
+const Tracing = require("@sentry/tracing");
 
 const http = require("http");
 const server = http.createServer(app);
@@ -17,41 +20,50 @@ const io = require("socket.io")(server, {
 
 const Conversation = require("./models/converstionSchema");
 const User = require("./models/Users");
+
+//Router Imports
 const router = require("./routes/index");
-const profileRouter = require('./routes/profile.routes')
-const AdRouter = require('./routes/ad.routes')
-const AlertRouter = require('./routes/alert.routes')
-const ComplainRouter = require('./routes/complain.routes')
-const HelpRouter = require('./routes/help.routes')
-const CreditRouter = require('./routes/credit.routes')
-const RatingRouter = require('./routes/rating.routes')
-const { findOne } = require("./models/converstionSchema");
-const { application } = require("express");
-// const chatController = require("./controllers/chatController").chatController;
+const profileRouter = require("./routes/profile.routes");
+const AdRouter = require("./routes/ad.routes");
+const AlertRouter = require("./routes/alert.routes");
+const ComplainRouter = require("./routes/complain.routes");
+const HelpRouter = require("./routes/help.routes");
+const CreditRouter = require("./routes/credit.routes");
+const RatingRouter = require("./routes/rating.routes");
+
+const connectDB = require('./db/connectDatabase')
+
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
-(async () => {
-  const uri = process.env.URL;
-  const connectionParams = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  };
-  try {
-    await mongoose
-      .connect(uri, connectionParams)
-      .then(() => {
-        console.log("Connected to the database ");
-      })
-      .catch((err) => {
-        console.error(`Error connecting to the database. n${err}`);
-      });
-  } catch (err) {
-    console.log("error: " + err);
-  }
-})();
+//Connecting to MongoDB
+connectDB();
+
+Sentry.init({
+  dsn: "https://c2ca7fe1eec14039b1874d3b84b406bf@o1302266.ingest.sentry.io/6539457",
+
+  integrations: [
+    // enable HTTP calls tracing
+    new Sentry.Integrations.Http({ tracing: true }),
+    // enable Express.js middleware tracing
+    new Tracing.Integrations.Express({
+      // to trace all requests to the default router
+      app,
+      // alternatively, you can specify the routes you want to trace:
+      // router: someRouter,
+    }),
+  ],
+  tracesSampleRate: 1.0,
+});
+
+//Sentry Middlewares
+
+app.use(Sentry.Handlers.requestHandler());
+// TracingHandler creates a trace for every incoming request
+app.use(Sentry.Handlers.tracingHandler());
+
 
 app.use(profileRouter);
 app.use(AdRouter);
@@ -59,7 +71,7 @@ app.use(AlertRouter);
 app.use(ComplainRouter);
 app.use(HelpRouter);
 app.use(CreditRouter);
-app.use(RatingRouter)
+app.use(RatingRouter);
 
 app.use("/", router);
 

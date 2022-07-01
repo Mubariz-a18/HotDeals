@@ -20,6 +20,7 @@ const furnitureSchema = mongoose.Schema({
   },
 
   //commo fields
+
   special_mention: [
     {
       type: String,
@@ -33,16 +34,14 @@ const furnitureSchema = mongoose.Schema({
       type: String,
     },
   ],
-  ad_present_location: [
-    {
-      type: String,
-    },
-  ],
-  ad_posted_location: [
-    {
-      type: String,
-    },
-  ],
+  ad_present_location: {
+    type: Array,
+    default: [],
+  },
+  ad_posted_location: {
+    type: Array,
+    default: [],
+  },
   reported: {
     type: Boolean,
     default: false,

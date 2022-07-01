@@ -9,6 +9,8 @@
   "author": "Damien Arrachequesne <damien.arrachequesne@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@sentry/node": "^7.3.1",
+    "@sentry/tracing": "^7.3.1",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",
