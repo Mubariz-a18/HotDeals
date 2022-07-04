@@ -1,4 +1,4 @@
-const User = require("../models/Profile/userProfile");
+const User = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 
 module.exports = class RatingService {

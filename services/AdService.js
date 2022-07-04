@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const User = require("../models/Profile/userProfile");
+const User = require("../models/Profile/Profile");
 const Pet = require("../models/Ads/petSchema");
 const Vehicle = require("../models/Ads/vehicleSchema");
 const House = require("../models/Ads/houseSchema");
@@ -23,6 +23,7 @@ module.exports = class AdService {
     if (bodyData.category == "Pet") {
       console.log("Inside Pet in AdService");
       console.log(userId);
+      console.log(bodyData)
       let adDoc = await Pet.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -39,8 +40,11 @@ module.exports = class AdService {
         ad_expire_date: bodyData.ad_expire_date,
         ad_promoted: bodyData.ad_promoted,
         ad_promoted_date: bodyData.ad_promoted_date,
+        ad_promoted_expire_date:bodyData.ad_promoted_expire_date,
         ad_status: bodyData.ad_status,
         ad_type: bodyData.ad_type,
+        is_negotiable: bodyData.is_negotiable,
+        is_ad_posted: bodyData.is_ad_posted,
       });
       console.log("here:" + adDoc);
 

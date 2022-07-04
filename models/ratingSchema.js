@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const ratingSchema = mongoose.Schema(
   {
-    user_id: {
+    _id: {
       type: mongoose.Schema.Types.ObjectId,
     },
    follower_info:{

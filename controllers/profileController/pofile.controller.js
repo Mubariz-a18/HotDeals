@@ -1,10 +1,17 @@
+var multer = require("multer");
+var upload = multer();
 const ProfileService = require("../../services/ProfileService");
 
 module.exports = class ProfileController {
   //API to create Profile First Time With The Phone Number
   static async apiCreateProfileWithPhone(req, res, next) {
     try {
-      const profileDocument = await ProfileService.createProfile(req.body);
+      console.log(req.user_phoneNumber)
+      const profileDocument = await ProfileService.createProfile(
+        req.body,
+        req.user_ID,
+        req.user_phoneNumber
+      );
       res.status(200).json(profileDocument);
     } catch (error) {
       res

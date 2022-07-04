@@ -1,3 +1,4 @@
+const { boolean } = require("joi");
 const mongoose = require("mongoose");
 
 const petSchema = mongoose.Schema({
@@ -58,7 +59,8 @@ const petSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Active", "Archive","Sold","Deleted",""],
+    default: "",
   },
   ad_type: {
     type: String,
@@ -78,6 +80,15 @@ const petSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
+  ad_promoted_expire_date: {
+    type: Date,
+  },
+  is_negotiable: {
+    type: Boolean,
+  },
+  is_ad_posted:{
+    type:Boolean
+  }
 });
 
 const Pet = mongoose.model("Pet", petSchema, "ads");

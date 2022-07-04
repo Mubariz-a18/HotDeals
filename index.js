@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
+var multer = require("multer");
+// var upload = multer();
 const app = express();
 const mongoose = require("mongoose");
 const Sentry = require("@sentry/node");
@@ -18,11 +20,10 @@ const io = require("socket.io")(server, {
   },
 });
 
-const Conversation = require("./models/converstionSchema");
-const User = require("./models/Users");
 
 //Router Imports
 const router = require("./routes/index");
+const authRouter = require("./routes/auth.routes");
 const profileRouter = require("./routes/profile.routes");
 const AdRouter = require("./routes/ad.routes");
 const AlertRouter = require("./routes/alert.routes");
@@ -30,12 +31,15 @@ const ComplainRouter = require("./routes/complain.routes");
 const HelpRouter = require("./routes/help.routes");
 const CreditRouter = require("./routes/credit.routes");
 const RatingRouter = require("./routes/rating.routes");
+const followUnfollowRouter = require('./routes/follow_unfollow.routes')
 
-const connectDB = require('./db/connectDatabase')
+const connectDB = require("./db/connectDatabase");
+const { application } = require("express");
 
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(upload.array());
 app.use(cors());
 
 //Connecting to MongoDB
@@ -65,6 +69,8 @@ app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 
 
+app.use(authRouter);
+
 app.use(profileRouter);
 app.use(AdRouter);
 app.use(AlertRouter);
@@ -72,8 +78,13 @@ app.use(ComplainRouter);
 app.use(HelpRouter);
 app.use(CreditRouter);
 app.use(RatingRouter);
+app.use(followUnfollowRouter)
 
-app.use("/", router);
+// app.use("/", router);
+
+// app.get('/', (req, res) => {
+//   res.send('successfully reached')
+// })
 
 io.use(async (socket, next) => {
   const username = socket.handshake.auth.username;
