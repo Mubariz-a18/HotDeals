@@ -51,18 +51,21 @@ let helpCenterSchema = Joi.object()
   .options({ allowUnknown: true });
 
 //OTP Schema Validation
-let otpSchema = Joi.object()
-  .keys({
-    phone_number: Joi.string().min(10).max(10).required(),
-    country_code: Joi.string().required(),
-    otp: Joi.string().min(6).max(6).required(),
-  })
-  .options({ allowUnknown: true });
+const getOTPSchema = Joi.object({
+  phoneNumber: Joi.string().min(7).required(),
+}).options({ allowUnknown: true });
+
+const verifyOTPSchema = Joi.object({
+  phoneNumber: Joi.string().min(7).required(),
+  otp: Joi.string().length(6).required(),
+  fcmToken: Joi.string().allow(null, ""),
+}).options({ allowUnknown: true });
 
 module.exports = {
   alertSchema,
   complainSchema,
   creditSchema,
   helpCenterSchema,
-  otpSchema,
+  getOTPSchema,
+  verifyOTPSchema,
 };

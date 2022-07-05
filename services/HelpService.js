@@ -1,4 +1,4 @@
-const User = require("../models/Profile/userProfile");
+const User = require("../models/Profile/Profile");
 const Help = require("../models/helpCenterSchema");
 
 module.exports = class HelpService {

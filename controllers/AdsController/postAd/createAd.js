@@ -9,7 +9,7 @@ const Sport = require("../../../models/Ads/sportSchema");
 const Furniture = require("../../../models/Ads/furnitureSchema");
 const ArtAndAntique = require("../../../models/Ads/artsAndAntiqueSchema");
 const Book = require("../../../models/Ads/bookSchema");
-const User = require("../../../models/Profile/userProfile");
+const User = require("../../../models/Profile/Profile");
 
 exports.createAd = async function (req, res) {
   try {

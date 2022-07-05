@@ -8,6 +8,8 @@ module.exports = {
     complainValidator:SchemaValidator.complainSchema,
     HelpValidator:SchemaValidator.helpCenterSchema,
     CreditValidator:SchemaValidator.creditSchema,
-    OTPValidator:SchemaValidator.otpSchema
+    OTPValidator:SchemaValidator.otpSchema,
+    getOTP:SchemaValidator.getOTPSchema,
+    verifyOTP:SchemaValidator.verifyOTPSchema,
     
 }

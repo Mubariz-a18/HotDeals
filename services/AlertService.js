@@ -1,4 +1,4 @@
-const User = require("../models/Profile/userProfile");
+const User = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
 
 module.exports = class AlertService {

@@ -16,6 +16,8 @@ const bookSchema = mongoose.Schema({
   },
 
   //commo fields
+  lat: { type: Number },
+  long: { type: Number },
   special_mention: [
     {
       type: String,
@@ -29,16 +31,14 @@ const bookSchema = mongoose.Schema({
       type: String,
     },
   ],
-  ad_present_location: [
-    {
-      type: String,
-    },
-  ],
-  ad_posted_location: [
-    {
-      type: String,
-    },
-  ],
+  ad_present_location: {
+    type: Array,
+    default: [],
+  },
+  ad_posted_location: {
+    type: Array,
+    default: [],
+  },
   reported: {
     type: Boolean,
     default: false,

@@ -12,15 +12,18 @@ const mongoose = require("mongoose");
 // });
 // const Ad = mongoose.model('Ad',AdSchema);
 
-const userProfileSchema = mongoose.Schema({
+const profileSchema = mongoose.Schema({
+  // userID: {
+  //   type: String,
+  //   required: true,
+  // },
   name: {
     type: String,
   },
-  phone_number: [
-    {
-      type: String,
-    },
-  ],
+  userNumber: {
+    type: String,
+    unique: true,
+  },
   country_code: {
     type: String,
   },
@@ -127,7 +130,21 @@ const userProfileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
+  follower_info: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
+  following_info: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
+  fcmToken: {
+    type: String,
+    default: "",
+  },
 });
 
-const User = mongoose.model("User", userProfileSchema);
-module.exports = User;
+const Profile = mongoose.model("profile", profileSchema);
+module.exports = Profile;

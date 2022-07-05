@@ -1,4 +1,4 @@
-const User = require("../models/Profile/userProfile");
+const User = require("../models/Profile/Profile");
 const Complain = require("../models/complainSchema");
 
 module.exports = class ComplainService {
