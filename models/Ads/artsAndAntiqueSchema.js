@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
+var GeoJSON = require("mongoose-geojson-schema");
 
 const artsAndAntiqueSchema = mongoose.Schema({
+  // any: mongoose.Schema.Types.GeoJSON,
+  // point: mongoose.Schema.Types.Point,
   category: {
     type: String,
     required: true,
@@ -14,8 +17,7 @@ const artsAndAntiqueSchema = mongoose.Schema({
   },
 
   //commo fields
-  lat: { type: Number },
-  long: { type: Number },
+
   special_mention: [
     {
       type: String,
@@ -77,7 +79,12 @@ const artsAndAntiqueSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
+  loc: {
+    type: { type: String },
+    coordinates: [],
+  },
 });
+
 
 const ArtsAndAntique = mongoose.model(
   "ArtsAndAntique",

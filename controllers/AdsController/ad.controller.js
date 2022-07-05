@@ -5,8 +5,7 @@ module.exports = class AdController {
   static async apiCreateAd(req, res, next) {
     try {
       console.log("inside ad create controller");
-      console.log(req.body);
-      const adDocument = await AdService.createAd(req.body, req.userId);
+      const adDocument = await AdService.createAd(req.body, req.user_ID);
 
       res.status(200).send({
         message: "Ad Successfully created!",

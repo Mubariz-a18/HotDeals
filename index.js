@@ -24,6 +24,7 @@ const io = require("socket.io")(server, {
 //Router Imports
 const router = require("./routes/index");
 const authRouter = require("./routes/auth.routes");
+const DashBoardRouter = require('./routes/dashboard.routes')
 const profileRouter = require("./routes/profile.routes");
 const AdRouter = require("./routes/ad.routes");
 const AlertRouter = require("./routes/alert.routes");
@@ -78,7 +79,8 @@ app.use(ComplainRouter);
 app.use(HelpRouter);
 app.use(CreditRouter);
 app.use(RatingRouter);
-app.use(followUnfollowRouter)
+app.use(followUnfollowRouter);
+app.use(DashBoardRouter)
 
 // app.use("/", router);
 

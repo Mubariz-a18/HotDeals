@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const User = require("../models/Profile/Profile");
+const Profile = require("../models/Profile/Profile");
+const GlobalSearch = require("../models/GlobalSearch");
 const Pet = require("../models/Ads/petSchema");
 const Vehicle = require("../models/Ads/vehicleSchema");
 const House = require("../models/Ads/houseSchema");
@@ -11,6 +11,7 @@ const Sport = require("../models/Ads/sportSchema");
 const Furniture = require("../models/Ads/furnitureSchema");
 const ArtAndAntique = require("../models/Ads/artsAndAntiqueSchema");
 const Book = require("../models/Ads/bookSchema");
+
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -22,8 +23,8 @@ module.exports = class AdService {
     console.log("Inside Ad Service");
     if (bodyData.category == "Pet") {
       console.log("Inside Pet in AdService");
-      console.log(userId);
-      console.log(bodyData)
+
+      //Create Pet Ad
       let adDoc = await Pet.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -40,26 +41,40 @@ module.exports = class AdService {
         ad_expire_date: bodyData.ad_expire_date,
         ad_promoted: bodyData.ad_promoted,
         ad_promoted_date: bodyData.ad_promoted_date,
-        ad_promoted_expire_date:bodyData.ad_promoted_expire_date,
+        ad_promoted_expire_date: bodyData.ad_promoted_expire_date,
         ad_status: bodyData.ad_status,
         ad_type: bodyData.ad_type,
         is_negotiable: bodyData.is_negotiable,
         is_ad_posted: bodyData.is_ad_posted,
       });
-      console.log("here:" + adDoc);
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      //Update my_ads field in Profile Model(Store created ad ID in Profile Model)
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      //Create new Ad in GlobalSearch Model 
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Vehicle") {
+
+
+    }
+    else if (bodyData.category == "Vehicle") {
       console.log("Inside Vehicle in AdService");
-      console.log(userId);
+
       const adDoc = await Vehicle.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -90,18 +105,31 @@ module.exports = class AdService {
         ad_type: bodyData.ad_type,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Housing") {
+
+
+    }
+    else if (bodyData.category == "Housing") {
       console.log("Inside Housing in AdService");
-      console.log(userId);
+
       const adDoc = await House.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -139,18 +167,31 @@ module.exports = class AdService {
         ad_type: bodyData.ad_type,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Electronic") {
+
+
+    }
+    else if (bodyData.category == "Electronic") {
       console.log("Inside Electronic in AdService");
-      console.log(userId);
+
       let adDoc = await Electronic.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -172,18 +213,31 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "HomeAppliance") {
+
+
+    }
+    else if (bodyData.category == "HomeAppliance") {
       console.log("Inside HomeAppliance in AdService");
-      console.log(userId);
+
       let adDoc = await HomeAppliance.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -204,18 +258,31 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "KitchenAppliance") {
+
+
+    }
+    else if (bodyData.category == "KitchenAppliance") {
       console.log("Inside KitchenAppliance in AdService");
-      console.log(userId);
+
       let adDoc = await KitchenAppliance.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -237,18 +304,31 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Fashion") {
+
+
+    }
+    else if (bodyData.category == "Fashion") {
       console.log("Inside Fashion in AdService");
-      console.log(userId);
+
       let adDoc = await Fashion.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -269,18 +349,31 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Sport") {
+
+
+    }
+    else if (bodyData.category == "Sport") {
       console.log("Inside Sport in AdService");
-      console.log(userId);
+
       let adDoc = await Sport.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -300,18 +393,31 @@ module.exports = class AdService {
         ad_promoted: bodyData.ad_promoted,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Furniture") {
+
+
+    }
+    else if (bodyData.category == "Furniture") {
       console.log("Inside Furniture in AdService");
-      console.log(userId);
+
       let adDoc = await Furniture.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -331,18 +437,31 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "ArtAndAntique") {
+
+
+    }
+    else if (bodyData.category == "ArtAndAntique") {
       console.log("Inside ArtAndAntique in AdService");
-      console.log(userId);
+
       let adDoc = await ArtAndAntique.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -358,20 +477,34 @@ module.exports = class AdService {
         ad_expire_date: bodyData.ad_expire_date,
         ad_promoted: bodyData.ad_promoted,
         ad_promoted_date: bodyData.ad_promoted_date,
+        loc: bodyData.loc,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
-    } else if (bodyData.category == "Book") {
+
+
+    }
+    else if (bodyData.category == "Book") {
       console.log("Inside Book in AdService");
-      console.log(userId);
+
       let adDoc = await Book.create({
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -388,15 +521,27 @@ module.exports = class AdService {
         ad_promoted_date: bodyData.ad_promoted_date,
       });
 
-      const updateUser = await User.findByIdAndUpdate(userId, {
+
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
         $push: {
           my_ads: {
             _id: adDoc._id,
           },
         },
       });
-      console.log(adDoc);
+
+
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        tile: bodyData.tile,
+      });
+
+
       return adDoc["_doc"];
+
+
     }
   }
 

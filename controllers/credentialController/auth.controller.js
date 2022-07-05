@@ -51,7 +51,6 @@ module.exports = class AuthController {
     try {
       //Verfying again otp collection to check the otp is valid
       const verficationStatus = await OtpService.verifyOTP(phoneNumber, otp);
-      console.log({ phoneNumber, otp });
       console.log("verification_checkstatus: ", verficationStatus);
 
       if (verficationStatus === "approved") {
@@ -62,7 +61,6 @@ module.exports = class AuthController {
 
         if (oldUser) {
           // If user exists
-          console.log("user exists");
           const userID = oldUser["_id"];
           const token = createJwtToken(userID, phoneNumber);
           // save user token
@@ -115,7 +113,7 @@ module.exports = class AuthController {
         return res.status(200).json({
           ...user["_doc"],
           token,
-        //   profile: profileData,
+          //   profile: profileData,
           existingUser: false,
         });
       }

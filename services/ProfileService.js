@@ -6,6 +6,7 @@ const Rating = require("../models/ratingSchema");
 const connectDB = require("../db/connectDatabase");
 const { request } = require("express");
 const Profile = require("../models/Profile/Profile");
+const { getSelectionData } = require("../utils/string");
 
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
@@ -14,10 +15,9 @@ function capitalizeFirstLetter(string) {
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
-  static async createProfile(bodyData,userID,phoneNuber) {
+  static async createProfile(bodyData, userID, phoneNuber) {
     //checking if profile already exists
     console.log("inside profile service");
-    console.log(phoneNuber)
     let profileDoc = await User.findOne({
       userNumber: phoneNuber,
     });
@@ -26,10 +26,9 @@ module.exports = class ProfileService {
         userNumber: phoneNuber,
       });
       if (!userProfile) {
-        console.log(profileDoc)
 
         const profileDoc1 = await Profile.create({
-          _id:userID,
+          _id: userID,
           name: bodyData.name,
           userNumber: phoneNuber,
           country_code: bodyData.country_code,
@@ -45,27 +44,67 @@ module.exports = class ProfileService {
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
         });
+
         return profileDoc1;
-      } else {
+
+      }
+      else{
         return userProfile;
       }
     }
   }
 
   //DB Service to Get Profile By Phone Number
-
   static async getProfile(bodyData) {
     console.log(bodyData);
-    const { phone_number } = bodyData;
-    let profileDoc = await User.findOne({
-      phone_number: phone_number,
-    });
+    const { userNumber, contactNumber, name } = bodyData;
+    console.log(contactNumber);
 
-    if (profileDoc) {
-      return profileDoc;
-    } else {
-      return null;
-    }
+
+    // let profileDoc = await Profile.aggregate([
+    //   {
+    //     $group: {
+    //       _id: "62c28fb3988777fe505754fd",
+    //       followersCount: { $sum: { $size: "$follower_info" } },
+    //       followingCount: { $sum: { $size: "$following_info" } },
+    //     },
+    //   },
+    // ]);
+
+    // let profileDoc = await Profile.aggregate([
+    //   {
+    //     $project: {
+    //       _id: 1,
+    //       numberOfFollower: {
+    //         $cond: {
+    //           if: { $isArray: "$follower_info" },
+    //           then: { $size: "$follower_info" },
+    //           else: "NA",
+    //         },
+    //       },
+    //       numberOfFollowing: {
+    //         $cond: {
+    //           if: { $isArray: "$following_info" },
+    //           then: { $size: "$following_info" },
+    //           else: "NA",
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
+    console.log("getting profile", profileDoc);
+
+    // if (profileDoc) {
+    //   if (name === "seeProfile") {
+    //     const data = await getSelectionData(profileDoc["_doc"]); //Func to get only the non private elements from profile
+    //     console.log(data);
+    //     return data;
+    //   } else {
+    //     return profileDoc;
+    //   }
+    // }
+
+    // return null;
   }
 
   static async updateProfile(bodyData) {

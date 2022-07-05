@@ -6,7 +6,6 @@ module.exports = class ProfileController {
   //API to create Profile First Time With The Phone Number
   static async apiCreateProfileWithPhone(req, res, next) {
     try {
-      console.log(req.user_phoneNumber)
       const profileDocument = await ProfileService.createProfile(
         req.body,
         req.user_ID,
@@ -23,9 +22,14 @@ module.exports = class ProfileController {
   //API to Get Profile
   static async apiGetProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.createProfile(req.body);
-      res.send(profileData);
+      const profileData = await ProfileService.getProfile(req.body);
+      if (profileData) {
+        res.send(profileData);
+      } else {
+        res.status(400).json({ error: "Profile Not Found" });
+      }
     } catch (error) {
+      console.log(error);
       res.status(400).json({ error: error });
     }
   }
