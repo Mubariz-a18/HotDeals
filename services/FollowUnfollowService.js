@@ -1,46 +1,73 @@
-const User = require("../models/Profile/Profile");
+const Profile = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 
 module.exports = class FollowUnfollowService {
-  static async followUser(followUserId, followingUserId) {
+  static async followUser(followerId, followingId) {
     console.log(
-      "inside FollowUnfollow Service:" + followUserId,
-      followingUserId
+      "inside FollowUnfollow Service:" + followerId,
+      followingId
     );
 
-    const updatefollowUserInfo = await User.findByIdAndUpdate(followingUserId, {
+    const whomFollowed = await Profile.findByIdAndUpdate(followingId, {
       $push: {
         following_info: {
-          _id: followUserId,
+          _id: followerId,
         },
       },
     });
-    const updatefollowInfo = await Rating.findByIdAndUpdate(followingUserId, {
+    const updatewhomFollowed = await Rating.findByIdAndUpdate(followingId, {
       $push: {
         following_info: {
-          _id: followUserId,
+          user_id: followerId,
         },
       },
     });
 
-    console.log(updatefollowUserInfo);
-
-    const updateFollowingUserInfo = await User.findByIdAndUpdate(followUserId, {
+    const whoFollowedMe = await Profile.findByIdAndUpdate(followerId, {
       $push: {
         follower_info: {
-          _id: followingUserId,
+          _id: followingId,
         },
       },
     });
 
-    const updateFollowingInfo = await Rating.findByIdAndUpdate(followUserId, {
+    const updatewhoFollowedMe = await Rating.findByIdAndUpdate(followerId, {
       $push: {
         follower_info: {
-          _id: followingUserId,
+          user_id: followingId,
         },
       },
     });
 
-    console.log(updateFollowingUserInfo);
+  }
+
+
+  static async UnfollowUser(UnfollowerId, UnfollowingId) {
+
+    console.log("inside unfollow")
+    console.log(UnfollowerId, UnfollowingId)
+
+    const whomUnFollowed  = await Profile.findByIdAndUpdate(UnfollowingId, {
+      $pull: {
+        following_info: {
+          _id: UnfollowerId,
+        },
+      },
+    });
+
+    console.log(whomUnFollowed)
+
+
+    const whoUnFollowedMe  = await Profile.findByIdAndUpdate(UnfollowerId, {
+      $pull: {
+        follower_info: {
+          _id: UnfollowingId,
+        },
+      },
+    });
+
+    console.log(whoUnFollowedMe);
+
+
   }
 };

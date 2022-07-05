@@ -130,16 +130,12 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  follower_info: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-  ],
-  following_info: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-  ],
+  follower_info: {
+    type: Array
+  },
+  following_info: {
+    type: Array
+  },
   fcmToken: {
     type: String,
     default: "",
