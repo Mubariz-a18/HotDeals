@@ -1,4 +1,4 @@
-const User = require("../../models/Profile/userProfile");
+const User = require("../../models/Profile/Profile");
 
 exports.petValidation = async function (req, res, next) {
   try {

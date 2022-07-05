@@ -1,5 +1,5 @@
 const Alert = require("../../models/alertSchema");
-const User = require("../../models/Profile/userProfile");
+const User = require("../../models/Profile/Profile");
 
 exports.alertController = async function (req, res) {
   try {

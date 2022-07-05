@@ -23,6 +23,7 @@ const homeApplianceSchema = mongoose.Schema({
   },
 
   //commo fields
+
   special_mention: [
     {
       type: String,
@@ -31,19 +32,19 @@ const homeApplianceSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [{
-    type: String,
-  }],
-  ad_present_location: [
+  tile: [
     {
       type: String,
     },
   ],
-  ad_posted_location: [
-    {
-      type: String,
-    },
-  ],
+  ad_present_location: {
+    type: Array,
+    default: [],
+  },
+  ad_posted_location: {
+    type: Array,
+    default: [],
+  },
   reported: {
     type: Boolean,
     default: false,
@@ -86,7 +87,10 @@ const homeApplianceSchema = mongoose.Schema({
   },
 });
 
-
-const HomeAppliance = mongoose.model("HomeAppliance", homeApplianceSchema, "ads");
+const HomeAppliance = mongoose.model(
+  "HomeAppliance",
+  homeApplianceSchema,
+  "ads"
+);
 
 module.exports = HomeAppliance;

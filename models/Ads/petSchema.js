@@ -1,3 +1,4 @@
+const { boolean } = require("joi");
 const mongoose = require("mongoose");
 
 const petSchema = mongoose.Schema({
@@ -19,69 +20,77 @@ const petSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  special_mention:[ {
-    type: String,
-  }],
-  tile: [{
-    type: String,
-  }],
-  ad_present_location: [
+  special_mention: [
     {
       type: String,
-
     },
   ],
-  ad_posted_location: [
+  tile: [
     {
       type: String,
-
     },
   ],
+  ad_present_location: {
+    type: Array,
+    default: [],
+  },
+  ad_posted_location: {
+    type: Array,
+    default: [],
+  },
 
-    //cmmon fields
-    reported: {
-      type: Boolean,
-      default: false,
+  reported: {
+    type: Boolean,
+    default: false,
+  },
+  reported_ad_count: {
+    type: Number,
+  },
+  reported_by: {
+    user_id: {
+      type: String,
     },
-    reported_ad_count: {
-      type: Number,
+    reason: {
+      type: String,
     },
-    reported_by: {
-      user_id: {
-        type: String,
-      },
-      reason: {
-        type: String,
-      },
-      report_date: {
-        type: Date,
-      },
+    report_date: {
+      type: Date,
     },
-    ad_status:{
-      type:String,
-      default:"active",
-    },
-    ad_type:{
-      type:String,
-      default:"free"
-    },
-    ad_expire_date:{
-      type:Date
-    },
-    ad_promoted:{
-      type:String
-    },
-    ad_promoted_type:{
-      type:String,
-      enum:["Boost","Premium",""],
-      default:""
-    },
-    ad_promoted_date:{
-      type:Date
-    }
+  },
+  ad_status: {
+    type: String,
+    enum: ["Active", "Archive","Sold","Deleted",""],
+    default: "",
+  },
+  ad_type: {
+    type: String,
+    default: "free",
+  },
+  ad_expire_date: {
+    type: Date,
+  },
+  ad_promoted: {
+    type: String,
+  },
+  ad_promoted_type: {
+    type: String,
+    enum: ["Boost", "Premium", ""],
+    default: "",
+  },
+  ad_promoted_date: {
+    type: Date,
+  },
+  ad_promoted_expire_date: {
+    type: Date,
+  },
+  is_negotiable: {
+    type: Boolean,
+  },
+  is_ad_posted:{
+    type:Boolean
+  }
 });
 
-
-const Pet = mongoose.model("Pet", petSchema,"ads");
+const Pet = mongoose.model("Pet", petSchema, "ads");
 
 module.exports = Pet;

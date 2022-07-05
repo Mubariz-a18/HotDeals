@@ -1,8 +1,8 @@
-const User = require("../../models/Profile/userProfile");
-const OTP = require("../../models/otpSchema");
-const { generateOTP } = require("../../../utils/generateOTP");
-const { createJwtToken } = require("../../../utils/generateToken");
-const { findOneAndUpdate } = require("../../models/Profile/userProfile");
+const User = require("../../models/Profile/Profile");
+const OTP = require("../../models/Otp");
+const { generateOTP } = require("../../utils/otp.util");
+const { createJwtToken } = require("../../utils/generateToken");
+const { findOneAndUpdate } = require("../../models/Profile/Profile");
 
 exports.signUpSignIn = async function (req, res) {
   try {
