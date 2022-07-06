@@ -3,7 +3,7 @@ const RatingService = require("../../services/RatingService");
 module.exports = class RatingController {
   static async apiCreateRating(req, res, next) {
     try {
-      const ratDoc = await RatingService.createRating(req.body, req.userId);
+      const ratDoc = await RatingService.createRating(req.body,  req.user_ID);
       if (ratDoc) {
         res.status(200).send({
           message: "Success",
