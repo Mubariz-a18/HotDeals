@@ -6,7 +6,7 @@ module.exports = class ComplainController {
         console.log("Inside Complai Controller")
       const complnData = await ComplainService.createComplain(
         req.body,
-        req.userId
+        req.user_ID
       );
       if (complnData) {
         res

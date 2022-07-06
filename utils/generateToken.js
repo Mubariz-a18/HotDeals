@@ -7,6 +7,5 @@ exports.createJwtToken = (userID, phoneNumber) => {
     process.env.JWT_SECRET_KEY,
     { expiresIn: "12h" }
   );
-  console.log(token.user_ID)
   return token;
 };

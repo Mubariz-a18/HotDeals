@@ -32,7 +32,8 @@ const ComplainRouter = require("./routes/complain.routes");
 const HelpRouter = require("./routes/help.routes");
 const CreditRouter = require("./routes/credit.routes");
 const RatingRouter = require("./routes/rating.routes");
-const followUnfollowRouter = require('./routes/follow_unfollow.routes')
+const followUnfollowRouter = require('./routes/follow_unfollow.routes');
+const GlobalSearchRouter = require('./routes/global_search.routes');
 
 const connectDB = require("./db/connectDatabase");
 const { application } = require("express");
@@ -80,7 +81,8 @@ app.use(HelpRouter);
 app.use(CreditRouter);
 app.use(RatingRouter);
 app.use(followUnfollowRouter);
-app.use(DashBoardRouter)
+app.use(DashBoardRouter);
+app.use(GlobalSearchRouter)
 
 // app.use("/", router);
 

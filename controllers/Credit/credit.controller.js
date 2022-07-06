@@ -3,7 +3,7 @@ const CreditService = require("../../services/CreditService");
 module.exports = class CreditController {
   static async apiCreateCredit(req, res, next) {
     try {
-      const creditData = await CreditService.createCredit(req.body, req.userId);
+      const creditData = await CreditService.createCredit(req.body,  req.user_ID);
       if (creditData) {
         res.status(200).send({
           message: "Success",
