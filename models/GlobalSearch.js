@@ -19,5 +19,6 @@ const GlobalSearchSchema = mongoose.Schema({
   ],
 });
 
+GlobalSearchSchema.index({ category: "text", sub_category: "text"});
 const GlobalSearch = mongoose.model("GlobalSearch", GlobalSearchSchema);
 module.exports = GlobalSearch;

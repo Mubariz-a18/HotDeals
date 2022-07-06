@@ -45,6 +45,11 @@ module.exports = class ProfileService {
           profile_url: bodyData.profile_url,
         });
 
+        const createDefaultRating = await Rating.create({
+          _id:profileDoc1._id,
+          
+        })
+
         return profileDoc1;
 
       }

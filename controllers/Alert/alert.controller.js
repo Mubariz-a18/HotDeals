@@ -3,7 +3,7 @@ const AlertService = require("../../services/AlertService");
 module.exports = class AlertController {
   static async apiCreateAlert(req, res, next) {
     try {
-      const alertData = await AlertService.createAlert(req.body, req.userId);
+      const alertData = await AlertService.createAlert(req.body,  req.user_ID);
 
       if (alertData) {
         res.status(200).send({
