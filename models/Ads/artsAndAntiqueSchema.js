@@ -26,7 +26,7 @@ const artsAndAntiqueSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [
+  title: [
     {
       type: String,
     },
@@ -59,7 +59,7 @@ const artsAndAntiqueSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -83,6 +83,10 @@ const artsAndAntiqueSchema = mongoose.Schema({
     type: { type: String },
     coordinates: [],
   },
+  is_premium:{
+    type: Boolean,
+    default: "false",
+  }
 });
 
 

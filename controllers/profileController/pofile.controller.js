@@ -6,6 +6,7 @@ module.exports = class ProfileController {
   //API to create Profile First Time With The Phone Number
   static async apiCreateProfileWithPhone(req, res, next) {
     try {
+      console.log(req.body)
       const profileDocument = await ProfileService.createProfile(
         req.body,
         req.user_ID,
@@ -15,14 +16,15 @@ module.exports = class ProfileController {
     } catch (error) {
       res
         .status(400)
-        .json({ error: "Document Already Exists with the phonenumber" });
+        .json({ error: "Something went wrong in profile controller" });
     }
   }
 
   //API to Get Profile
   static async apiGetProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.getProfile(req.body);
+      const id = "62c82ba70e0677180c29a07d";
+      const profileData = await ProfileService.getProfile(id);
       if (profileData) {
         res.send(profileData);
       } else {

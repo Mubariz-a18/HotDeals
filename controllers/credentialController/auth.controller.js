@@ -10,33 +10,36 @@ module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
     const { phoneNumber } = req.body;
+    console.log(phoneNumber);
 
     try {
       // Creating OTP for phoneNumber
-      const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber);
+      const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
       let msgResponse = {};
       // If testPhoneNumber
       if (testPhoneNumbers.includes(phoneNumber)) {
         msgResponse["status"] = "success";
-      } else {
-        res.json({
-          OTP: otpDoc.otp,
-          message: "OTP Sent Successfully",
-        });
       }
-      //    else {
-      //     msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
-      //   }
+      //  else {
+      //   res.json({
+      //     OTP: otpDoc.otp,
+      //     message: "OTP Sent Successfully",
+      //   });
+      // }
+         else {
+          msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
+        }
 
-      //   if (msgResponse.status === "success") {
-      //     res.json({
-      //       message: "OTP Sent Successfully",
-      //     });
-      //   } else {
-      //     res.status(400).json({
-      //       message: msgResponse.data,
-      //     });
-      //   }
+        if (msgResponse.status === "success") {
+          res.json({
+            statusCode:200,
+            message: "OTP Sent Successfully",
+          });
+        } else {
+          res.status(400).json({
+            message: msgResponse.data,
+          });
+        }
     } catch (error) {
       res.status(400).json({
         message: error.message,
@@ -50,25 +53,25 @@ module.exports = class AuthController {
 
     try {
       //Verfying again otp collection to check the otp is valid
-      const verficationStatus = await OtpService.verifyOTP(phoneNumber, otp);
+      const verficationStatus = await OtpService.verifyOTP(phoneNumber.text, otp);
       console.log("verification_checkstatus: ", verficationStatus);
 
       if (verficationStatus === "approved") {
         //Get user from Database
         const oldUser = await User.findOne({
-          userNumber: phoneNumber,
+          userNumber: phoneNumber.text,
         }); // CHECK THIS!!!!
 
         if (oldUser) {
           // If user exists
           const userID = oldUser["_id"];
-          const token = createJwtToken(userID, phoneNumber);
+          const token = createJwtToken(userID, phoneNumber.text);
           // save user token
 
           //Get user profile
-          let profileDoc = await Profile.findOne({
-            userNumber: phoneNumber,
-          });
+          // let profileDoc = await Profile.findOne({
+          //   userNumber: phoneNumber.text,
+          // });
 
           //   if (profileDoc.fcmToken !== fcmToken) {
           //     console.log("Token Not same", fcmToken);
@@ -85,12 +88,10 @@ module.exports = class AuthController {
           //     });
           //   }
           return res.status(200).json({
-            ...oldUser["_doc"],
-            token,
-            // profile: profileDoc["_doc"],
+            message: "success",
+            statusCode:200,
+            token,          
             existingUser: true,
-            isProfileSetupCompleted: oldUser["_doc"]["displayName"].length > 0,
-            // acceptedTerms: profileDoc["_doc"]["acceptedTerms"],
           });
           //return res.send({ token });
         }
@@ -98,7 +99,7 @@ module.exports = class AuthController {
         // If new user, create a user
 
         const user = await User.create({
-          userNumber: phoneNumber,
+          userNumber: phoneNumber.text,
         });
         //Create Default user profile
         // const profileData = await Profile.create({
@@ -106,19 +107,19 @@ module.exports = class AuthController {
         //   userID: user["_doc"]["_id"],
         //   //   fcmToken: fcmToken,
         // });
-        const token = await createJwtToken(user["_doc"]["_id"], phoneNumber);
+        const token = createJwtToken(user["_doc"]["_id"], phoneNumber.text);
         // save user token
         user.token = token;
 
         return res.status(200).json({
-          ...user["_doc"],
+          message: "success",
+          statusCode:200,
           token,
-          //   profile: profileData,
-          existingUser: false,
         });
       }
       return res.status(400).json({
         message: INVALID_OTP_ERR,
+        statusCode:401
       });
     } catch (error) {
       console.log("errorInVerifyingOTP: ", error);

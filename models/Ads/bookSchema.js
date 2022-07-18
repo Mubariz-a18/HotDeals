@@ -26,7 +26,7 @@ const bookSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [
+  title: [
     {
       type: String,
     },
@@ -59,7 +59,7 @@ const bookSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -79,7 +79,8 @@ const bookSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
-});
+},
+  { timestamps: true });
 
 bookSchema.index({ category: "text", sub_category: "text" });
 const Book = mongoose.model("Book", bookSchema, "ads");

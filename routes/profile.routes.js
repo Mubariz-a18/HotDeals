@@ -13,6 +13,6 @@ router.post(
   ProfileCotroller.apiCreateProfileWithPhone
 );
 
-router.post("/api/v1/getProfile", verifyToken, ProfileCotroller.apiGetProfile);
+router.post("/api/v1/getProfile", ProfileCotroller.apiGetProfile);
 
 module.exports = router;

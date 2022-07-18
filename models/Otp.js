@@ -5,11 +5,9 @@ const otpSchema = Schema({
   otp: {
     type: String,
     unique: true,
-    required: true,
   },
   phoneNumber: {
     type: String,
-    required: true,
   },
   countryCode: {
     type: String,

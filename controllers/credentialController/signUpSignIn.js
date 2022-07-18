@@ -9,6 +9,7 @@ exports.signUpSignIn = async function (req, res) {
     const phone_number = req.body.phone_number;
     const country_code = req.body.country_code;
     const otp = req.body.otp;
+    console.log(phone_number, country_code, otp);
 
     const user = await User.findOne({
       phone_number: phone_number,

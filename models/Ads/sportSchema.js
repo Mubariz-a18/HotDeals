@@ -29,7 +29,7 @@ const sportSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [{
+  title: [{
     type: String,
   }],
   ad_present_location: {
@@ -60,7 +60,7 @@ const sportSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -80,7 +80,8 @@ const sportSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
-});
+},
+  { timestamps: true });
 
 const Sport = mongoose.model("Sport", sportSchema, "ads");
 

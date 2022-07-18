@@ -5,6 +5,7 @@ const testPhoneNumbers = require('../data/testNumbers');
 module.exports = class OtpService {
 
   static async generateOTPAndCreateDocument(phoneNumber) {
+    console.log(phoneNumber.length)
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
     });

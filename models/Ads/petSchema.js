@@ -25,7 +25,7 @@ const petSchema = mongoose.Schema({
       type: String,
     },
   ],
-  tile: [
+  title: [
     {
       type: String,
     },
@@ -59,8 +59,7 @@ const petSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    enum: ["Active", "Archive","Sold","Deleted",""],
-    default: "",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -86,10 +85,11 @@ const petSchema = mongoose.Schema({
   is_negotiable: {
     type: Boolean,
   },
-  is_ad_posted:{
-    type:Boolean
+  is_ad_posted: {
+    type: Boolean
   }
-});
+},
+  { timestamps: true });
 
 const Pet = mongoose.model("Pet", petSchema, "ads");
 

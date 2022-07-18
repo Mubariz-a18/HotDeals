@@ -36,7 +36,7 @@ const electronicSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [{
+  title: [{
     type: String,
   }],
   ad_present_location: {
@@ -67,7 +67,7 @@ const electronicSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted", "Draft",],
   },
   ad_type: {
     type: String,
@@ -87,9 +87,11 @@ const electronicSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
-});
+},
+  { timestamps: true });
 
 
 const Electronic = mongoose.model("Electronic", electronicSchema, "ads");
 
 module.exports = Electronic;
+
