@@ -23,8 +23,8 @@ module.exports = class ProfileController {
   //API to Get Profile
   static async apiGetProfile(req, res, next) {
     try {
-      const id = "62c82ba70e0677180c29a07d";
-      const profileData = await ProfileService.getProfile(id);
+      console.log(req.user_ID)
+      const profileData = await ProfileService.getProfile(req.user_ID);
       if (profileData) {
         res.send(profileData);
       } else {

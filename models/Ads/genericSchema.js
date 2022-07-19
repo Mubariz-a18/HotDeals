@@ -55,19 +55,20 @@ const genericSchema = mongoose.Schema({
             type: String,
         },
         report_date: {
-            type: Date,
+            type: String,
         },
     },
     ad_status: {
         type: String,
         enum: ["Selling", "Archive", "Sold", "Deleted", "Draft",],
+        default:"Selling"
     },
     ad_type: {
         type: String,
         default: "free",
     },
     ad_expire_date: {
-        type: Date,
+        type: String,
     },
     ad_promoted: {
         type: String,
@@ -78,10 +79,10 @@ const genericSchema = mongoose.Schema({
         default: "",
     },
     ad_promoted_date: {
-        type: Date,
+        type: String,
     },
     ad_promoted_expire_date: {
-        type: Date,
+        type: String,
     },
     is_negotiable: {
         type: Boolean,

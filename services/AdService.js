@@ -15,21 +15,29 @@ const Book = require("../models/Ads/bookSchema");
 const Generic = require("../models/Ads/genericSchema")
 const { isObjectIdOrHexString } = require("mongoose");
 const ObjectId = require('mongodb').ObjectId;
+const { getFormattedDate } = require('../utils/string')
 
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+function formateDate(ISODate) {
+  console.log("Inside function" + ISODate)
+  let date = new Date(ISODate);
+  if (date === undefined || date === null) return "";
+  return date.toISOString().substring(0, 10);
+}
+
 module.exports = class AdService {
-  // DB Services to Create a Ad
   static async createAd(bodyData, userId) {
     console.log("Inside Ad Service");
-    // console.log(req.body)
 
-    //Create Pet Ad
-    // if (bodyData.category == "Pet") {
-    console.log("inside ad")
+    let reported_by = {
+      user_id: bodyData.reported_by.user_id,
+      reason: bodyData.reported_by.reason,
+      report_date: formateDate(bodyData.reported_by.report_date)
+    }
     let adDoc = await Generic.create({
       category: bodyData.category,
       sub_category: bodyData.sub_category,
@@ -42,19 +50,36 @@ module.exports = class AdService {
       ad_present_location: bodyData.ad_present_location,
       ad_posted_location: bodyData.ad_posted_location,
       reported_ad_count: bodyData.reported_ad_count,
-      reported_by: bodyData.reported_by,
-      ad_expire_date: bodyData.ad_expire_date,
+      reported_by: reported_by,
+      ad_expire_date: formateDate(bodyData.ad_expire_date),
       ad_promoted: bodyData.ad_promoted,
-      ad_promoted_date: bodyData.ad_promoted_date,
-      ad_promoted_expire_date: bodyData.ad_promoted_expire_date,
+      ad_promoted_date: formateDate(bodyData.ad_promoted_date),
+      ad_promoted_expire_date: formateDate(bodyData.ad_promoted_expire_date),
       ad_status: bodyData.ad_status,
       ad_type: bodyData.ad_type,
       is_negotiable: bodyData.is_negotiable,
       is_ad_posted: bodyData.is_ad_posted,
     });
-    // console.log(adDoc)
-    return adDoc;
-    // }
+
+    //Update my_ads field in Profile Model(Store created ad ID in Profile Model)
+    const updateUser = await Profile.findByIdAndUpdate(userId, {
+      $push: {
+        my_ads: {
+          _id: adDoc._id,
+        },
+      },
+    });
+
+    //Create new Ad in GlobalSearch Model 
+    const createGlobalSearch = await GlobalSearch.create({
+      ad_id: adDoc._id,
+      category: bodyData.category,
+      sub_category: bodyData.sub_category,
+      title: bodyData.title,
+    });
+
+
+    return adDoc["_doc"];
 
 
     // if (bodyData.category == "Pet") {
@@ -586,147 +611,134 @@ module.exports = class AdService {
   }
 
   static async getMyAds(userId) {
-    console.log(userId)
     const user = await Profile.findOne({
-      _id: "62cd1f1bf05785a63e6ecfa3"
+      _id: userId
     })
-    // console.log(user);
     console.log(user.my_ads);
     if (user) {
-      const myAds = await Ads.find({
-        _id: ["62bd5fc86bac1c0ccd2ed887", "62bd5f98de40679df0c71f66", "62bd5efdf53b77391368133e", "62bd5d1fe53e829fb6b6673a", "62bd5cbd34fb2ca9e83dcab7", "62cd23a9a6194e2c7e041949", "62cd2685744b3487593c0ef7", "62ce4a148f00523bbf002c47", "62ce4a82e2d2c7e512366d6c", "62ce4a9d027a1438b196e141"]
+      const myAdsDocs = await Generic.aggregate([
+        {
+          $match: { _id: { $in: user.my_ads } }
+        },
+        {
+          $facet: {
+            "Selling": [{ $match: { ad_status: "Selling" } }],
+            "Archived": [{ $match: { ad_status: "Archive" } }],
+            "Drafts": [{ $match: { ad_status: "Draft" } }]
+          }
+        },
+      ])
+      return myAdsDocs;
+    }
+    else{
+      res.send({
+        statusCode:400,
+        message:"User Not Found"
       })
-
-      // console.log(myAds)
-      // const myAdsDocs = await Ads.aggregate([
-      //   // {
-      //   //   $match: { _id: { $in: user.my_ads } }
-      //   // },
-      //   {
-      //     $match: {
-      //       _id: {
-      //         $in: [
-      //           ObjectId("62cd23a9a6194e2c7e041949"),
-      //           ObjectId("62cd2685744b3487593c0ef7"),
-      //           ObjectId("62ce4a148f00523bbf002c47"),
-      //           ObjectId("62ce4a82e2d2c7e512366d6c"),
-      //           ObjectId("62ce4a9d027a1438b196e141")
-      //         ]
-      //       }
-      //     }
-      //   },
-      // {
-      //   $facet: {
-      //     "Selling": [{ $match: { ad_status: "Selling" } }],
-      //     "Archived": [{ $match: { ad_status: "Archive" } }],
-      //     "Drafts": [{ $match: { ad_status: "Draft" } }]
-      //   }
-      // },
-      // ])
-      // console.log(myAdsDocs)
-      return myAds;
     }
   }
 
   static async changeAdStatus(bodyData, userId, ad_id) {
-    console.log(ad_id)
-
-    const user = await Profile.findOne({
+    const userExist = await Profile.findOne({
       _id: userId
     })
-    if (user) {
-
-      if (bodyData.status == "ARCHIVED") {
-        const findAd = await Ads.find({
-          _id: "62b59d330f1f77fabbb9d258"
-        });
-        console.log("Ad Found" + findAd)
-        const adDoc = await Book.findByIdAndUpdate(
-          { _id: "62b59d330f1f77fabbb9d258" },
-          { $set: { ad_status: "Delete" } }
-        )
-        console.log("AD Status Changed" + adDoc)
-        // return adDoc;
-
+    if (userExist) {
+      const findAd = await Generic.findOne({
+        _id: ad_id
+      });
+      if (findAd) {
+        if (bodyData.status == "ARCHIVED") {
+          const adDoc = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $set: { ad_status: "Archive" } }
+          )
+          console.log("AD Status Changed" + adDoc);
+          return adDoc;
+        } else if (bodyData.status == "SOLD") {
+          const adDoc = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $set: { ad_status: "Sold" } }
+          )
+          console.log("AD Status Changed" + adDoc);
+          return adDoc;
+        }
+        else if (bodyData.status == "DELETE") {
+          const adDoc = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $set: { ad_status: "Deleted" } }
+          )
+          console.log("AD Status Changed" + adDoc);
+          return adDoc;
+        }
+        else if (bodyData.status == "PREMEIUM") {
+          const adDoc = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $set: { ad_status: "PREMEIUM" } }
+          )
+          console.log("AD Status Changed" + adDoc);
+          return adDoc;
+        }
       }
-      else if (bodyData.status == "SOLD") {
-        const findAd = await Ads.find({
-          _id: "62b59d330f1f77fabbb9d258"
-        });
-        console.log("Ad Found" + findAd)
-        const adDoc = await Book.findByIdAndUpdate(
-          { _id: "62b59d330f1f77fabbb9d258" },
-          { $set: { ad_status: "Delete" } }
-        )
-        console.log("AD Status Changed" + adDoc)
-        // return adDoc;
-      }
-      else if (bodyData.status == "DELETE") {
-        const findAd = await Ads.find({
-          _id: "62b59d330f1f77fabbb9d258"
-        });
-        console.log("Ad Found" + findAd)
-        const adDoc = await Book.findByIdAndUpdate(
-          { _id: "62b59d330f1f77fabbb9d258" },
-          { $set: { ad_status: "Delete" } }
-        )
-        console.log("AD Status Changed" + adDoc)
-        // return adDoc;
-      }
-      else if (bodyData.status == "PREMEIUM") {
-        const findAd = await Ads.find({
-          _id: "62b59d330f1f77fabbb9d258"
-        });
-        console.log("Ad Found" + findAd)
-        const adDoc = await Book.findByIdAndUpdate(
-          { _id: "62b59d330f1f77fabbb9d258" },
-          { $set: { ad_status: "Delete" } }
-        )
-        console.log("AD Status Changed" + adDoc)
-        // return adDoc;
+      else {
+        res.send({
+          statusCode: 404,
+          message: "Ad Not Found!!"
+        })
       }
     }
     else {
-
+      res.send({
+        statusCode: 404,
+        message: "User Not Found!!"
+      })
     }
   }
 
   static async favouriteAds(bodyData, userId, ad_id) {
     console.log("I'm inside Favourite Ads!!")
+    console.log(bodyData, userId, ad_id)
 
     if (bodyData.value == "Favourite") {
-      const favAds = await Ads.findOneAndUpdate(
-        { _id: "62b59d330f1f77fabbb9d258" },
-        { $set: { is_ad_favourite: "true" } },
-        { new: true }
-      )
-      // const Ad = Ads.findOne({
-      //   _id: ""
-      // })
-      // if (Ad) {
-      const makeFavAd = await Profile.findOneAndUpdate(
-        { _id: "62c2ae90f5aae83ced255735" },
-        { $push: { favourite_ads: { _id: "62b59d3b0f1f77fabbb9d25b" } } },
-        { new: true }
-      )
-      console.log(makeFavAd)
-      return makeFavAd;
-      // }
+      const findAd = await Generic.findOne({
+        _id: ad_id
+      })
+      if (findAd) {
+        const makeFavAd = await Profile.findOneAndUpdate(
+          { _id: userId },
+          { $push: { favourite_ads: { _id: ad_id } } },
+          { new: true }
+        )
+        console.log(makeFavAd)
+        return makeFavAd;
+      }
     }
     else if (bodyData.value == "Unfavourite") {
-      console.log(bodyData.value)
-      const UnfavAds = await Ads.findOneAndUpdate(
-        { _id: "62b59d330f1f77fabbb9d258" },
-        { $set: { is_ad_favourite: "false" } },
-        { new: true }
-      )
       const makeUnFavAd = await Profile.findOneAndUpdate(
-        { _id: "62c2ae90f5aae83ced255735" },
-        { $pull: { favourite_ads: ObjectId("62b59d330f1f77fabbb9d258") } },
+        { _id: userId },
+        { $pull: { favourite_ads: ad_id } },
         { new: true }
       );
       return makeUnFavAd;
     }
   }
 
+  static async getFavouriteAds(userId) {
+    const userExist = await Profile.findOne({
+      _id: userId
+    })
+    if (userExist) {
+      const getMyFavAds = await Generic.aggregate([
+        {
+          $match: { _id: { $in: userExist.favourite_ads } }
+        },
+      ])
+      return getMyFavAds
+    }
+    else{
+      res.send({
+        statusCode:400,
+        message:"No User Found"
+      })
+    }
+  }
 };

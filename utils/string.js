@@ -36,7 +36,15 @@ async function getSelectionData(profileData) {
   return seeProfileData;
 }
 
+async function getFormattedDate(ISODate){
+    console.log("Inside function" +ISODate)
+    let date = new Date(ISODate);
+    if (date === undefined || date === null) return "";
+    return date.toISOString().substring(0, 10);
+}
+
 module.exports = {
   capitalizeFirstLetter,
   getSelectionData,
+  getFormattedDate
 };

@@ -9,10 +9,9 @@ const Validator = require("../middlewares/validatorMiddleware");
 router.post(
   "/api/v1/createProfile",
   verifyToken,
-  upload.single("profile_url"),
   ProfileCotroller.apiCreateProfileWithPhone
 );
 
-router.post("/api/v1/getProfile", ProfileCotroller.apiGetProfile);
+router.post("/api/v1/getProfile",verifyToken, ProfileCotroller.apiGetProfile);
 
 module.exports = router;

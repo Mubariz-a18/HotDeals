@@ -62,6 +62,7 @@ module.exports = class ProfileService {
 
         return profileDoc1;
       } else {
+        console.log("inside else")
         return userProfile;
       }
     }
@@ -72,10 +73,12 @@ module.exports = class ProfileService {
     const profileDoc = await Profile.findOne({
       _id: user_ID,
     });
+    console.log(profileDoc)
     if (profileDoc) {
       console.log("I'm inside profile Service")
 
       const data = await getSelectionData(profileDoc["_doc"]);
+      console.log(data)
       return data;
       // const profileData = await Profile.aggregate([
       //   {
