@@ -4,7 +4,7 @@ const HelpService = require("../../services/HelpService");
 module.exports = class HelpController {
   static async apiCreateHelp(req, res, next) {
     try {
-      const helpData = await HelpService.createHelp(req.body, req.user_ID);
+      const helpData = await HelpService.createHelp(req.body);
       console.log(helpData);
       if (helpData) {
         res.status(200).send({

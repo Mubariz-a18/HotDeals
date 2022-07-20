@@ -1,6 +1,7 @@
 const userProfileValidator = require('./userProfile.validator');
 const adsValidator = require('./Ads.Validator');
-const SchemaValidator = require('./Schema.Validator')
+const SchemaValidator = require('./Schema.Validator');
+const { Schema } = require('mongoose');
 module.exports = {
     updatePofile:userProfileValidator.userSchema,
     CreateAdsValidator:adsValidator.commonFieldSchema,
@@ -11,5 +12,6 @@ module.exports = {
     OTPValidator:SchemaValidator.otpSchema,
     getOTP:SchemaValidator.getOTPSchema,
     verifyOTP:SchemaValidator.verifyOTPSchema,
+    genericSchemaValidator:SchemaValidator.genericSchema
     
 }

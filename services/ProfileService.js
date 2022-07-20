@@ -16,55 +16,92 @@ function capitalizeFirstLetter(string) {
 module.exports = class ProfileService {
   // DB Services to Create a Profile
   static async createProfile(bodyData, userID, phoneNuber) {
+
     //checking if profile already exists
-    console.log("inside profile service");
+    console.log("inside profile service" + bodyData);
     let profileDoc = await User.findOne({
       userNumber: phoneNuber,
     });
+
     if (profileDoc) {
+
       const userProfile = await Profile.findOne({
-        userNumber: phoneNuber,
+        _id: userID,
       });
       if (!userProfile) {
-
+        let email = bodyData.email;
+        let user_type = bodyData.user_type;
+        let city = bodyData.city;
+        let about = bodyData.about;
+        let contactNumber = {
+          text: profileDoc.userNumber
+        }
         const profileDoc1 = await Profile.create({
           _id: userID,
           name: bodyData.name,
-          userNumber: phoneNuber,
+          userNumber: contactNumber,
           country_code: bodyData.country_code,
-          email: bodyData.email,
+          email: email,
           date_of_birth: bodyData.date_of_birth,
           age: bodyData.age,
           gender: bodyData.gender,
-          user_type: bodyData.user_type,
+          user_type: user_type,
           language_preference: bodyData.language_preference,
-          city: bodyData.city,
-          about: bodyData.about,
+          city: city,
+          about: about,
           free_credit: bodyData.free_credit,
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
         });
 
+        console.log(profileDoc1)
+
         const createDefaultRating = await Rating.create({
-          _id:profileDoc1._id,
-          
-        })
+          _id: profileDoc1._id,
+        });
 
         return profileDoc1;
-
-      }
-      else{
+      } else {
+        console.log("inside else")
         return userProfile;
       }
     }
   }
 
   //DB Service to Get Profile By Phone Number
-  static async getProfile(bodyData) {
-    console.log(bodyData);
-    const { userNumber, contactNumber, name } = bodyData;
-    console.log(contactNumber);
+  static async getProfile(user_ID) {
+    const profileDoc = await Profile.findOne({
+      _id: user_ID,
+    });
+    console.log(profileDoc)
+    if (profileDoc) {
+      console.log("I'm inside profile Service")
 
+      const data = await getSelectionData(profileDoc["_doc"]);
+      console.log(data)
+      return data;
+      // const profileData = await Profile.aggregate([
+      //   {
+      //     $match: { _id: mongoose.Types.ObjectId(user_ID) },
+      //   },
+      //   {
+      //     $project: {
+      //       _id: 0,
+      //       name: 1,
+      //       "userNumber.text":1,
+      //       email:1,
+      //       gender: 1,
+      //       age: 1,
+      //       about:1,
+      //       user_type: 1,
+      //       city:1
+      //     }
+      //   }
+      // ]);
+
+      // return profileData;
+    } else {
+    }
 
     // let profileDoc = await Profile.aggregate([
     //   {
@@ -97,7 +134,7 @@ module.exports = class ProfileService {
     //     },
     //   },
     // ]);
-    console.log("getting profile", profileDoc);
+    // console.log("getting profile", profileDoc);
 
     // if (profileDoc) {
     //   if (name === "seeProfile") {

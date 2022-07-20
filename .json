@@ -1,5 +1,4 @@
 [
-
   {
     "name": "Chris",
     "phone": 91946244589,
@@ -20,13 +19,28 @@
     "category": "Pet",
     "sub_category": "Dog",
     "animal": "Dog",
-    "breed": "Pitbul",
+    "breed": "Labra",
     "condition": "Nothing",
     "description": "dummy description",
-    "special_mention": ["dummy mention"],
-    "tile": "dummy tile",
-    "ad_present_location": ["Hyderaad"],
-    "ad_posted_location": ["Pet"],
+    "special_mention": ["dummy mention", "Black colour", "Indian breed"],
+    "title": ["dummy tile"],
+    "ad_present_location": [
+      {
+        "lat": 50.3293714,
+        "lng": 3.9389939
+      }
+    ],
+    "ad_posted_location": [
+      {
+        "lat": 50.3293714,
+        "lng": 3.9389939,
+        "is_premium": "true"
+      },
+      {
+        "lat": 50.3293284,
+        "lng": 6.9389634
+      }
+    ],
     "reported_ad_count": 12,
     "reported_by": {
       "user_id": "123456",
@@ -34,8 +48,15 @@
       "report_date": "2020-07-10 15:00:00.000"
     },
     "ad_expire_date": "2020-07-10 15:00:00.000",
-    "ad_promoted": "24/2022",
-    "ad_promoted_date": "2020-07-10 15:00:00.000"
+    "ad_promoted": "yes",
+    "ad_promoted_date": "2020-07-10 15:00:00.000",
+    "ad_promoted_expire_date": "2020-07-10 15:00:00.000",
+    "is_negotiable": "true",
+    "is_ad_posted": "true",
+    "loc": {
+      "type": "Point",
+      "coordinates": [79.419182, 13.628756]
+    }
   },
   {
     "category": "Vehicle",

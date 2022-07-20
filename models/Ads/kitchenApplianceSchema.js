@@ -34,7 +34,7 @@ const kitchenApplianceSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [
+  title: [
     {
       type: String,
     },
@@ -67,7 +67,7 @@ const kitchenApplianceSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -87,7 +87,8 @@ const kitchenApplianceSchema = mongoose.Schema({
   ad_promoted_date: {
     type: String,
   },
-});
+},
+  { timestamps: true });
 
 
 const KitchenAppliance = mongoose.model(

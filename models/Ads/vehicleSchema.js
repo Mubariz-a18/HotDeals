@@ -44,13 +44,13 @@ const vehicleSchema = mongoose.Schema({
   vehicle_present_at: {
     type: String
   },
-  special_mention:[ {
+  special_mention: [{
     type: String
   }],
   description: {
     type: String
   },
-  tile: [{
+  title: [{
     type: String
   }],
   ad_present_location: {
@@ -83,7 +83,7 @@ const vehicleSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -103,7 +103,8 @@ const vehicleSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
-});
+},
+  { timestamps: true });
 
 const Vehicle = mongoose.model("Vehicle", vehicleSchema, "ads");
 

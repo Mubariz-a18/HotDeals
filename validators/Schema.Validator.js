@@ -50,15 +50,26 @@ let helpCenterSchema = Joi.object()
   })
   .options({ allowUnknown: true });
 
+  //Complain Schema Validation
+let phone = Joi.object().keys({
+  text: Joi.string().length(10).required(),
+});
+
 //OTP Schema Validation
 const getOTPSchema = Joi.object({
-  phoneNumber: Joi.string().min(7).required(),
+  phoneNumber: phone
 }).options({ allowUnknown: true });
 
 const verifyOTPSchema = Joi.object({
-  phoneNumber: Joi.string().min(7).required(),
+  phoneNumber: phone,
   otp: Joi.string().length(6).required(),
   fcmToken: Joi.string().allow(null, ""),
+}).options({ allowUnknown: true });
+
+const genericSchema = Joi.object({
+  category:Joi.string().required(),
+  sub_category:Joi.string().required(),
+  description: Joi.string().required(),
 }).options({ allowUnknown: true });
 
 module.exports = {
@@ -68,4 +79,5 @@ module.exports = {
   helpCenterSchema,
   getOTPSchema,
   verifyOTPSchema,
+  genericSchema
 };

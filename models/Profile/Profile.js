@@ -21,8 +21,14 @@ const profileSchema = mongoose.Schema({
     type: String,
   },
   userNumber: {
-    type: String,
-    unique: true,
+    text: {
+      type: String,
+      default: "",
+    },
+    private: {
+      type: Boolean,
+      default: true,
+    },
   },
   country_code: {
     type: String,
@@ -31,7 +37,14 @@ const profileSchema = mongoose.Schema({
     type: Date,
   },
   email: {
-    type: String,
+    text: {
+      type: String,
+      default: "",
+    },
+    private: {
+      type: Boolean,
+      default: true,
+    },
   },
   age: {
     type: Number,
@@ -41,18 +54,38 @@ const profileSchema = mongoose.Schema({
     enum: ["Male", "Female", "Others"],
   },
   user_type: {
-    type: String,
-    enum: ["Agent", "Owner"],
-    default: "Owner",
+    text: {
+      type: String,
+      enum: ["Agent", "Owner"],
+      default: "Owner",
+    },
+    private: {
+      type: Boolean,
+      default: true,
+    },
   },
   language_preference: {
     type: String,
   },
   city: {
-    type: String,
+    text: {
+      type: String,
+      default: "",
+    },
+    private: {
+      type: Boolean,
+      default: true,
+    },
   },
   about: {
-    type: String,
+    text: {
+      type: String,
+      default: "",
+    },
+    private: {
+      type: Boolean,
+      default: true,
+    },
   },
   is_phone_verified: {
     type: Boolean,

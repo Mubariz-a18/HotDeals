@@ -1,4 +1,4 @@
-const { default: axios } = require("axios");
+const axios = require('axios').default;
 const {
   EXOTEL_API_KEY,
   EXOTEL_API_TOKEN,
@@ -17,6 +17,7 @@ module.exports = class SMSController {
    * @param {string} phoneNumber - PhoneNumber to sent the OTP Code.
    */
   static async sendSMSWithExotel(otp, phoneNumber) {
+    console.log(otp,phoneNumber.text);
     const url =
       "https://" +
       EXOTEL_API_KEY +
@@ -25,14 +26,15 @@ module.exports = class SMSController {
       "@api.exotel.in/v1/Accounts/" +
       EXOTEL_ACCOUNT_SID +
       "/Sms/send.json";
+      console.log(url)
     try {
       const exoResponse = await axios.post(
         url,
         formUrlEncoded({
-          From: "EXOSMS",
-          To: phoneNumber,
-          Body: `OTP for Cyberlink is  ${otp} ${otpHash}`,
-          Priority: "HIGH",
+          From: "DEEPNU",
+          To: phoneNumber.text,
+          Body: `Dear user, your OTP for DeepNucleus is ${otp}.`
+          // Priority: "HIGH",
         }),
         {
           withCredentials: true,

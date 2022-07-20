@@ -77,7 +77,7 @@ const houseSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  tile: [
+  title: [
     {
       type: String,
     },
@@ -112,7 +112,7 @@ const houseSchema = mongoose.Schema({
   },
   ad_status: {
     type: String,
-    default: "active",
+    enum: ["Selling", "Archive", "Sold", "Deleted","Draft",],
   },
   ad_type: {
     type: String,
@@ -132,7 +132,8 @@ const houseSchema = mongoose.Schema({
   ad_promoted_date: {
     type: Date,
   },
-});
+},
+  { timestamps: true });
 
 const House = mongoose.model("House", houseSchema, "ads");
 

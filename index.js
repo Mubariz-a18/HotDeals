@@ -2,29 +2,27 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-var multer = require("multer");
-// var upload = multer();
-const app = express();
 const mongoose = require("mongoose");
 const Sentry = require("@sentry/node");
-
 const Tracing = require("@sentry/tracing");
-
 const http = require("http");
+const app = express();
 const server = http.createServer(app);
+// const io = require('socket.io')(server);
 
-// const httpServer = require("http").createServer();
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "http://localhost:8080",
-  },
-});
+const io = require("socket.io")(server
+  , {
+    cors: {
+      origin: "http://localhost:8080",
+    },
+  }
+);
 
 
 //Router Imports
 const router = require("./routes/index");
 const authRouter = require("./routes/auth.routes");
-const DashBoardRouter = require('./routes/dashboard.routes')
+const DashBoardRouter = require('./routes/home.routes')
 const profileRouter = require("./routes/profile.routes");
 const AdRouter = require("./routes/ad.routes");
 const AlertRouter = require("./routes/alert.routes");
@@ -34,16 +32,15 @@ const CreditRouter = require("./routes/credit.routes");
 const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
+// const ChatRouter = require('./routes/chat.routes')
+
+//Middlewares
+const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
 const connectDB = require("./db/connectDatabase");
 const { application } = require("express");
 
-app.use(express.static(__dirname));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(upload.array());
-app.use(cors());
-
+const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 connectDB();
 
@@ -70,9 +67,15 @@ app.use(Sentry.Handlers.requestHandler());
 // TracingHandler creates a trace for every incoming request
 app.use(Sentry.Handlers.tracingHandler());
 
+//Middlewares
+app.use(express.static(__dirname));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
+app.use(errorHandlerMiddleware)
 
+//Routers
 app.use(authRouter);
-
 app.use(profileRouter);
 app.use(AdRouter);
 app.use(AlertRouter);
@@ -82,7 +85,8 @@ app.use(CreditRouter);
 app.use(RatingRouter);
 app.use(followUnfollowRouter);
 app.use(DashBoardRouter);
-app.use(GlobalSearchRouter)
+app.use(GlobalSearchRouter);
+// app.use(ChatRouter)
 
 // app.use("/", router);
 
@@ -90,20 +94,13 @@ app.use(GlobalSearchRouter)
 //   res.send('successfully reached')
 // })
 
+
 io.use(async (socket, next) => {
-  const username = socket.handshake.auth.username;
+  console.log("Reached to server")
+  const username = await socket.handshake.auth.username;
 
   console.log("here" + username, socket.id);
 
-  const usr = await User.findOne({
-    socketID: socket.id,
-  });
-  if (!usr) {
-    const createUser = await new User({
-      name: username,
-      socketID: socket.id,
-    }).save();
-  }
   if (!username) {
     return next(new Error("invalid username"));
   }
@@ -112,6 +109,12 @@ io.use(async (socket, next) => {
 });
 
 io.on("connection", (socket) => {
+  console.log("I'm herer" +socket.username)
+  console.log('socket is ready for connection');
+  socket.on("connect", () => {
+    console.log("user connected!!")
+    socket.broadcast.emit("user disconnected", socket.id);
+  });
   // fetch existing users
   const users = [];
   for (let [id, socket] of io.of("/").sockets) {
@@ -132,18 +135,7 @@ io.on("connection", (socket) => {
 
   // forward the private message to the right recipient
   socket.on("private message", async ({ content, to }) => {
-    const too = await User.findOne({
-      socketID: to,
-    });
-    const cnvr = await new Conversation({
-      to: too.name,
-      from: socket.username,
-      message: content,
-      senderID: socket.id,
-      receiverID: to,
-    }).save();
 
-    console.log(cnvr);
     socket.to(to).emit("private message", {
       content,
       from: socket.id,
@@ -156,7 +148,39 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+
+
+
+// //FLUTTER CHAT CODE
+// io.on('connection', socket => {
+//   console.log(socket.id)
+//   console.log('Connection to client established');
+  
+//   //Get the chatID of the user and join in a room of the same chatID
+//   // chatID = socket.handshake.query.chatID
+//   // socket.join(chatID)
+
+//   //Leave the room if the user closes the socket
+//   socket.on('disconnect', () => {
+//     console.log("user disconnected")
+//       // socket.leave(chatID)
+//   })
+
+//   // //Send message to only a particular user
+//   // socket.on('send_message', message => {
+//   //     receiverChatID = message.receiverChatID
+//   //     senderChatID = message.senderChatID
+//   //     content = message.content
+
+//   //     //Send message to only that particular room
+//   //     socket.in(receiverChatID).emit('receive_message', {
+//   //         'content': content,
+//   //         'senderChatID': senderChatID,
+//   //         'receiverChatID':receiverChatID,
+//   //     })
+//   // })
+// });
+
 
 server.listen(PORT, () => {
   console.log(`server listening at http://localhost:${PORT}`);

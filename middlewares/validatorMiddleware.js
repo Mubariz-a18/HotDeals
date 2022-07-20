@@ -15,7 +15,11 @@ module.exports = function (validator) {
       req.body = validated;
       next();
     } catch (err) {
-      console.log(err);
+      console.log(err.message)
+      res.status(400).send({
+        statusCode: 400,
+        message: err.message
+      })
       //* Pass err to next
       //! If validation error occurs call next with HTTP 422. Otherwise HTTP 500
       if (err.isJoi)
