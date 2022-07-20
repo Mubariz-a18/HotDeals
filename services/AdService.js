@@ -622,18 +622,66 @@ module.exports = class AdService {
         },
         {
           $facet: {
-            "Selling": [{ $match: { ad_status: "Selling" } }],
-            "Archived": [{ $match: { ad_status: "Archive" } }],
-            "Drafts": [{ $match: { ad_status: "Draft" } }]
+            "Selling": [
+              { $match: { ad_status: "Selling" } },
+              {
+                $project: {
+                  _id: 1,
+                  category: 1,
+                  sub_category: 1,
+                  field: 1,
+                  description: 1,
+                  special_mention: 1,
+                  title: 1,
+                  saved: 1,
+                  views: 1,
+                  createdAt: 1,
+                }
+              }
+            ],
+            "Archived": [
+              { $match: { ad_status: "Archive" } },
+              {
+                $project: {
+                  _id: 1,
+                  category: 1,
+                  sub_category: 1,
+                  field: 1,
+                  description: 1,
+                  special_mention: 1,
+                  title: 1,
+                  saved: 1,
+                  views: 1,
+                  createdAt: 1,
+                }
+              }
+            ],
+            "Drafts": [
+              { $match: { ad_status: "Draft" } },
+              {
+                $project: {
+                  _id: 1,
+                  category: 1,
+                  sub_category: 1,
+                  field: 1,
+                  description: 1,
+                  special_mention: 1,
+                  title: 1,
+                  saved: 1,
+                  views: 1,
+                  createdAt: 1,
+                }
+              }
+            ]
           }
         },
       ])
       return myAdsDocs;
     }
-    else{
+    else {
       res.send({
-        statusCode:400,
-        message:"User Not Found"
+        statusCode: 400,
+        message: "User Not Found"
       })
     }
   }
@@ -708,7 +756,10 @@ module.exports = class AdService {
           { $push: { favourite_ads: { _id: ad_id } } },
           { new: true }
         )
-        console.log(makeFavAd)
+        const updateAd = await Generic.findByIdAndUpdate(
+          { _id: ad_id },
+          { $inc: { saved: 1 } }
+        )
         return makeFavAd;
       }
     }
@@ -718,6 +769,10 @@ module.exports = class AdService {
         { $pull: { favourite_ads: ad_id } },
         { new: true }
       );
+      const updateAd = await Generic.findByIdAndUpdate(
+        { _id: ad_id },
+        { $inc: { saved: -1 } }
+      )
       return makeUnFavAd;
     }
   }
@@ -734,11 +789,71 @@ module.exports = class AdService {
       ])
       return getMyFavAds
     }
-    else{
+    else {
       res.send({
-        statusCode:400,
-        message:"No User Found"
+        statusCode: 400,
+        message: "No User Found"
       })
+    }
+  }
+
+  static async deleteAds(bodyData, userId, ad_id) {
+    const userExist = await Profile.findOne({
+      _id: userId
+    });
+    if (userExist) {
+      const findAd = await Generic.findOne({
+        _id: ad_id
+      });
+      if (findAd) {
+        if (bodyData.AD_SECTION == 'FAVOURITE') {
+          const remove_fav_ad = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { favourite_ads: ad_id } },
+            { new: true }
+          );
+          return remove_fav_ad;
+        }
+        else if (bodyData.AD_SECTION == 'MY_ADS') {
+          const remove_my_ad = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { my_ads: ad_id } },
+            { new: true }
+          );
+          return remove_my_ad;
+        }
+      }
+      else {
+        res.send({
+          message: "Ad Not Found",
+          statusCode: 404
+        })
+      }
+    }
+    else {
+      res.send({
+        message: "User Not Found",
+        statusCode: 404,
+      })
+    }
+  }
+
+  static async getAdDetails(bodyData, userId, ad_id) {
+    const userExist = await Profile.findOne({
+      _id: userId
+    });
+    if (userExist) {
+      const findAd = await Generic.aggregate([
+        {
+          $match: { _id: ObjectId(ad_id) }
+        },
+      ])
+      const updateAd = await Generic.findByIdAndUpdate(
+        { _id: ad_id },
+        { $inc: { views: 1 } },
+        { new: true }
+      )
+      return findAd;
     }
   }
 };

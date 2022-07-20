@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "supervisor index.js"
+    "start": "nodemon index.js"
   },
   "author": "Damien Arrachequesne <damien.arrachequesne@gmail.com>",
   "license": "MIT",
@@ -30,6 +30,6 @@
     "unirest": "^0.6.0"
   },
   "devDependencies": {
-    "supervisor": "^0.12.0"
+    "nodemon": "^2.0.19"
   }
 }

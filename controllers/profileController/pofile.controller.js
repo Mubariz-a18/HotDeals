@@ -12,7 +12,11 @@ module.exports = class ProfileController {
         req.user_ID,
         req.user_phoneNumber
       );
-      res.status(200).json(profileDocument);
+      res.send({
+        message:"Success",
+        statusCode:200,
+        Profile_Data:profileDocument
+      })
     } catch (error) {
       res
         .status(400)

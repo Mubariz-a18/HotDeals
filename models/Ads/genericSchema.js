@@ -93,6 +93,12 @@ const genericSchema = mongoose.Schema({
     is_ad_favourite:{
         type:Boolean,
         default: false
+    },
+    saved:{
+        type:Number
+    },
+    views:{
+        type:Number
     }
 },
     { timestamps: true });
