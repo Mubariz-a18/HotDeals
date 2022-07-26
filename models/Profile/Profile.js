@@ -17,6 +17,9 @@ const profileSchema = mongoose.Schema({
   //   type: String,
   //   required: true,
   // },
+  _id:{
+    type:String
+  },
   name: {
     type: String,
   },
@@ -173,7 +176,14 @@ const profileSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-});
+  created_date:{
+    type:String
+  },
+  updated_date:{
+    type:String
+  }
+},
+);
 
 const Profile = mongoose.model("profile", profileSchema);
 module.exports = Profile;

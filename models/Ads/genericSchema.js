@@ -60,8 +60,8 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft",],
-        default:"Selling"
+        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft","Expired"],
+        default: "Selling"
     },
     ad_type: {
         type: String,
@@ -90,19 +90,34 @@ const genericSchema = mongoose.Schema({
     is_ad_posted: {
         type: Boolean
     },
-    is_ad_favourite:{
-        type:Boolean,
+    is_ad_favourite: {
+        type: Boolean,
         default: false
     },
-    saved:{
-        type:Number
+    is_reposted:{
+        type: Boolean,
+        default: false
     },
-    views:{
-        type:Number
-    }
-},
-    { timestamps: true });
+    loc: {
+        type: { type: String },
+        coordinates: [],
+    },
+    saved: {
+        type: Number
+    },
+    views: {
+        type: Number
+    },
+    created_at: {
+        type: String,
+    },
+    updated_at: {
+        type: String
+    },
+});
 
+genericSchema.index({ category: "text", sub_category: "text", loc: "2dsphere" });
+genericSchema.index({ created_at: 1 }, { expireAfterSeconds: 30, partialFilterExpression: { ad_status: 'EXPIRED' } })
 const Generic = mongoose.model("Generic", genericSchema,);
 
 module.exports = Generic;

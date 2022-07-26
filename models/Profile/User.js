@@ -20,6 +20,12 @@ const userSchema = Schema({
     type: String,
     default: "",
   },
+  created_at:{
+    type:String
+  },
+  updated_at:{
+    type:String
+  }
 });
 
 module.exports = mongoose.model("user", userSchema);

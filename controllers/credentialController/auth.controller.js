@@ -115,6 +115,7 @@ module.exports = class AuthController {
           message: "success",
           statusCode:200,
           token,
+          existingUser: false,
         });
       }
       return res.status(400).json({

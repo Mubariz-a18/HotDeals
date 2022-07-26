@@ -13,5 +13,6 @@ router.post(
 );
 
 router.post("/api/v1/getProfile",verifyToken, ProfileCotroller.apiGetProfile);
+router.post('/api/v1/updateProfile',verifyToken,ProfileCotroller.apiUpdateProfile)
 
 module.exports = router;

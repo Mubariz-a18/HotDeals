@@ -16,6 +16,8 @@ const Generic = require("../models/Ads/genericSchema")
 const { isObjectIdOrHexString } = require("mongoose");
 const ObjectId = require('mongodb').ObjectId;
 const { getFormattedDate } = require('../utils/string')
+const schedule = require('node-schedule');
+var cron = require('node-cron');
 
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
@@ -29,59 +31,111 @@ function formateDate(ISODate) {
   return date.toISOString().substring(0, 10);
 }
 
+var moment = require('moment');
+moment().format()
+var currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
+var DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
+console.log(DateAfter30Days)
+
+var now = moment().format('YYYY-MM-DD HH:mm:ss');;
+if (now > DateAfter30Days) {
+  console.log("PAST")
+} else {
+  console.log("FUTURE")
+}
+
+
+const job = schedule.scheduleJob('*/10 * * * * *', async () => {
+  const Ads = await Generic.find();
+  console.log(Ads.length)
+  Ads.forEach(ad => {
+    console.log('Ad is Expired!' + ad._id);
+
+    console.log('Running a task every midnight (1:00 am)');
+    Generic.findOneAndUpdate({
+      _id: ad._id, ad_expire_date: {
+
+        $lt: now,
+
+      }
+    }, { $set: { ad_status: 'Expired' } },
+
+      { returnNewDocument: true }, (err, data) => {
+        if (err) {
+          return errorHandler(dbError, res);
+        }
+      })
+  });
+});
+
+
 module.exports = class AdService {
   static async createAd(bodyData, userId) {
-    console.log("Inside Ad Service");
+    console.log("Inside Ad Service", bodyData.loc);
 
-    let reported_by = {
-      user_id: bodyData.reported_by.user_id,
-      reason: bodyData.reported_by.reason,
-      report_date: formateDate(bodyData.reported_by.report_date)
+    if (bodyData.ad_id) {
+      const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
+        {
+          $set: {
+            ad_status: 'Selling',
+            ad_expire_date: DateAfter30Days,
+            created_at: currentDate,
+            updated_at: currentDate,
+          }
+        })
     }
-    let adDoc = await Generic.create({
-      category: bodyData.category,
-      sub_category: bodyData.sub_category,
-      field: bodyData.field,
-      description: bodyData.description,
-      special_mention: bodyData.special_mention,
-      title: bodyData.title,
-      price: bodyData.price,
-      image_url: bodyData.image_url,
-      ad_present_location: bodyData.ad_present_location,
-      ad_posted_location: bodyData.ad_posted_location,
-      reported_ad_count: bodyData.reported_ad_count,
-      reported_by: reported_by,
-      ad_expire_date: formateDate(bodyData.ad_expire_date),
-      ad_promoted: bodyData.ad_promoted,
-      ad_promoted_date: formateDate(bodyData.ad_promoted_date),
-      ad_promoted_expire_date: formateDate(bodyData.ad_promoted_expire_date),
-      ad_status: bodyData.ad_status,
-      ad_type: bodyData.ad_type,
-      is_negotiable: bodyData.is_negotiable,
-      is_ad_posted: bodyData.is_ad_posted,
-    });
-
-    //Update my_ads field in Profile Model(Store created ad ID in Profile Model)
-    const updateUser = await Profile.findByIdAndUpdate(userId, {
-      $push: {
-        my_ads: {
-          _id: adDoc._id,
+    else{
+      let reported_by = {
+        user_id: bodyData.reported_by.user_id,
+        reason: bodyData.reported_by.reason,
+        report_date: formateDate(bodyData.reported_by.report_date)
+      }
+      let adDoc = await Generic.create({
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        field: bodyData.field,
+        description: bodyData.description,
+        special_mention: bodyData.special_mention,
+        title: bodyData.title,
+        price: bodyData.price,
+        image_url: bodyData.image_url,
+        ad_present_location: bodyData.ad_present_location,
+        ad_posted_location: bodyData.ad_posted_location,
+        reported_ad_count: bodyData.reported_ad_count,
+        reported_by: reported_by,
+        ad_expire_date: DateAfter30Days,
+        ad_promoted: bodyData.ad_promoted,
+        ad_promoted_date: formateDate(bodyData.ad_promoted_date),
+        ad_promoted_expire_date: formateDate(bodyData.ad_promoted_expire_date),
+        ad_status: bodyData.ad_status,
+        ad_type: bodyData.ad_type,
+        loc: bodyData.loc,
+        is_negotiable: bodyData.is_negotiable,
+        is_ad_posted: bodyData.is_ad_posted,
+        created_at: currentDate,
+        updated_at: currentDate,
+      });
+  
+      //Update my_ads field in Profile Model(Store created ad ID in Profile Model)
+      const updateUser = await Profile.findByIdAndUpdate(userId, {
+        $push: {
+          my_ads: {
+            _id: adDoc._id,
+          },
         },
-      },
-    });
+      });
+  
+      //Create new Ad in GlobalSearch Model 
+      const createGlobalSearch = await GlobalSearch.create({
+        ad_id: adDoc._id,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        title: bodyData.title,
+      });
 
-    //Create new Ad in GlobalSearch Model 
-    const createGlobalSearch = await GlobalSearch.create({
-      ad_id: adDoc._id,
-      category: bodyData.category,
-      sub_category: bodyData.sub_category,
-      title: bodyData.title,
-    });
-
-
-    return adDoc["_doc"];
-
-
+      return adDoc["_doc"];
+    }
     // if (bodyData.category == "Pet") {
     //   console.log("Inside Pet in AdService");
     //   // console.log(userId)

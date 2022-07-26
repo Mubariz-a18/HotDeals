@@ -6,13 +6,17 @@ const Rating = require("../models/ratingSchema");
 const connectDB = require("../db/connectDatabase");
 const { request } = require("express");
 const Profile = require("../models/Profile/Profile");
-const { getSelectionData } = require("../utils/string");
+const ObjectId = require('mongodb').ObjectId;
 
+const { getSelectionData } = require("../utils/string");
+var moment = require('moment');
+moment().format();
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
+const now = moment().format('YYYY-MM-DD HH:mm:ss');
+console.log("Herer" + now);
 module.exports = class ProfileService {
   // DB Services to Create a Profile
   static async createProfile(bodyData, userID, phoneNuber) {
@@ -23,11 +27,14 @@ module.exports = class ProfileService {
       userNumber: phoneNuber,
     });
 
+
     if (profileDoc) {
+      console.log(userID)
 
       const userProfile = await Profile.findOne({
         _id: userID,
       });
+      console.log("Here" + userProfile)
       if (!userProfile) {
         let email = bodyData.email;
         let user_type = bodyData.user_type;
@@ -37,6 +44,8 @@ module.exports = class ProfileService {
           text: profileDoc.userNumber
         }
         const profileDoc1 = await Profile.create({
+          // _id:bodyData._id,
+
           _id: userID,
           name: bodyData.name,
           userNumber: contactNumber,
@@ -52,6 +61,8 @@ module.exports = class ProfileService {
           free_credit: bodyData.free_credit,
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
+          created_date: now,
+          updated_date: now
         });
 
         console.log(profileDoc1)
@@ -63,6 +74,7 @@ module.exports = class ProfileService {
         return profileDoc1;
       } else {
         console.log("inside else")
+        console.log(userProfile)
         return userProfile;
       }
     }
@@ -149,32 +161,31 @@ module.exports = class ProfileService {
     // return null;
   }
 
-  static async updateProfile(bodyData) {
-    await User.updateOne(
+  static async updateProfile(bodyData, userId) {
+    const updateUsr = await Profile.findByIdAndUpdate(userId,
       {
-        _id: req.userId,
+        $set: {
+          name: bodyData.name,
+          phone_number: bodyData.phone,
+          country_code: bodyData.country_code,
+          email: bodyData.email,
+          date_of_birth: bodyData.date_of_birth,
+          age: bodyData.age,
+          gender: bodyData.gender,
+          user_type: bodyData.user_type,
+          language_preference: bodyData.language_preference,
+          city: bodyData.city,
+          about: bodyData.about,
+          free_credit: bodyData.free_credit,
+          premium_credit: bodyData.premium_credit,
+          profile_url: bodyData.profile_url,
+          updated_date: moment().format('DD-MM-YY HH:mm:ss'),
+        },
       },
       {
-        name: bodyData.name,
-        phone_number: bodyData.phone,
-        country_code: bodyData.country_code,
-        email: bodyData.email,
-        date_of_birth: bodyData.date_of_birth,
-        age: bodyData.age,
-        gender: bodyData.gender,
-        user_type: bodyData.user_type,
-        language_preference: bodyData.language_preference,
-        city: bodyData.city,
-        about: bodyData.about,
-        free_credit: bodyData.free_credit,
-        premium_credit: bodyData.premium_credit,
-        profile_url: bodyData.profile_url,
+        new:true
       }
     );
-
-    const profile = await User.findOne({
-      _id: req.userId,
-    });
-    return profile;
+    return updateUsr;
   }
 };
