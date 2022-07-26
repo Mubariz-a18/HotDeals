@@ -42,9 +42,13 @@ module.exports = class ProfileController {
 
   static async apiUpdateProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.updateProfile(req.body);
+      const profileData = await ProfileService.updateProfile(req.body,req.user_ID);
       if (profileData) {
-        res.send(profileData);
+        res.send({
+          message:"success",
+          statusCode:200,
+          ProfileDoc:profileData
+        });
       } else {
         res.status(400).send({ msg: "Update profile Failed" });
       }

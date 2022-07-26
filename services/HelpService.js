@@ -1,27 +1,62 @@
-const User = require("../models/Profile/Profile");
+const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
 
 module.exports = class HelpService {
   static async createHelp(bodyData, userId) {
-    try {
-      // console.log("Inside Help Services");
-      // const user = await User.findOne({ _id: userId });
-      // if (user) {
+      const findUser = await Profile.findOne({ _id: userId });
+      if (findUser) {
         const msg = bodyData.message;
         const newCmpln = await Help.create({
-          user_id: "62b6cb19c19bebde50d0ae1e",
+          user_id: userId,
           phone_number: bodyData.phone_number,
           title: bodyData.title,
           description: bodyData.description,
           attachment: bodyData.attachment,
           message: msg,
         });
-        // console.log(newCmpln);
+
+        const updateUSer = await Profile.findOneAndUpdate({
+          _id:userId
+        },
+        {
+          $push:{
+            help_center:newCmpln._id
+          }
+        })
 
         return newCmpln;
-      // }
-    } catch (error) {
-      res.status(500).send({ error: error });
+      }
+  }
+
+  static async deleteHelp(bodyData, userId) {
+    const helpID = bodyData.helpID;
+    const findUsr = await Profile.findOne({
+      _id: userId
+    })
+    if (findUsr) {
+      const findHelp = await Help.findOne({
+        _id: helpID
+      })
+      if (findHelp) {
+        const deleteHelp = await Profile.findOneAndUpdate(
+          { _id: userId },
+          { $pull: { help_center: helpID } },
+          { new: true }
+        )
+        return deleteHelp;
+      }
+      else {
+        res.send({
+          message: "No Ad Found!!",
+          statusCode: "404"
+        })
+      }
+    }
+    else {
+      res.send({
+        message: "User not found!!",
+        statusCode: "404"
+      })
     }
   }
 };

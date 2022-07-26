@@ -1,5 +1,6 @@
 const Profile = require("../models/Profile/Profile");
 const Ads = require("../models/Ads/adSchema");
+const generics = require('../models/Ads/genericSchema')
 const AdService = require("./AdService");
 module.exports = class HomeService {
   static async getHome(bodyData) {
@@ -9,7 +10,7 @@ module.exports = class HomeService {
     let lat = bodyData.lat;
     console.log(lng, lat)
 
-    const premiumAds = await Ads.aggregate([
+    const premiumAds = await generics.aggregate([
       {
         $geoNear: {
           near: {
@@ -29,6 +30,9 @@ module.exports = class HomeService {
           _id: 1,
           category: 1,
           sub_category: 1,
+          title:1,
+          price:1,
+          image_url:1,
           special_mention: 1,
           description: 1,
           reported: 1,
