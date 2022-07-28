@@ -2,6 +2,9 @@ const { boolean } = require("joi");
 const mongoose = require("mongoose");
 
 const genericSchema = mongoose.Schema({
+    user_id: {
+        type: mongoose.Types.ObjectId,
+    },
     category: {
         type: String,
     },
@@ -60,7 +63,7 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft","Expired"],
+        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft", "Expired"],
         default: "Selling"
     },
     ad_type: {
@@ -94,7 +97,7 @@ const genericSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    is_reposted:{
+    is_reposted: {
         type: Boolean,
         default: false
     },

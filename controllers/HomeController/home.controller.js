@@ -7,7 +7,10 @@ module.exports = class HomeController {
         console.log(req.query)
       const homeData = await HomeService.getHome(req.query);
       if (homeData) {
-        res.status(200).send(homeData);
+        res.send({
+          PremmeiumAds:homeData[0].PremiumAds,
+          RecentAds:homeData[0].RecentAds,
+        })
       }
     } catch (error) {
         console.log(error)

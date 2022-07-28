@@ -1,3 +1,4 @@
+const request = require('request');
 const FollowUnfollowService = require('../../services/FollowUnfollowService')
 
 module.exports = class FollowController {
@@ -8,7 +9,15 @@ module.exports = class FollowController {
             const followingId =req.user_ID;
             console.log(followerId, followingId)
 
-            const followUser = await FollowUnfollowService.followUser(followerId, followingId)
+            const followUser = await FollowUnfollowService.followUser(followerId, followingId);
+            console.log(followUser)
+            if(followUser){
+                console.log("inside if")
+                res.send({
+                    message:"success",
+                    statusCode:200
+                })
+            }
 
         } catch (error) {
             return res.status(500).send({ error: "User Follow Failed" });
@@ -24,6 +33,13 @@ module.exports = class FollowController {
             console.log(UnfollowerId, UnfollowingId)
 
             const followUser = await FollowUnfollowService.UnfollowUser(UnfollowerId, UnfollowingId)
+            if(followUser){
+                console.log("inside if")
+                res.send({
+                    message:"success",
+                    statusCode:200
+                })
+            }
         } catch (error) {
             return res.status(500).send({ error: "User Follow Failed" });
 

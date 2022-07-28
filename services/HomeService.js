@@ -12,27 +12,49 @@ module.exports = class HomeService {
 
     const premiumAds = await generics.aggregate([
       {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [+lng, +lat],
+        '$geoNear': {
+          'near': {
+            'type': 'Point',
+            'coordinates': [+lng, +lat]
           },
-          distanceField: "distance",
-          spherical: true,
-          maxDistance: 600000,
-          //   minDistance: 10000
-        },
+          'distanceField': 'distance',
+          'spherical': true,
+          'maxDistance': 600000
+        }
       },
-
-      { $limit: 50 },
+      {
+        '$lookup': {
+          'from': 'profiles',
+          'localField': 'user_id',
+          'foreignField': '_id',
+          'as': 'sample_result'
+        }
+      },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': {
+          'Name': '$sample_result.name',
+          'User_id': '$sample_result._id',
+          'Since': '$sample_result.created_date',
+          'Profile_URL': '$sample_result.profile_url'
+        }
+      },
       {
         $project: {
           _id: 1,
+          User_id: 1,
+          Name: 1,
+          Since: 1,
+          Profile_URL: 1,
           category: 1,
           sub_category: 1,
-          title:1,
-          price:1,
-          image_url:1,
+          title: 1,
+          price: 1,
+          image_url: 1,
           special_mention: 1,
           description: 1,
           reported: 1,
@@ -50,7 +72,7 @@ module.exports = class HomeService {
           "RecentAds": [{ $match: { isPrime: false } }]
         }
       },
-    ]);
+    ])
 
     return premiumAds;
 

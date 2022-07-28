@@ -38,7 +38,13 @@ module.exports = class FollowUnfollowService {
         },
       },
     });
-
+    const followerInfo = {
+      whomFollowed:whomFollowed,
+      updatewhomFollowed:updatewhomFollowed,
+      whoFollowedMe:whoFollowedMe,
+      updatewhoFollowedMe:updatewhoFollowedMe
+    }
+    return followerInfo;
   }
 
 
@@ -47,7 +53,7 @@ module.exports = class FollowUnfollowService {
     console.log("inside unfollow")
     console.log(UnfollowerId, UnfollowingId)
 
-    const whomUnFollowed  = await Profile.findByIdAndUpdate(UnfollowingId, {
+    const whomUnFollowed = await Profile.findByIdAndUpdate(UnfollowingId, {
       $pull: {
         following_info: {
           _id: UnfollowerId,
@@ -55,10 +61,7 @@ module.exports = class FollowUnfollowService {
       },
     });
 
-    console.log(whomUnFollowed)
-
-
-    const whoUnFollowedMe  = await Profile.findByIdAndUpdate(UnfollowerId, {
+    const whoUnFollowedMe = await Profile.findByIdAndUpdate(UnfollowerId, {
       $pull: {
         follower_info: {
           _id: UnfollowingId,
@@ -66,7 +69,11 @@ module.exports = class FollowUnfollowService {
       },
     });
 
-    console.log(whoUnFollowedMe);
+    const followerInfo = {
+      whomFollowed:whomUnFollowed,
+      whoUnFollowedMe:whoUnFollowedMe,
+    }
+    return followerInfo;
 
 
   }

@@ -26,8 +26,8 @@ module.exports = class AlertController {
       const getAlert = await AlertService.getAlert(req.body);
       if (getAlert) {
         res.status(200).send({
-          Alerts: getAlert,
           statusCode: 200,
+          Alerts: getAlert,
         });
       } else {
         res.status(404).send({

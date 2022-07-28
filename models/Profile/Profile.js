@@ -17,9 +17,9 @@ const profileSchema = mongoose.Schema({
   //   type: String,
   //   required: true,
   // },
-  _id:{
-    type:String
-  },
+  // _id:{
+  //   type:String
+  // },
   name: {
     type: String,
   },
