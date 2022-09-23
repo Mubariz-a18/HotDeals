@@ -1,5 +1,6 @@
 const OtpService = require("../../services/OtpService");
 const User = require("../../models/Profile/User");
+const Profile = require("../../models/Profile/Profile");
 const testPhoneNumbers = require("../../data/testNumbers");
 const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
@@ -19,6 +20,12 @@ module.exports = class AuthController {
       if (testPhoneNumbers.includes(phoneNumber)) {
         msgResponse["status"] = "success";
       }
+      //  else {
+      //   res.json({
+      //     OTP: otpDoc.otp,
+      //     message: "OTP Sent Successfully",
+      //   });
+      // }
          else {
           msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
         }
@@ -46,7 +53,7 @@ module.exports = class AuthController {
 
     try {
       //Verfying again otp collection to check the otp is valid
-      const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
+      const verficationStatus = await OtpService.verifyOTP(phoneNumber.text, otp);
       console.log("verification_checkstatus: ", verficationStatus);
 
       if (verficationStatus === "approved") {
@@ -59,13 +66,34 @@ module.exports = class AuthController {
           // If user exists
           const userID = oldUser["_id"];
           const token = createJwtToken(userID, phoneNumber.text);
-  
+          // save user token
+
+          //Get user profile
+          // let profileDoc = await Profile.findOne({
+          //   userNumber: phoneNumber.text,
+          // });
+
+          //   if (profileDoc.fcmToken !== fcmToken) {
+          //     console.log("Token Not same", fcmToken);
+          //     await Profile.updateOne(
+          //       {
+          //         userNumber: phoneNumber,
+          //       },
+          //       {
+          //         fcmToken: fcmToken,
+          //       }
+          //     );
+          //     profileDoc = await Profile.findOne({
+          //       userNumber: phoneNumber,
+          //     });
+          //   }
           return res.status(200).json({
             message: "success",
             statusCode:200,
             token,          
             existingUser: true,
           });
+          //return res.send({ token });
         }
 
         // If new user, create a user
@@ -73,7 +101,12 @@ module.exports = class AuthController {
         const user = await User.create({
           userNumber: phoneNumber.text,
         });
-
+        //Create Default user profile
+        // const profileData = await Profile.create({
+        //   userNumber: phoneNumber,
+        //   userID: user["_doc"]["_id"],
+        //   //   fcmToken: fcmToken,
+        // });
         const token = createJwtToken(user["_doc"]["_id"], phoneNumber.text);
         // save user token
         user.token = token;

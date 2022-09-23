@@ -1,18 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
 const verifyToken = require("../utils/verifyToken").verifyJwtToken;
-const ProfileCotroller = require("../controllers/profileController/pofile.controller");
-const Validator = require("../middlewares/validatorMiddleware");
+const ProfileCotroller = require("../controllers/profileController/profile.controller");
 
-router.post(
-  "/api/v1/createProfile",
-  verifyToken,
-  ProfileCotroller.apiCreateProfileWithPhone
-);
 
-router.post("/api/v1/getProfile",verifyToken, ProfileCotroller.apiGetProfile);
-router.post('/api/v1/updateProfile',verifyToken,ProfileCotroller.apiUpdateProfile)
+// Profiles Routes
+router.post("/api/v1/createProfile", verifyToken, ProfileCotroller.apiCreateProfileWithPhone);   //Create 
+router.post("/api/v1/getProfile", verifyToken, ProfileCotroller.apiGetProfile);                  //Get
+router.post('/api/v1/updateProfile', verifyToken, ProfileCotroller.apiUpdateProfile)             //Upddate
 
 module.exports = router;

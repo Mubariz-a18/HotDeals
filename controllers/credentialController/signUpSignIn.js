@@ -2,7 +2,8 @@ const User = require("../../models/Profile/Profile");
 const OTP = require("../../models/Otp");
 const { generateOTP } = require("../../utils/otp.util");
 const { createJwtToken } = require("../../utils/generateToken");
-const { findOneAndUpdate } = require("../../models/Profile/Profile");
+
+//signup and signin
 
 exports.signUpSignIn = async function (req, res) {
   try {

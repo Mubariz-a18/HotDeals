@@ -50,9 +50,9 @@ const vehicleSchema = mongoose.Schema({
   description: {
     type: String
   },
-  title: [{
+  title: {
     type: String
-  }],
+  },
   ad_present_location: {
     type: Array,
     default: [],
@@ -62,7 +62,7 @@ const vehicleSchema = mongoose.Schema({
     default: [],
   },
 
-  //cmmon fields
+  //common fields
   reported: {
     type: Boolean,
     default: false,

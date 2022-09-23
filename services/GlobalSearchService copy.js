@@ -9,6 +9,10 @@ module.exports = class GlobalSearchService {
         });
         return result;
         
+        // const result = await GlobalSearch.find({
+        //     $text: { $search: `${seachKeyword1},${seachKeyword2}` },
+        // });
+        // return result;
     }
 
     static async createAnalyticsKeyword(seachKeyword1, seachKeyword2, user_ID) {

@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 
 const verifyToken = require('../utils/verifyToken').verifyJwtToken;
-const Validator = require('../middlewares/validatorMiddleware');
 const FollowUnfollowController = require('../controllers/followUnfollowController/follow.controller')
 
-router.post('/user/:id/follow',verifyToken,FollowUnfollowController.apiFollowUser);
-router.post('/user/:id/unfollow',verifyToken,FollowUnfollowController.apiUnfollowUser)
+
+// Follow Unfollow  & Ratings Route
+router.post('/user/follow',verifyToken,FollowUnfollowController.apiFollowUser);
+router.post('/user/unfollow/:id',verifyToken,FollowUnfollowController.apiUnfollowUser);
+router.post('/user/rating',verifyToken,FollowUnfollowController.apiRatingUser)
 
 module.exports = router;

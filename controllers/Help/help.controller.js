@@ -2,6 +2,8 @@ const { request } = require("express");
 const HelpService = require("../../services/HelpService");
 
 module.exports = class HelpController {
+
+  // Create New Help
   static async apiCreateHelp(req, res, next) {
     try {
       const helpData = await HelpService.createHelp(req.body,req.user_ID);
@@ -18,6 +20,8 @@ module.exports = class HelpController {
       }
     } catch (error) {}
   }
+
+  // Delete Help
   static async apiDeleteHelp(req,res,next){
     try {
       const deleteHelp = await HelpService.deleteHelp(req.body,req.user_ID);

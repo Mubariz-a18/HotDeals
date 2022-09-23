@@ -1,58 +1,73 @@
 const Profile = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
+const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class FollowUnfollowService {
-  static async followUser(followerId, followingId) {
-    console.log(
-      "inside FollowUnfollow Service:" + followerId,
-      followingId
-    );
 
-    const whomFollowed = await Profile.findByIdAndUpdate(followingId, {
-      $push: {
-        following_info: {
-          _id: followerId,
-        },
-      },
-    });
-    const updatewhomFollowed = await Rating.findByIdAndUpdate(followingId, {
-      $push: {
-        following_info: {
-          user_id: followerId,
-        },
-      },
-    });
+  // Following a New User 
+  static async followUser(bodyData, userId) {
+    //authentication 
+    const findUser = await Profile.findOne({
+      _id: userId
+    })
+    //if user is authenticated find the person(other users) who the user is going to follow 
+    if (findUser) {
+      const findFollowingInfo = await Profile.findOne({
+        _id: bodyData.following_id
+      });
+      // if the person(other users) exist  update the person(other user)`s profile with users_id in followers  
+      if (findFollowingInfo) {
 
-    const whoFollowedMe = await Profile.findByIdAndUpdate(followerId, {
-      $push: {
-        follower_info: {
-          _id: followingId,
-        },
-      },
-    });
+        // updating followers
+        const who_Following_Me = await Profile.findByIdAndUpdate(bodyData.following_id,
+          {
+            $push: {
+              followers: {
+                _id: ObjectId(userId),
+              },
+            }
+          }
+        )
 
-    const updatewhoFollowedMe = await Rating.findByIdAndUpdate(followerId, {
-      $push: {
-        follower_info: {
-          user_id: followingId,
-        },
-      },
-    });
-    const followerInfo = {
-      whomFollowed:whomFollowed,
-      updatewhomFollowed:updatewhomFollowed,
-      whoFollowedMe:whoFollowedMe,
-      updatewhoFollowedMe:updatewhoFollowedMe
+        //updating followings
+        const whom_I_following = await Profile.findByIdAndUpdate(userId,
+          {
+            $push: {
+              followings: {
+                _id: ObjectId(bodyData.following_id),
+              },
+            }
+          }
+        )
+
+        const follower_following = {
+          following: who_Following_Me,
+          follower: whom_I_following
+        }
+        return follower_following;
+      }
+      else {
+        res.send({
+          statusCode: 403,
+          message: "Following Info Not Found"
+        })
+      }
     }
-    return followerInfo;
+    else {
+      res.send({
+        statusCode: 403,
+        message: "User Not Found"
+      })
+    }
   }
 
-
+  // Unfollowing a User
   static async UnfollowUser(UnfollowerId, UnfollowingId) {
 
     console.log("inside unfollow")
     console.log(UnfollowerId, UnfollowingId)
 
+    // Unfollowing a User
     const whomUnFollowed = await Profile.findByIdAndUpdate(UnfollowingId, {
       $pull: {
         following_info: {
@@ -61,6 +76,7 @@ module.exports = class FollowUnfollowService {
       },
     });
 
+    //Unfollowed By a User
     const whoUnFollowedMe = await Profile.findByIdAndUpdate(UnfollowerId, {
       $pull: {
         follower_info: {
@@ -70,11 +86,39 @@ module.exports = class FollowUnfollowService {
     });
 
     const followerInfo = {
-      whomFollowed:whomUnFollowed,
-      whoUnFollowedMe:whoUnFollowedMe,
+      whomFollowed: whomUnFollowed,
+      whoUnFollowedMe: whoUnFollowedMe,
     }
     return followerInfo;
+  }
 
+  // Rating A User
+  static async RatingToUser(bodyData, userId) {
+    const findUsr = await Profile.find({
+      _id: userId,
+    })
+    if (findUsr) {
+      const findRatedUsr = await Profile.findOne({
+        user_id: bodyData.rated_user_id
+      })
+      if (findRatedUsr) {
+        console.log("here" + findUsr[0].name)
+        const findRatedUsr = await Rating.findOneAndUpdate({
+          user_id: bodyData.rated_user_id
+        },
+          {
+            $push: {
+              RatingInfo: {
+                rating: bodyData.rating,
+                rating_given_by: findUsr[0].name,
+                rating_given_date: "2022-07-27 18:29:15"
+              }
+            }
+          }
+        )
+        return findRatedUsr;
+      }
+    }
 
   }
 };

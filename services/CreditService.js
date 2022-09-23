@@ -2,6 +2,8 @@ const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
 
 module.exports = class CreditService {
+
+  // Create Credit
   static async createCredit(bodyData, userId) {
     try {
       const user = await User.findOne({ _id: userId });

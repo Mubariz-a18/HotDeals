@@ -1,9 +1,10 @@
 const User = require("../../models/Profile/Profile");
 const Rating = require("../../models/ratingSchema");
 
+//Giving Rating 
 exports.rating_given = async function (req, res) {
   try {
-    console.log("reached herer");
+    console.log("reached here");
     console.log(req.body);
 
     const user = await User.findOne({

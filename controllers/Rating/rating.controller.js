@@ -1,5 +1,7 @@
 const RatingService = require("../../services/RatingService");
 
+// Creating Ratings
+
 module.exports = class RatingController {
   static async apiCreateRating(req, res, next) {
     try {

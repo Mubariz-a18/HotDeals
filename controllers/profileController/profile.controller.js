@@ -1,5 +1,4 @@
 var multer = require("multer");
-var upload = multer();
 const ProfileService = require("../../services/ProfileService");
 
 module.exports = class ProfileController {

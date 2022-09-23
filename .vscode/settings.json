@@ -1,8 +1,0 @@
-{
-    "appService.zipIgnorePattern": [
-        "node_modules{,/**}",
-        ".vscode{,/**}"
-    ],
-    "appService.defaultWebAppToDeploy": "/subscriptions/7dc19e66-c677-4285-9140-7719296ce93a/microsoft.web/sites/subscriptions/7dc19e66-c677-4285-9140-7719296ce93a/resourceGroups/Deep-Nucleus_group/providers/Microsoft.Web/sites/deep-nucleus1",
-    "appService.deploySubpath": "."
-}

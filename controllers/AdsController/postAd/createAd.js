@@ -11,18 +11,22 @@ const ArtAndAntique = require("../../../models/Ads/artsAndAntiqueSchema");
 const Book = require("../../../models/Ads/bookSchema");
 const User = require("../../../models/Profile/Profile");
 
+
+// Create Ad Controller 
 exports.createAd = async function (req, res) {
   try {
     console.log(req.userId);
 
     let category = req.body.category;
+    // Check is body contains Data or not
+    // if True based on the category Data is saved 
 
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
       res.status(400).send({ error: "please provide data!" });
     } else {
+      // PET Category 
       if (category == "Pet") {
         console.log("Inside Pet If");
-
         const newAd = await new Pet({
           category: category,
           sub_category: req.body.sub_category,
@@ -31,10 +35,9 @@ exports.createAd = async function (req, res) {
           condition: req.body.condition,
           description: req.body.description,
           special_mentions: req.body.special_mention,
-          tile: req.body.tile,
+          title: req.body.title,
           ad_present_location: req.body.ad_present_location,
           ad_posted_location: req.body.ad_posted_location,
-
           reported_ad_count: req.body.reported_ad_count,
           reported_by: req.body.reported_by,
           ad_expire_date: req.body.ad_expire_date,
@@ -56,7 +59,9 @@ exports.createAd = async function (req, res) {
           message: "Ad Successfully created!",
           Ad: newAd,
         });
-      } else if (category == "Vehicle") {
+      }
+      // Vehicle Category  
+      else if (category == "Vehicle") {
         console.log("Inside Vehicle else If");
 
         let reported_by = req.body.reported_by;
@@ -79,7 +84,7 @@ exports.createAd = async function (req, res) {
           vehicle_present_at: req.body.vehicle_present_at,
           special_mention: req.body.special_mention,
           description: req.body.description,
-          tile: req.body.tile,
+          title: req.body.title,
           ad_present_location: req.body.ad_present_location,
           ad_posted_location: req.body.ad_posted_location,
 
@@ -103,7 +108,9 @@ exports.createAd = async function (req, res) {
           message: "Ad Successfully created!",
           Ad: newAd,
         });
-      } else if (category == "Housing") {
+      }
+      // Housing category 
+      else if (category == "Housing") {
         console.log("Inside Husing else If");
         console.log(req.body);
         const newAd = await new House({
@@ -191,7 +198,9 @@ exports.createAd = async function (req, res) {
           message: "Ad Successfully created!",
           Ad: newAd,
         });
-      } else if (category == "HomeAppliance") {
+      }
+      // Home Appliance category
+       else if (category == "HomeAppliance") {
         console.log("Inside HomeApplance else If");
         console.log(req.body);
         const newAd = await new HomeAppliance({
@@ -264,7 +273,9 @@ exports.createAd = async function (req, res) {
           message: "Ad Successfully created!",
           Ad: newAd,
         });
-      } else if (category == "Fashion") {
+      }
+      // Fashion category
+      else if (category == "Fashion") {
         console.log("Inside fashion else If");
         console.log(req.body);
         const newAd = await new Fashion({

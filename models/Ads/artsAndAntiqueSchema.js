@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 var GeoJSON = require("mongoose-geojson-schema");
 
 const artsAndAntiqueSchema = mongoose.Schema({
-  // any: mongoose.Schema.Types.GeoJSON,
-  // point: mongoose.Schema.Types.Point,
   category: {
     type: String,
     required: true,

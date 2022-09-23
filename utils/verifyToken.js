@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-const {
-  JWT_SECRET_KEY,
-} = process.env;
+const {  JWT_SECRET_KEY } = process.env;
+
+// Verification Of Token 
+
 exports.verifyJwtToken = async (req, res, next) => {
 
   // check for auth header from client
@@ -12,6 +13,7 @@ exports.verifyJwtToken = async (req, res, next) => {
   }
   // verify  auth token
   const token = header.split("Bearer ")[1];
+
   if (!token) {
     return res.status(403).send("A token is required for authentication");
   }

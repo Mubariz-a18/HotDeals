@@ -1,6 +1,8 @@
 const CreditService = require("../../services/CreditService");
 
 module.exports = class CreditController {
+
+  // Create Credit 
   static async apiCreateCredit(req, res, next) {
     try {
       const creditData = await CreditService.createCredit(req.body,  req.user_ID);

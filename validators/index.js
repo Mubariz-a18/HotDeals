@@ -1,7 +1,7 @@
 const userProfileValidator = require('./userProfile.validator');
 const adsValidator = require('./Ads.Validator');
 const SchemaValidator = require('./Schema.Validator');
-const { Schema } = require('mongoose');
+
 module.exports = {
     updatePofile:userProfileValidator.userSchema,
     CreateAdsValidator:adsValidator.commonFieldSchema,

@@ -1,3 +1,4 @@
+//Generating and OTP 
 
 exports.generateOTP = (otp_length) => {
     // Declare a digits variable
