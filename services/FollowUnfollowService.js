@@ -1,99 +1,125 @@
 const Profile = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 const ObjectId = require('mongodb').ObjectId;
+const currentDate = require('../utils/moment')
 
 module.exports = class FollowUnfollowService {
+  static async followUser(res,bodyData, userId) {
+    try {
+        const dbUser = await Profile.findById({ _id: userId })
+        if (dbUser) {
+            const user_to_follow = await Profile.findById({ _id: bodyData.following_id })
+            if (user_to_follow) {
 
-  // Following a New User 
-  static async followUser(bodyData, userId) {
-    //authentication 
-    const findUser = await Profile.findOne({
-      _id: userId
-    })
-    //if user is authenticated find the person(other users) who the user is going to follow 
-    if (findUser) {
-      const findFollowingInfo = await Profile.findOne({
-        _id: bodyData.following_id
-      });
-      // if the person(other users) exist  update the person(other user)`s profile with users_id in followers  
-      if (findFollowingInfo) {
+                const alreadyExistInFollowers = user_to_follow.followers.includes(dbUser._id)
+                const alreadyExistInfollowing = dbUser.followings.includes(bodyData.following_id)
 
-        // updating followers
-        const who_Following_Me = await Profile.findByIdAndUpdate(bodyData.following_id,
-          {
-            $push: {
-              followers: {
-                _id: ObjectId(userId),
-              },
+                console.log(alreadyExistInFollowers, alreadyExistInfollowing)
+
+                if (alreadyExistInFollowers == false && alreadyExistInfollowing == false) {
+                    const user_followed = await Profile.findByIdAndUpdate(bodyData.following_id,
+                        {
+                            $push: {
+                                followers: ObjectId(userId),
+                            }
+                        }
+                    )
+                    const user_update = await Profile.findByIdAndUpdate(dbUser._id,
+                        {
+                            $push: {
+                                followings:
+                                    ObjectId(bodyData.following_id),
+
+                            }
+                        })
+                    const followInfo = {
+                        user_followed, user_update
+                    }
+                    return (followInfo)
+                } else {
+                    return ({
+                        statusCode: 403,
+                        message: "already following"
+                    })
+                }
+            } else {
+                return ({
+                    statusCode: 403,
+                    message: "Following Info Not Found"
+                })
             }
-          }
-        )
-
-        //updating followings
-        const whom_I_following = await Profile.findByIdAndUpdate(userId,
-          {
-            $push: {
-              followings: {
-                _id: ObjectId(bodyData.following_id),
-              },
-            }
-          }
-        )
-
-        const follower_following = {
-          following: who_Following_Me,
-          follower: whom_I_following
+        } else {
+            return ({
+                statusCode: 403,
+                message: "unauthorized"
+            })
         }
-        return follower_following;
-      }
-      else {
-        res.send({
-          statusCode: 403,
-          message: "Following Info Not Found"
-        })
-      }
     }
-    else {
-      res.send({
-        statusCode: 403,
-        message: "User Not Found"
-      })
+    catch (e) {
+        res.send(e)
     }
-  }
+}
 
-  // Unfollowing a User
-  static async UnfollowUser(UnfollowerId, UnfollowingId) {
+static async UnfollowUser(bodyData, userId) {
+    try {
+        const dbUser = await Profile.findById({ _id: userId })
+        console.log(dbUser)
+        if (dbUser) {
+            const user_to_unfollow = await Profile.findById({ _id: bodyData.unfollowing_id })
+            if (user_to_unfollow) {
 
-    console.log("inside unfollow")
-    console.log(UnfollowerId, UnfollowingId)
+                const alreadyExistInFollowers = user_to_unfollow.followers.includes(dbUser._id)
+                const alreadyExistInfollowing = dbUser.followings.includes(bodyData.unfollowing_id)
 
-    // Unfollowing a User
-    const whomUnFollowed = await Profile.findByIdAndUpdate(UnfollowingId, {
-      $pull: {
-        following_info: {
-          _id: UnfollowerId,
-        },
-      },
-    });
+                if (alreadyExistInFollowers == true && alreadyExistInfollowing == true) {
+                    const user_unfollowed = await Profile.findByIdAndUpdate(bodyData.unfollowing_id,
+                        {
+                            $pull: {
+                                followers: ObjectId(userId),
+                            }
+                        }
+                    )
+                    const user_update = await Profile.findByIdAndUpdate(dbUser._id,
+                        {
+                            $pull: {
+                                followings:
+                                    ObjectId(bodyData.unfollowing_id),
 
-    //Unfollowed By a User
-    const whoUnFollowedMe = await Profile.findByIdAndUpdate(UnfollowerId, {
-      $pull: {
-        follower_info: {
-          _id: UnfollowingId,
-        },
-      },
-    });
-
-    const followerInfo = {
-      whomFollowed: whomUnFollowed,
-      whoUnFollowedMe: whoUnFollowedMe,
+                            }
+                        })
+                    const followInfo = {
+                        user_unfollowed,
+                        user_update
+                    }
+                    return (followInfo)
+                } else {
+                    return ({
+                        statusCode: 403,
+                        message: "already removed"
+                    })
+                }
+            } else {
+                return ({
+                    statusCode: 403,
+                    message: "Following Info Not Found"
+                })
+            }
+        } else {
+            return ({
+                statusCode: 403,
+                message: "unauthorized"
+            })
+        }
     }
-    return followerInfo;
-  }
+    catch (e) {
+        console.log(e.message)
+    }
+}
+  
 
   // Rating A User
   static async RatingToUser(bodyData, userId) {
+    console.log("here in f2uf")
     const findUsr = await Profile.find({
       _id: userId,
     })
@@ -102,7 +128,8 @@ module.exports = class FollowUnfollowService {
         user_id: bodyData.rated_user_id
       })
       if (findRatedUsr) {
-        console.log("here" + findUsr[0].name)
+        console.log(userId)
+        console.log(bodyData.rated_user_id)
         const findRatedUsr = await Rating.findOneAndUpdate({
           user_id: bodyData.rated_user_id
         },
@@ -110,8 +137,9 @@ module.exports = class FollowUnfollowService {
             $push: {
               RatingInfo: {
                 rating: bodyData.rating,
-                rating_given_by: findUsr[0].name,
-                rating_given_date: "2022-07-27 18:29:15"
+                rating_given_by: userId,
+                rating_given_date: currentDate,
+                rating_updated_date: currentDate
               }
             }
           }

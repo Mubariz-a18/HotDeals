@@ -5,7 +5,7 @@ module.exports = class ComplainController {
   //Create Complain
   static async apiCreateComplaint(req, res, next) {
     try {
-      console.log("Inside Complai Controller")
+      console.log("Inside Complaint Controller")
       const complnData = await ComplaintService.createComplaint(
         req.body,
         req.user_ID,
@@ -25,6 +25,27 @@ module.exports = class ComplainController {
       res.send({
         statusCode: 500,
         message: error.message
+      })
+    }
+  }
+  static async apiUpdateController(req,res,next){
+    try{
+      const updatedComplain = await ComplaintService.updateComplain(req.body,req.user_ID);
+      if(updatedComplain){
+        res.send({
+          statusCode:200,
+          message:"Complain updated successfully"
+        })
+      } else {
+        res.send({
+          statusCode:201,
+          message:"something went wrong in updatecomplaint"
+        })
+      }
+    } catch(error){
+      res.send({
+        statusCode:500,
+        message:error.message
       })
     }
   }

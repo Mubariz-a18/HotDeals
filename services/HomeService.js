@@ -19,7 +19,7 @@ module.exports = class HomeService {
             'near': { type: 'Point', coordinates: [+lng, +lat] },
             'distanceField': 'distance',
             'maxDistance': +maxDistance,
-            'query': { 'ad_type': "free" },
+           
             'spherical': true
           }
         },

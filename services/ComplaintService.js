@@ -10,28 +10,30 @@ module.exports = class ComplainService {
     console.log("Inside Complain Service");
     const user = await User.findOne({ _id: userId });
     if (user) {
-      const cmpln = {
-        user_id: userId,
+      const complaint = {
+        complaint_id: ObjectId(),
         reason: bodyData.complaint.reason,
         complaint_date: currentDate,
         description: bodyData.complaint.description,
-        attachement: bodyData.complaint.attachement,
+        attachment: bodyData.complaint.attachment,
+        status:bodyData.complaint.status
       }
-      const findAd = await Complaint.findOne({
-        ad_id: bodyData.ad_id
+      const findComplaint = await Complaint.findOne({
+        _id : bodyData._id
       })
-      if (findAd) {
-        console.log("inside find ad" + findAd.ad_id)
+      if (findComplaint) {
+        console.log("inside complain " + findComplaint._id)
         const pushCmpln = await Complaint.findOneAndUpdate(
-          { _id: ObjectId(findAd._id) },
+          { _id: ObjectId(bodyData._id) },
           {
             $push: {
               complaint: {
-                user_id: userId,
+                complaint_id: ObjectId(),
                 reason: bodyData.complaint.reason,
                 complaint_date: currentDate,
                 description: bodyData.complaint.description,
-                attachement: bodyData.complaint.attachement,
+                attachment: bodyData.complaint.attachment,
+                status :bodyData.status
               },
             },
           },
@@ -42,12 +44,13 @@ module.exports = class ComplainService {
       }
       else {
         console.log("inside else")
-        console.log(cmpln)
-        const createCmpln = await Complaint.create({
-          ad_id: bodyData.ad_id,
-          complaint: cmpln
+        console.log(complaint)
+        const createcomplaint= await Complaint.create({
+          user_id: userId,
+          complaint: complaint,
+  
         })
-        return createCmpln
+        return createcomplaint
       }
     }
     else{
@@ -55,6 +58,30 @@ module.exports = class ComplainService {
         statusCode:200,
         message:"User Not Found"
       })
+    }
+  }
+  
+  static async updateComplain (bodyData, userId){
+    const user = await User.findOne({ _id: userId });
+    const complain = await Complaint.findOne({ad_id:ObjectId(bodyData.ad_id)})
+    console.log(complain)
+    if(user){
+      const updatecomplaintDoc = await Complaint.findOneAndUpdate(
+        { ad_id:ObjectId(bodyData.ad_id) },
+        {
+          $set: {
+            complaint: {
+              user_id: userId,
+              reason: bodyData.complaint.reason,
+              description: bodyData.complaint.description,
+              attachment: bodyData.complaint.attachment
+            }
+          }
+          
+        },
+        {new: true }
+      )
+      return updatecomplaintDoc;
     }
   }
 };

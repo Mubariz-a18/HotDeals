@@ -2,8 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-const Sentry = require("@sentry/node");
-const Tracing = require("@sentry/tracing");
+
 const http = require("http");
 const app = express();
 const server = http.createServer(app);
@@ -31,30 +30,6 @@ const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
 connectDB();
-
-// scheduleTask();
-Sentry.init({ 
-  dsn: "https://c2ca7fe1eec14039b1874d3b84b406bf@o1302266.ingest.sentry.io/6539457",
-
-  integrations: [
-    // enable HTTP calls tracing
-    new Sentry.Integrations.Http({ tracing: true }),
-    // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({
-      // to trace all requests to the default router
-      app,
-      // alternatively, you can specify the routes you want to trace:
-      // router: someRouter,
-    }),
-  ],
-  tracesSampleRate: 1.0,
-});
-
-//Sentry Middlewares
-app.use(Sentry.Handlers.requestHandler());
-
-// TracingHandler creates a trace for every incoming request
-app.use(Sentry.Handlers.tracingHandler());
 
 //Middlewares
 app.use(express.static(__dirname));

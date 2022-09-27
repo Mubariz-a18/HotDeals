@@ -13,17 +13,6 @@ module.exports = class OtpService {
     if (otpDoc) {
       return otpDoc;
     }
-    //testing dummy numbers
-    else {
-      if (testPhoneNumbers.includes(phoneNumber)) {
-        const otp = "098612";
-        return await OtpModel.create({
-          otp,
-          phoneNumber,
-        });
-      }
-
-     //else  generate an otp of 6 Digits 
     else {
         const otp = generateOTP(6);
         return await OtpModel.create({
@@ -32,7 +21,25 @@ module.exports = class OtpService {
         });
       };
     };
-  };
+  
+
+  static async generateEmailOtpAndCreateDocument(email){
+    console.log(email)
+    const otpDoc = await OtpModel.findOne({
+      email:email,
+    });
+    if (otpDoc) {
+      return otpDoc;
+    }
+    else {
+      const otp = generateOTP(6);
+      console.log(otp)
+      return await OtpModel.create({
+        otp,
+        email,
+      });
+    };
+  }
 
   //Verify Otp and Delete Document 
   static async verifyOTPAndDeleteDocument(phoneNumber, otp) {

@@ -4,6 +4,9 @@ const testPhoneNumbers = require("../../data/testNumbers");
 const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
+const Profile = require("../../models/Profile/Profile");
+const sendEmail = require('../../utils/emailOtpUtil.js')
+
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
@@ -94,4 +97,26 @@ module.exports = class AuthController {
       return res.status(400).send(error);
     }
   }
+
+  static async apiGetEmailOtp(req,res,next){
+    const {email} = req.body;
+    try{
+      const findUsr = await Profile.findOne({
+        _id: (req.user_ID)
+      })
+      const otpDoc = await OtpService.generateEmailOtpAndCreateDocument(email)
+      const message = `Your email verifivation OTP is  :- \n\n ${otpDoc.otp}`
+      const email_To_User = await sendEmail({
+        email:email,
+        subject:"Email Verification",
+        message
+      })
+      res.send("email sent sucess")
+      console.log(message)
+      console.log(email_To_User)
+    }catch (e){
+        res.send(e.message).status(401)
+    }
+  }
+
 };

@@ -1,21 +1,24 @@
 const FollowUnfollowService = require('../../services/FollowUnfollowService')
 
+
 module.exports = class FollowController {
 
     // New Follow User
     static async apiFollowUser(req, res, next) {
         try {
-            console.log("inside Follow Controller:" + req.user_ID);
+            // console.log("inside Follow Controller:" + req.user_ID);
             const followerId = req.user_ID;
 
-            const followUser = await FollowUnfollowService.followUser(req.body, req.user_ID);
-            // console.log(followUser)
+            const followUser = await FollowUnfollowService.followUser(req, req.body, req.user_ID);
+            console.log(followUser)
             if(followUser){
                 console.log("inside if")
                 res.send({
                     message:"success",
                     statusCode:200
                 })
+            }else {
+                return res.send("user not found")
             }
 
         } catch (error) {
@@ -28,18 +31,15 @@ module.exports = class FollowController {
     //Unfollow Existing User
     static async apiUnfollowUser(req,res,next){
         try {
-            console.log("inside Follow Controller:" + req.params.id);
-            const UnfollowerId = req.params.id;
-            const UnfollowingId =req.user_ID;
-            console.log(UnfollowerId, UnfollowingId)
-
-            const followUser = await FollowUnfollowService.UnfollowUser(UnfollowerId, UnfollowingId)
-            if(followUser){
+            const unfollowUser = await FollowUnfollowService.UnfollowUser(req.body, req.user_ID)
+            if(unfollowUser){
                 console.log("inside if")
                 res.send({
-                    message:"success",
+                    message:"successfully unfollowed",
                     statusCode:200
                 })
+            }else{
+                res.send("user not found")
             }
         } catch (error) {
             return res.status(500).send({ error: "User Follow Failed" });

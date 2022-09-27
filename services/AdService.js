@@ -27,7 +27,7 @@ module.exports = class AdService {
     const findUsr = await Profile.findOne({
       _id: ObjectId(userId)
     })
-    console.log(findUsr);
+
     if (findUsr) {
       if (bodyData.ad_id) {
         const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
@@ -63,6 +63,12 @@ module.exports = class AdService {
           updated_at: currentDate,
           loc: bodyData.loc,
         });
+
+        const updateMyAdsInUser = await Profile.findByIdAndUpdate({_id:userId},{
+          $push :{
+            my_ads :ObjectId(adDoc._id)
+          }
+        })
 
         //Create new Ad in GlobalSearch Model 
         const createGlobalSearch = await GlobalSearch.create({

@@ -9,6 +9,9 @@ const otpSchema = Schema({
   phoneNumber: {
     type: String,
   },
+  email:{
+    type:String
+  },
   countryCode: {
     type: String,
   },

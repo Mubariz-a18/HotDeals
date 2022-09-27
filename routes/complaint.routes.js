@@ -7,5 +7,6 @@ const ComplaintController = require('../controllers/Complaint/complaint.controll
 
 //Complain Route
 router.post('/api/createComplaint',verifyToken,ComplaintController.apiCreateComplaint);
+router.post('/api/updateComplaint',verifyToken, ComplaintController.apiUpdateController)
 
 module.exports = router;

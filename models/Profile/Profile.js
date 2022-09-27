@@ -147,11 +147,12 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  followers: {
-    type: Array
-  },
-  followings: {
-    type: Array
+  followers:  Array
+  ,
+  followings: Array,
+  isVerified:{
+    type:Boolean,
+    default:false
   },
   rate_count: {
     type: Number,
