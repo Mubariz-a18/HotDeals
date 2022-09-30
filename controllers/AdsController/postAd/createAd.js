@@ -341,25 +341,42 @@ exports.createAd = async function (req, res) {
       } else if (category == "KitchenAppliance") {
         console.log("Inside KitchenApplance else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          device,
+          brand,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,} = req.body;
         const newAd = await new KitchenAppliance({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          device: req.body.device,
-          brand: req.body.brand,
-          colour: req.body.colour,
-          year: req.body.year,
-          state: req.body.state,
-
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          device,
+          brand,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date
         }).save();
 
         console.log(newAd);
@@ -380,24 +397,41 @@ exports.createAd = async function (req, res) {
       else if (category == "Fashion") {
         console.log("Inside fashion else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          brand,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,
+        } = req.body;
         const newAd = await new Fashion({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          brand: req.body.brand,
-          colour: req.body.colour,
-          year: req.body.year,
-          state: req.body.state,
-
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          brand,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,
         }).save();
 
         console.log(newAd);
@@ -416,24 +450,40 @@ exports.createAd = async function (req, res) {
       } else if (category == "Sport") {
         console.log("Inside sports else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          type,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date} = req.body;
         const newAd = await new Sport({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          type: req.body.type,
-          colour: req.body.colour,
-          year: req.body.year,
-          state: req.body.state,
-
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          type,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date
         }).save();
 
         console.log(newAd);
@@ -452,23 +502,38 @@ exports.createAd = async function (req, res) {
       } else if (category == "Furniture") {
         console.log("Inside furniture else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,} = req.body
         const newAd = await new Furniture({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          colour: req.body.colour,
-          year: req.body.year,
-          state: req.body.state,
-
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          colour,
+          year,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,
         }).save();
 
         console.log(newAd);
@@ -487,21 +552,34 @@ exports.createAd = async function (req, res) {
       } else if (category == "ArtAndAntique") {
         console.log("Inside ArtAndAntique else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,} = req.body;
         const newAd = await new ArtAndAntique({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          state: req.body.state,
-
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          state,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date
         }).save();
 
         console.log(newAd);
@@ -520,20 +598,34 @@ exports.createAd = async function (req, res) {
       } else if (category == "Book") {
         console.log("Inside Book else If");
         console.log(req.body);
+        const {
+          category,
+          sub_category,
+          genre,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date,} = req.body
         const newAd = await new Book({
-          category: req.body.category,
-          sub_category: req.body.sub_category,
-          genre: req.body.genre,
-          special_mention: req.body.special_mention,
-          description: req.body.description,
-          tile: req.body.tile,
-          ad_present_location: req.body.ad_present_location,
-          ad_posted_location: req.body.ad_posted_location,
-          reported_ad_count: req.body.reported_ad_count,
-          reported_by: req.body.reported_by,
-          ad_expire_date: req.body.ad_expire_date,
-          ad_promoted: req.body.ad_promoted,
-          ad_promoted_date: req.body.ad_promoted_date,
+          category,
+          sub_category,
+          genre,
+          special_mention,
+          description,
+          title,
+          ad_present_location,
+          ad_posted_location,
+          reported_ad_count,
+          reported_by,
+          ad_expire_date,
+          ad_promoted,
+          ad_promoted_date
         }).save();
 
         console.log(newAd);
