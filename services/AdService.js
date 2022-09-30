@@ -202,6 +202,7 @@ module.exports = class AdService {
           return adDoc;
         }
         else if (bodyData.status == "PREMEIUM") {
+          // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $set: { ad_status: "PREMEIUM" } }

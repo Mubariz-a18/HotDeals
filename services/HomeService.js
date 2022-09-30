@@ -1,4 +1,5 @@
 const generics = require('../models/Ads/genericSchema')
+const profiles = require('../models/Profile/Profile')
 module.exports = class HomeService {
 
   // Get Home - Using Aggregation and GeoNear 
@@ -17,10 +18,31 @@ module.exports = class HomeService {
         {
           '$geoNear': {
             'near': { type: 'Point', coordinates: [+lng, +lat] },
-            'distanceField': 'distance',
-            'maxDistance': +maxDistance,
-           
+            "distanceField": "dist.calculated",
+            'maxDistance': maxDistance,
+            "includeLocs": "dist.location",
             'spherical': true
+          }
+        },
+        {
+          '$lookup': {
+            'from': 'profiles',
+            'localField': 'user_id',
+            'foreignField': '_id',
+            'as': 'sample_result'
+          }
+        },
+        {
+          '$unwind': {
+            'path': '$sample_result'
+          }
+        },
+        {
+          '$addFields': {
+            'Seller_Name': '$sample_result.name',
+            'Seller_Id': '$sample_result._id',
+            'Seller_Joined': '$sample_result.created_date',
+            'Seller_Image': '$sample_result.profile_url',
           }
         },
         {
@@ -44,7 +66,7 @@ module.exports = class HomeService {
             'ad_expire_date': 1,
             'ad_promoted': 1,
             'isPrime': 1 ,
-            "loc":1
+            "dist":1
           }
         },
         {
@@ -67,7 +89,7 @@ module.exports = class HomeService {
         }
       ]
     ])
-    console.log(ads, ads.length)
+    console.log(ads , ads.length)
     return ads;
   };
 };
