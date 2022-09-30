@@ -1,32 +1,28 @@
-// const schedule = require('node-schedule');
+const cron = require('node-cron')
+const Generic = require('../models/Ads/genericSchema')
+var moment = require('moment');
+moment().format()
+var now = moment().format('YYYY-MM-DD HH:mm:ss');; 
 
-// var moment = require('moment');
-// moment().format()
-// var now = moment().format('YYYY-MM-DD HH:mm:ss');;
+const ScheduleTask = cron.schedule('0 0 0  * * *', async() => {
+    const Ads = await Generic.find();
+    Ads.forEach(ad => {   
+        if (now > (ad.ad_expire_date) ) {
+          console.log("codeishere")
+            const updateAd =  Generic.findByIdAndUpdate(ad._id,
+              { $set: { ad_status: "Expired" } },
+                {new: true})
+                .then((res)=>{
+                 res
+                })
+                .catch(e=>e)
 
-// const ScheduleTask = schedule.scheduleJob('*/10 * * * * *', async() => {
-//     const Ads =  Generic.find();
-//     Ads.forEach(ad => {
-//         // console.log(ad.ad_expire_date);
-//         // console.log(now)
-//         if (now > ad.ad_expire_date) {
-//             console.log(ad)
-//             const updateAd =  Generic.findByIdAndUpdate(ad._id,
-//                 {
-//                     $set: {
-//                         ad_status: "Expired",
-//                         // updated_date: moment().format('DD-MM-YY HH:mm:ss'),
-//                     },
-//                 },
-//                 {
-//                     new: true
-//                 });
+        }
 
-//         }
-//         else {
-//             console.log('Ad is not Expired!');
-//         }
-//     });
-// });
+    });
+});
+  setInterval(()=>{
+    ScheduleTask.start()
+  },1000)
 
-// module.exports = ScheduleTask;
+module.exports = ScheduleTask;

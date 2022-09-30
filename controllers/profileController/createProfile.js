@@ -54,3 +54,4 @@ exports.createProfile = async function (req, res) {
     console.log(newUsr);
   } catch (error) {}
 };
+

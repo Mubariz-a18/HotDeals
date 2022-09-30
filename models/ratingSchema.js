@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const ratingSchema = mongoose.Schema({
     user_id: mongoose.Types.ObjectId,
+    average_rating:Number,
     RatingInfo: [{
         _id:false,
         rating: Number,
