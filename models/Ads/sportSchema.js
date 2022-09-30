@@ -20,7 +20,7 @@ const sportSchema = mongoose.Schema({
     type: String,
   },
 
-  //commo fields
+  //common fields
   special_mention: [
     {
       type: String,

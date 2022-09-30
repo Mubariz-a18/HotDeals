@@ -3,10 +3,12 @@ const Analytics = require("../models/Analytics");
 
 module.exports = class GlobalSearchService {
     static async getGlobalSearch(seachKeyword1, seachKeyword2, user_ID) {
+
         const result = await GlobalSearch.find({
             $text: { $search: `${seachKeyword1},${seachKeyword2}` },
         });
         return result;
+        
     }
 
     static async createAnalyticsKeyword(seachKeyword1, seachKeyword2, user_ID) {

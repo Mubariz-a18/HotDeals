@@ -2,6 +2,8 @@ const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
 
 module.exports = class HelpService {
+
+  // Create Help 
   static async createHelp(bodyData, userId) {
       const findUser = await Profile.findOne({ _id: userId });
       if (findUser) {
@@ -28,6 +30,7 @@ module.exports = class HelpService {
       }
   }
 
+  // Delete Help
   static async deleteHelp(bodyData, userId) {
     const helpID = bodyData.helpID;
     const findUsr = await Profile.findOne({

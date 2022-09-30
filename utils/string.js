@@ -1,5 +1,4 @@
-const Profile = require('../models/Profile/Profile')
-
+// Captializing firstLetters
 function capitalizeFirstLetter(string) {
   if (string === undefined || string === null) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -7,8 +6,6 @@ function capitalizeFirstLetter(string) {
 
 async function getSelectionData(profileData) {
   let tempProfileData = { ...profileData };
-  // console.log("here:" + tempProfileData)
-  // delete tempProfileData["fcmToken"];
   let seeProfileData = {};
 
   Object.keys(tempProfileData).map((profileKey) => {

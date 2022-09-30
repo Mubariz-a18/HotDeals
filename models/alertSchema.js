@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const alertSchema = mongoose.Schema(
   {
-    user_id: {
+    user_ID: {
       type: mongoose.Schema.Types.ObjectId,
     },
     category: {

@@ -2,7 +2,6 @@ var express = require("express");
 var app = express();
 var http = require("http").Server(app);
 var io = require("socket.io")(http);
-const moment = require("moment-timezone");
 
 const Message = require("../models/message");
 exports.postMessageController = async function (req, res) {

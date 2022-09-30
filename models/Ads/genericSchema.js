@@ -1,19 +1,21 @@
-const { boolean } = require("joi");
 const mongoose = require("mongoose");
 
 const genericSchema = mongoose.Schema({
+    user_id: {
+        type: mongoose.Types.ObjectId,
+    },
     category: {
         type: String,
     },
     sub_category: {
         type: String,
     },
-    field: {
-        type: Array,
-        default: [],
-    },
     description: {
-        type: String,
+    type: String,
+    },
+    SelectFields : { 
+        type: Object,
+        default:{}
     },
     special_mention: [
         {
@@ -31,36 +33,17 @@ const genericSchema = mongoose.Schema({
         type: Array,
         default: [],
     },
-    ad_present_location: {
-        type: Array,
-        default: [],
+    ad_present_location:{
+        type: {type:String} ,
+        coordinates: [],
     },
     ad_posted_location: {
-        type: Array,
-        default: [],
-    },
-
-    reported: {
-        type: Boolean,
-        default: false,
-    },
-    reported_ad_count: {
-        type: Number,
-    },
-    reported_by: {
-        user_id: {
-            type: String,
-        },
-        reason: {
-            type: String,
-        },
-        report_date: {
-            type: String,
-        },
+        type: {type:String} ,
+        coordinates: [],
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft","Expired"],
+        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft", "Expired"],
         default: "Selling"
     },
     ad_type: {
@@ -70,6 +53,7 @@ const genericSchema = mongoose.Schema({
     ad_expire_date: {
         type: String,
     },
+
     ad_promoted: {
         type: String,
     },
@@ -94,29 +78,28 @@ const genericSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    is_reposted:{
+    is_reposted: {
         type: Boolean,
         default: false
     },
-    loc: {
-        type: { type: String },
-        coordinates: [],
+    isPrime:{
+        type:Boolean,
+        default:false
     },
-    saved: {
-        type: Number
-    },
-    views: {
-        type: Number
-    },
+    // loc: {
+    //     type: String ,
+    //     coordinates: [],
+    // },
+
     created_at: {
-        type: String,
+        type: Date,
     },
     updated_at: {
         type: String
     },
 });
 
-genericSchema.index({ category: "text", sub_category: "text", loc: "2dsphere" });
+genericSchema.index({ category: "text", sub_category: "text", ad_posted_location: "2dsphere" });
 genericSchema.index({ created_at: 1 }, { expireAfterSeconds: 30, partialFilterExpression: { ad_status: 'EXPIRED' } })
 const Generic = mongoose.model("Generic", genericSchema,);
 

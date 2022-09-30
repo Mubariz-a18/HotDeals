@@ -1,25 +1,7 @@
+
 const mongoose = require("mongoose");
 
-// const AdSchema = mongoose.Schema({
-//   category: {
-//     type: String,
-//     reqired: true,
-//   },
-//   sub_category: {
-//     type: String,
-//     required: true,
-//   },
-// });
-// const Ad = mongoose.model('Ad',AdSchema);
-
 const profileSchema = mongoose.Schema({
-  // userID: {
-  //   type: String,
-  //   required: true,
-  // },
-  _id:{
-    type:String
-  },
   name: {
     type: String,
   },
@@ -159,28 +141,41 @@ const profileSchema = mongoose.Schema({
     default: false,
   },
   profile_url: {
-    type: String,
+    type: Array
   },
   help_center: [
     {
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  follower_info: {
-    type: Array
+  followers:  Array
+  ,
+  followings: Array,
+  isVerified:{
+    type:Boolean,
+    default:false
   },
-  following_info: {
-    type: Array
+  rate_count: {
+    type: Number,
+    default: 0
+  },
+  // rate_value: {
+  //   type: Number,
+  //   default: 0
+  // },
+  rate_average: {
+    type: Number,
+    default: 0
   },
   fcmToken: {
     type: String,
     default: "",
   },
-  created_date:{
-    type:String
+  created_date: {
+    type: String
   },
-  updated_date:{
-    type:String
+  updated_date: {
+    type: String
   }
 },
 );
