@@ -1,4 +1,3 @@
-var multer = require("multer");
 const ProfileService = require("../../services/ProfileService");
 
 module.exports = class ProfileController {
