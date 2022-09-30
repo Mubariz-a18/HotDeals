@@ -141,7 +141,7 @@ const profileSchema = mongoose.Schema({
     default: false,
   },
   profile_url: {
-    type: Array
+    type: String
   },
   help_center: [
     {

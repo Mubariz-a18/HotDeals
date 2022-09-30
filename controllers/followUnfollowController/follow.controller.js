@@ -7,8 +7,6 @@ module.exports = class FollowController {
     static async apiFollowUser(req, res, next) {
         try {
             // console.log("inside Follow Controller:" + req.user_ID);
-            const followerId = req.user_ID;
-
             const followUser = await FollowUnfollowService.followUser(req, req.body, req.user_ID);
             console.log(followUser)
             if(followUser){
@@ -20,13 +18,11 @@ module.exports = class FollowController {
             }else {
                 return res.send("user not found")
             }
-
         } catch (error) {
             return res.status(500).send({ error: "User Follow Failed" });
 
         }
     }
-
 
     //Unfollow Existing User
     static async apiUnfollowUser(req,res,next){
@@ -46,7 +42,6 @@ module.exports = class FollowController {
 
         }
     }
-
 
     //Give Ratings to a User
     static async apiRatingUser(req,res,next){
