@@ -43,7 +43,8 @@ module.exports = class HomeService {
             'ad_type': 1,
             'ad_expire_date': 1,
             'ad_promoted': 1,
-            'isPrime': 1
+            'isPrime': 1 ,
+            "loc":1
           }
         },
         {
