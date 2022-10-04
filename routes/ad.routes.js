@@ -16,3 +16,4 @@ router.post('/api/v1/deleteAd',verifyToken,AdController.apiDeleteAds);
 router.post('/api/v1/get-particular-ad-details',verifyToken,AdController.apiGetParticularAdDetails);
 
 module.exports = router;
+ 

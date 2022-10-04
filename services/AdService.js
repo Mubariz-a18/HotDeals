@@ -2,33 +2,30 @@ const Profile = require("../models/Profile/Profile");
 const GlobalSearch = require("../models/GlobalSearch");
 const Generic = require("../models/Ads/genericSchema")
 const ObjectId = require('mongodb').ObjectId;
+const {track} = require('../services/mixpanel-service.js');
+const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 
-// Moment is used for Date format ,current date ,or Specific Periods of time
-var moment = require('moment');
-moment().format()
-var currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-
-var DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
-console.log(DateAfter30Days)
-
-var now = moment().format('YYYY-MM-DD HH:mm:ss');;
-if (now > DateAfter30Days) {
-  console.log("PAST")
-} else {
-  console.log("FUTURE")
-}
-
+const {currentDate,DateAfter30Days} = require("../utils/moment");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    console.log("Inside Ad Service", bodyData);
-
+    console.log(bodyData.ad_posted_location.coordinates[0] , bodyData.ad_posted_location.coordinates[1])
     const findUsr = await Profile.findOne({
       _id: ObjectId(userId)
     })
 
     if (findUsr) {
+      //mix panel set 
+
+      await mixpanel.people.set(userId, {
+        $first_name: findUsr.name,
+        $last_name: '',
+        $email:findUsr.email.text,
+        $created: (new Date()).toISOString()
+    }, {
+      $ip: '127.0.0.1'
+  });
       if (bodyData.ad_id) {
         const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
           {
@@ -63,6 +60,15 @@ module.exports = class AdService {
           updated_at: currentDate,
           loc: bodyData.loc,
         });
+        // mixpanel track
+        await track('Ad creation succeed', { 
+          category: bodyData.category,
+          distinct_id: adDoc._id ,
+          $latitude: bodyData.ad_posted_location.coordinates[1],
+          $longitude: bodyData.ad_posted_location.coordinates[0],
+        })
+
+
 
         const updateMyAdsInUser = await Profile.findByIdAndUpdate({_id:userId},{
           $push :{
@@ -78,7 +84,6 @@ module.exports = class AdService {
           title: bodyData.title,
           description: bodyData.description,
         });
-
         return adDoc["_doc"];
       }
     }
@@ -158,7 +163,13 @@ module.exports = class AdService {
           }
         },
       ]);
+      // mixpanel track 
+      await track('get my ads', { 
+        distinct_id: userId,
+        $ip:"127.0.0.1"
+      })
       return myAdsDocs;
+      
     }
     else {
       res.send({
@@ -208,6 +219,15 @@ module.exports = class AdService {
             { $set: { ad_status: "PREMEIUM" } }
           )
           console.log("AD Status Changed" + adDoc);
+         
+      // mixpanel track 
+      await track('ad status changed', { 
+        distinct_id: userId,
+        ad_id:ad_id,
+        status : bodyData.status,
+        $ip:"127.0.0.1"
+      })
+
           return adDoc;
         }
       }
@@ -229,45 +249,57 @@ module.exports = class AdService {
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
     console.log("I'm inside Favourite Ads!!")
-    console.log(bodyData, userId, ad_id)
+    const findUsr = Profile.findOne({_id:userId});
 
-    // Ad is find from Generics collection
-    //if body contains "Favourite"
-    if (bodyData.value == "Favourite") {
-      const findAd = await Generic.findOne({
-        _id: ad_id
+
+    if (findUsr) {
+      await track('Make Ad favourite ', {
+        distinct_id: userId,
+        ad_id: ad_id,
+        $ip: "127.0.0.1"
       })
-      if (findAd) {
-        //Ad _id is pushed in user`s profile (faviourite_ads)
-        const makeFavAd = await Profile.findOneAndUpdate(
+      // Ad is find from Generics collection
+      //if body contains "Favourite"
+      if (bodyData.value == "Favourite") {
+        const findAd = await Generic.findOne({
+          _id: ad_id
+        })
+        if (findAd) {
+          //Ad _id is pushed in user`s profile (faviourite_ads)
+          const makeFavAd = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $push: { favourite_ads: { _id: ad_id } } },
+            { new: true }
+          )
+          const updateAd = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $inc: { saved: 1 } }
+          )
+
+          return makeFavAd;
+        }
+      }
+      // Ad is find from Generics collection
+      //if body contains "UnFavourite"
+      //Ad _id is removed from  user`s profile (faviourite_ads)
+      else if (bodyData.value == "Unfavourite") {
+        const makeUnFavAd = await Profile.findOneAndUpdate(
           { _id: userId },
-          { $push: { favourite_ads: { _id: ad_id } } },
+          { $pull: { favourite_ads: ad_id } },
           { new: true }
-        )
+        );
+
+        // Generic collection is also updated with the count of saved favourite ads
         const updateAd = await Generic.findByIdAndUpdate(
           { _id: ad_id },
-          { $inc: { saved: 1 } }
+          { $inc: { saved: -1 } }
         )
-        return makeFavAd;
+        return makeUnFavAd;
       }
+    } else {
+      console.log('unauthorized')
     }
-    // Ad is find from Generics collection
-    //if body contains "UnFavourite"
-    //Ad _id is removed from  user`s profile (faviourite_ads)
-    else if (bodyData.value == "Unfavourite") {
-      const makeUnFavAd = await Profile.findOneAndUpdate(
-        { _id: userId },
-        { $pull: { favourite_ads: ad_id } },
-        { new: true }
-      );
 
-      // Generic collection is also updated with the count of saved favourite ads
-      const updateAd = await Generic.findByIdAndUpdate(
-        { _id: ad_id },
-        { $inc: { saved: -1 } }
-      )
-      return makeUnFavAd;
-    }
   }
 
 
@@ -322,6 +354,12 @@ module.exports = class AdService {
             { $pull: { my_ads: ad_id } },
             { new: true }
           );
+          await track(' ad removed', { 
+            distinct_id: userId,
+            ad_id:ad_id
+          })
+    
+          mixpanel.people.increment(userId, 'ad removed');
           return remove_my_ad;
         }
 
@@ -360,6 +398,14 @@ module.exports = class AdService {
         { $inc: { views: 1 } },
         { new: true }
       )
+      // mix panel tack 
+
+      await track('viewed ad', { 
+        distinct_id: userId,
+        ad_id:ad_id
+      })
+
+      mixpanel.people.increment(userId, 'views particular ad');
       return findAd;
     }
   }
