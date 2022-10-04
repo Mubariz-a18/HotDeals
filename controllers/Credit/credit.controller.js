@@ -5,11 +5,11 @@ module.exports = class CreditController {
   // Create Credit 
   static async apiCreateCredit(req, res, next) {
     try {
-      const creditData = await CreditService.createCredit(req.body,  req.user_ID);
+      const creditDoc = await CreditService.createCredit(req.body,  req.user_ID);
       if (creditData) {
         res.status(200).send({
           message: "Success",
-          data: creditData,
+          data: creditDoc,
         });
       } else {
         res.status(400).json({ error: "Something went wrong in controller" });

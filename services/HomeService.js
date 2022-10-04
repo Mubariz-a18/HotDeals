@@ -1,5 +1,6 @@
 const generics = require('../models/Ads/genericSchema')
-const profiles = require('../models/Profile/Profile')
+const profiles = require('../models/Profile/Profile');
+const { track } = require('./mixpanel-service');
 module.exports = class HomeService {
 
   // Get Home - Using Aggregation and GeoNear 
@@ -89,6 +90,11 @@ module.exports = class HomeService {
         }
       ]
     ])
+    await track('home page ', { 
+      distinct_id:new Date(),      
+      $latitude: +lat,
+      $longitude: +lng,
+    })
     console.log(ads , ads.length)
     return ads;
   };

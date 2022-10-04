@@ -1,7 +1,8 @@
 const Profile = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 const ObjectId = require('mongodb').ObjectId;
-const currentDate = require('../utils/moment')
+const currentDate = require('../utils/moment');
+const { track } = require("./mixpanel-service");
 
 module.exports = class FollowUnfollowService {
   static async followUser(res,bodyData, userId) {
@@ -35,6 +36,12 @@ module.exports = class FollowUnfollowService {
                     const followInfo = {
                         user_followed, user_update
                     }
+                        track("user followed",{
+                            distinct_id : userId,
+                            message:`${dbUser.name} followed ${user_followed.name}`,
+                            userfollowed : bodyData.following_id 
+                        })
+
                     return (followInfo)
                 } else {
                     return ({

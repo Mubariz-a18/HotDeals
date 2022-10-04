@@ -5,12 +5,14 @@ const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
 const Profile = require("../../models/Profile/Profile");
+const { track } = require("../../services/mixpanel-service");
+const mixpanel = require("mixpanel");
 
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
-    const { phoneNumber } = req.body;
+    const { phoneNumber } = req.body; 
     console.log(phoneNumber);
 
     try {
@@ -30,6 +32,10 @@ module.exports = class AuthController {
             statusCode:200,
             message: "OTP Sent Successfully",
           });
+          await track("otp sent successfull", {
+            distinct_id: phoneNumber.text,
+          })
+          mixpanel.people.increment(userID, 'views particular ad');
         } else {
           res.status(400).json({
             message: msgResponse.data,
@@ -61,7 +67,12 @@ module.exports = class AuthController {
           // If user exists
           const userID = oldUser["_id"];
           const token = createJwtToken(userID, phoneNumber.text);
-  
+         
+          await track("login successfull",{
+          distinct_id:userID,
+          })
+          mixpanel.people.increment(userID , 'login successfull');
+          
           return res.status(200).json({
             message: "success",
             statusCode:200,
@@ -92,6 +103,10 @@ module.exports = class AuthController {
         statusCode:401
       });
     } catch (error) {
+       await track("login unsuccessfull",{
+        distinct_id:phoneNumber,
+        })
+        mixpanel.people.increment(phoneNumber , 'login unsuccessfull');
       console.log("errorInVerifyingOTP: ", error);
       return res.status(400).send(error);
     }

@@ -23,23 +23,7 @@ module.exports = class OtpService {
     };
   
 
-  static async generateEmailOtpAndCreateDocument(email){
-    console.log(email)
-    const otpDoc = await OtpModel.findOne({
-      email:email,
-    });
-    if (otpDoc) {
-      return otpDoc;
-    }
-    else {
-      const otp = generateOTP(6);
-      console.log(otp)
-      return await OtpModel.create({
-        otp,
-        email,
-      });
-    };
-  }
+
 
   //Verify Otp and Delete Document 
   static async verifyOTPAndDeleteDocument(phoneNumber, otp) {
@@ -51,7 +35,7 @@ module.exports = class OtpService {
     
     // Deleting Doc
     if (otpDoc) {
-      if (phoneNumber !== "+919381062923") {
+      if (phoneNumber) {
         await OtpModel.deleteOne({
           phoneNumber,
           otp,

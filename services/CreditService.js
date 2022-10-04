@@ -12,12 +12,7 @@ module.exports = class CreditService {
         console.log(bodyData,userId);
         const newCredit = await  Credit.create({
           user_id: userId,
-          credit_type: bodyData.credit_type,
-          transcation_id: bodyData.transcation_id,
-          purchase_mode: bodyData.purchase_mode,
-          purchase_date: bodyData.purchase_date,
-          expiray_date: bodyData.expiray_date,
-          activate_status: bodyData.activate_status,
+         
         });
         console.log(newCredit);
         return newCredit;
