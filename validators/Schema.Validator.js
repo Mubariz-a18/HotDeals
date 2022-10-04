@@ -24,16 +24,16 @@ let complainSchema = Joi.object()
   .options({ allowUnknown: true });
 
 //Credit Schema Validation
-let creditSchema = Joi.object()
-  .keys({
-    credit_type: Joi.string().required(),
-    transcation_id: Joi.string().required(),
-    purchase_mode: Joi.string().required(),
-    purchase_date: Joi.string().required(),
-    expiray_date: Joi.string().required(),
-    activate_status: Joi.string().required(),
-  })
-  .options({ allowUnknown: true });
+// let creditSchema = Joi.object()
+//   .keys({
+//     credit_type: Joi.string().required(),
+//     transcation_id: Joi.string().required(),
+//     purchase_mode: Joi.string().required(),
+//     purchase_date: Joi.string().required(),
+//     expiray_date: Joi.string().required(),
+//     activate_status: Joi.string().required(),
+//   })
+//   .options({ allowUnknown: true });
 
 //Message Schema Validation
 let message = Joi.object().keys({
@@ -75,7 +75,7 @@ const genericSchema = Joi.object({
 module.exports = {
   alertSchema,
   complainSchema,
-  creditSchema,
+  // creditSchema,
   helpCenterSchema,
   getOTPSchema,
   verifyOTPSchema,

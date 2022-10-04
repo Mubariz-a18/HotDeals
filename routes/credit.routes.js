@@ -7,6 +7,6 @@ const CreditController = require('../controllers/Credit/credit.controller')
 
 
 //Credit Route
-router.post('/api/createCredit',verifyToken,Validator("CreditValidator"),CreditController.apiCreateCredit);
+router.post('/api/createCredit',verifyToken,CreditController.apiCreateCredit);
 
 module.exports = router;
