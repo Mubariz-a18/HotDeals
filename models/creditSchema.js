@@ -1,30 +1,72 @@
 const mongoose = require("mongoose");
 
 const creditSchema = mongoose.Schema({
-  user_id: [
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
+  free_credits_info: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-  ],
-  credit_type: {
-    type: String,
-    default: "premium",
+              count:{
+                type:Number,
+              },
+              status:{
+                type:String,
+                enum: ['Available', "Expired"]
+              },
+              allocation: {
+                type: String,
+                enum: ["Admin","referral"],
+              },
+              referral_Id :{
+                type: mongoose.Schema.Types.ObjectId,
+              },
+              expires_on: {
+                type:String
+              },
+              allocated_on:{
+                type:String
+              }
+  }
+],
+  premium_credit_info:[
+    {
+              count:{
+                type:Number,
+              },
+              transaction_Id:{
+                type:mongoose.Schema.Types.ObjectId
+              },
+              purchaseDate:{
+                type:String
+              },
+              expires_on:{
+                type:String
+              }
+  }
+],
+  available_free_credits :{
+              type : Number
   },
-  transcation_id: {
-    type: String,
+  available_premium_credits :{
+              type : Number
   },
-  purchase_mode: {
-    type: String,
-  },
-  purchase_date: {
-    type: Date,
-  },
-  expiray_date: {
-    type: Date,
-  },
-  activate_status: {
-    type: Boolean,
-  },
+  credit_usage : [
+  {
+              type_of_credit: {
+                type: String,
+                enum: ["free", "premium"]
+              },
+              expires_on: {
+                type: String
+              },
+              credited_on: {
+                type: String
+              },
+              category: {
+                type: String
+              }
+  }
+  ]
 });
 
 const Credit = mongoose.model("Credit", creditSchema);
