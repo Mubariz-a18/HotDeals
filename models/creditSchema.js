@@ -17,11 +17,14 @@ const creditSchema = mongoose.Schema({
               },
               status:{
                 type:String,
-                enum: ['Available', "Expired"]
+                enum: ['Available', "Expired" , "Active"]
+              },
+              duration:{
+                type:Number,
               },
               allocation: {
                 type: String,
-                enum: ["Admin","referral"],
+                enum: ["Admin","Referral"],
               },
               referral_code:{
                 type:String,
@@ -29,10 +32,16 @@ const creditSchema = mongoose.Schema({
               referral_Id :{
                 type: mongoose.Schema.Types.ObjectId,
               },
+              activationDate:{
+                type:String
+              },
               expires_on: {
                 type:String
               },
               allocated_on:{
+                type:String
+              },
+              credits_expires_on:{
                 type:String
               }
   }
@@ -42,13 +51,26 @@ const creditSchema = mongoose.Schema({
               count:{
                 type:Number,
               },
+              status:{
+                type:String,
+                enum: ['Available', "Expired" , "Active"]
+              },
+              duration:{
+                type:Number,
+              },
               transaction_Id:{
                 type:String
               },
               purchaseDate:{
                 type:String
               },
+              activationDate:{
+                type:String
+              },
               expires_on:{
+                type:String
+              },
+              credits_expires_on:{
                 type:String
               }
   }
@@ -57,7 +79,7 @@ const creditSchema = mongoose.Schema({
   {
               type_of_credit: {
                 type: String,
-                enum: ["free", "premium"]
+                enum: ["Free", "Premium"]
               },
               count:{
                 type: Number
