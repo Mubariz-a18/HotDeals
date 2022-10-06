@@ -90,8 +90,13 @@ module.exports = class HomeService {
         }
       ]
     ])
+    var digits = "0123456789";
+    let id = "";
+    for (let i = 0; i < 10; i++) {
+      id += digits[Math.floor(Math.random() * 10)];
+    }
     await track('home page ', { 
-      distinct_id:new Date(),      
+      distinct_id: id ,      
       $latitude: +lat,
       $longitude: +lng,
     })

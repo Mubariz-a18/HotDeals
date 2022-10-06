@@ -1,5 +1,7 @@
 const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
+const { track } = require('./mixpanel-service');
+ 
 
 module.exports = class HelpService {
 
@@ -16,7 +18,10 @@ module.exports = class HelpService {
           attachment: bodyData.attachment,
           message: msg,
         });
-
+        await track('help created ', { 
+          distinct_id : userId,
+          helpID: newCmpln._id
+        });
         const updateUSer = await Profile.findOneAndUpdate({
           _id:userId
         },
@@ -25,7 +30,6 @@ module.exports = class HelpService {
             help_center:newCmpln._id
           }
         })
-
         return newCmpln;
       }
   }
@@ -33,6 +37,7 @@ module.exports = class HelpService {
   // Delete Help
   static async deleteHelp(bodyData, userId) {
     const helpID = bodyData.helpID;
+
     const findUsr = await Profile.findOne({
       _id: userId
     })
@@ -40,12 +45,17 @@ module.exports = class HelpService {
       const findHelp = await Help.findOne({
         _id: helpID
       })
+      console.log(findHelp)
       if (findHelp) {
         const deleteHelp = await Profile.findOneAndUpdate(
           { _id: userId },
           { $pull: { help_center: helpID } },
           { new: true }
-        )
+        );
+        await track('help deleted ', { 
+          distinct_id : userId,
+          helpID: helpID
+        });
         return deleteHelp;
       }
       else {

@@ -1,5 +1,6 @@
 const Profile = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
+const { track } = require("./mixpanel-service");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class AlertService {
@@ -27,7 +28,12 @@ module.exports = class AlertService {
           },
         },
       });
-
+      await track('alert created ', { 
+        distinct_id: userId,
+        category: bodyData.category,
+        sub_category: bodyData.sub_category,
+        keyword: bodyData.keyword,
+      })
       return alertDoc;
     }
     else{
@@ -46,8 +52,11 @@ module.exports = class AlertService {
         console.log(user.alert.length , bodyData._id , ".......")
         for (let i = 0 ;i<=user.alert.length ;i++){
           if(user.alert[i]== bodyData._id){
-            return user.alert[i] , 
-           myAlert;
+            
+            await track('get alert ', { 
+              distinct_id: bodyData._id,
+            })
+            return user.alert[i] , myAlert;
           }
         }
       } else {
@@ -76,6 +85,9 @@ module.exports = class AlertService {
             activate_status: bodyData.activate_status,
           },
         }, { new: true })
+        await track('update  alert ', { 
+          distinct_id: alert_id,
+        })
         return updateAds;
       }
     } catch (e) {
@@ -94,6 +106,9 @@ module.exports = class AlertService {
           { $pull: { alert: ObjectId(alert_id) } },
           { new: true }
         );
+        await track('delete alert  alert ', { 
+          distinct_id: alert_id,
+        })
         return deleteAlert;
       }
 

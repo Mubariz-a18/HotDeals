@@ -1,7 +1,8 @@
 const User = require("../models/Profile/Profile");
 const Complaint = require("../models/complaintSchema");
 const ObjectId = require('mongodb').ObjectId;
-const currentDate = require('../utils/moment')
+const {currentDate} = require('../utils/moment');
+const { track } = require("./mixpanel-service");
 
 module.exports = class ComplainService {
 
@@ -49,6 +50,10 @@ module.exports = class ComplainService {
           user_id: userId,
           complaint: complaint,
   
+        });
+        await track('create complain', { 
+          distinct_id: createcomplaint._id,
+          reason: bodyData.complaint.reason,
         })
         return createcomplaint
       }
@@ -81,6 +86,10 @@ module.exports = class ComplainService {
         },
         {new: true }
       )
+      await track('update complain', { 
+        distinct_id: updatecomplaintDoc._id,
+        reason: bodyData.complaint.reason
+      })
       return updatecomplaintDoc;
     }
   }
