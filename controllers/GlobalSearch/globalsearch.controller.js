@@ -5,7 +5,7 @@ module.exports = class GlobalSearchController {
             const seachKeyword1 = req.query.category;
             const seachKeyword2 = req.query.sub_category;
             const searchResult = await GlobalSearchService.getGlobalSearch(seachKeyword1, seachKeyword2, req.user_ID);
-            console.log(searchResult.length);
+            console.log(searchResult);
             if (searchResult.length !== 0) {
                 res.status(200).send({
                     message: "Successfull",
@@ -14,6 +14,7 @@ module.exports = class GlobalSearchController {
             }
             else {
                 const createAnalytics = await GlobalSearchService.createAnalyticsKeyword(seachKeyword1, seachKeyword2, req.user_ID);
+                console.log(createAnalytics)
                 res.status(200).send({
                     message: "Keywords Successfully Stored!"
                 })

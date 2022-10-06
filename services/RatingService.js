@@ -1,6 +1,6 @@
 const User = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
-const currentDate = require("../utils/moment");
+const {currentDate} = require("../utils/moment");
 
 module.exports = class RatingService {
   // creating a new Rating document for a particular user
@@ -11,7 +11,9 @@ module.exports = class RatingService {
         _id: userId,
       });
       if (user) {
+        
         // If the array of Rating Info Dosn not contain any ratings create a new object
+        
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
         if (!alreadyexist) {
           const ratDoc = await Rating.create({

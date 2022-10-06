@@ -2,41 +2,34 @@ const mongoose = require("mongoose");
 const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
+const { track } = require("./mixpanel-service");
 
 var moment = require('moment');
 moment().format();
 
 const now = moment().format('YYYY-MM-DD HH:mm:ss');
 
-console.log("Herer" + now);
-
-
 module.exports = class ProfileService {
   // DB Services to Create a Profile
   static async createProfile(bodyData, userID, phoneNuber) {
 
-    //checking if profile already exists
-    console.log("inside profile service" + bodyData);
+    //checking if profile already exist
     let profileDoc = await User.findOne({
       userNumber: phoneNuber,
     });
-
-
+    console.log(userID)
     if (profileDoc) {
-      console.log(userID)
 
       const userProfile = await Profile.findOne({
         _id: userID,
       });
-      console.log("Here" + userProfile)
       if (!userProfile) {
-        let email = bodyData.email;
-        let user_type = bodyData.user_type;
-        let city = bodyData.city;
-        let about = bodyData.about;
-        let contactNumber = {
-          text: profileDoc.userNumber
-        }
+        let email = bodyData.text.email;
+        let user_type = bodyData.text.user_type;
+        let city = bodyData.text.city;
+        let about = bodyData.text.about;
+        let contactNumber = profileDoc.userNumber
+        
         // Creating Profile
         const profileDoc1 = await Profile.create({
           _id: userID,
@@ -62,6 +55,11 @@ module.exports = class ProfileService {
 
         const createDefaultRating = await Rating.create({
           user_id: profileDoc1._id,
+        });
+
+        await track('New Profile Created ', { 
+          distinct_id : profileDoc1._id ,
+          $email :  profileDoc.email.text
         });
 
         return profileDoc1;
@@ -104,6 +102,10 @@ module.exports = class ProfileService {
         },
       ]);
 
+      await track('User searched  ', { 
+        distinct_id : user_ID ,
+      });
+
       return profileData;
     } else {
     }
@@ -135,6 +137,10 @@ module.exports = class ProfileService {
         new: true
       }
     );
+    await track('User Profile updated  ', { 
+      distinct_id : userId ,
+      $email: bodyData.email
+    });
     return updateUsr;
   }
 };

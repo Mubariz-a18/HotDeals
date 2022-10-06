@@ -84,6 +84,12 @@ module.exports = class AdService {
           title: bodyData.title,
           description: bodyData.description,
         });
+        await track('global search keywords', { 
+          category: bodyData.category,
+          distinct_id: createGlobalSearch._id ,
+          category: bodyData.category,
+          sub_category: bodyData.sub_category,  
+        })
         return adDoc["_doc"];
       }
     }
@@ -165,8 +171,7 @@ module.exports = class AdService {
       ]);
       // mixpanel track 
       await track('get my ads', { 
-        distinct_id: userId,
-        $ip:"127.0.0.1"
+        distinct_id: userId
       })
       return myAdsDocs;
       
@@ -224,8 +229,7 @@ module.exports = class AdService {
       await track('ad status changed', { 
         distinct_id: userId,
         ad_id:ad_id,
-        status : bodyData.status,
-        $ip:"127.0.0.1"
+        status : bodyData.status
       })
 
           return adDoc;
@@ -255,8 +259,7 @@ module.exports = class AdService {
     if (findUsr) {
       await track('Make Ad favourite ', {
         distinct_id: userId,
-        ad_id: ad_id,
-        $ip: "127.0.0.1"
+        ad_id: ad_id
       })
       // Ad is find from Generics collection
       //if body contains "Favourite"
@@ -316,7 +319,10 @@ module.exports = class AdService {
         {
           $match: { _id: { $in: userExist.favourite_ads } }
         },
-      ])
+      ]);
+      await track('get favourite Ads ', {
+        distinct_id: userId
+      })
       return getMyFavAds
     }
     else {
