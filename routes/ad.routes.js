@@ -11,7 +11,7 @@ router.post('/api/createAd',verifyToken,Validator("genericSchemaValidator"),AdCo
 router.get('/api/v1/getMyAds',verifyToken,AdController.apiGetMyAds);
 router.post('/api/vi/changeAdStatus',verifyToken,AdController.apiChangeAdStatus);
 router.post('/api/v1/favouriteAds',verifyToken,AdController.apiFavouriteAds);
-router.post('/api/v1/getFavouriteAds',verifyToken,AdController.apiGetFavouriteAds);
+router.get('/api/v1/getFavouriteAds',verifyToken,AdController.apiGetFavouriteAds);
 router.post('/api/v1/deleteAd',verifyToken,AdController.apiDeleteAds);
 router.post('/api/v1/get-particular-ad-details',verifyToken,AdController.apiGetParticularAdDetails);
 

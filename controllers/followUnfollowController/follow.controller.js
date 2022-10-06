@@ -44,17 +44,17 @@ module.exports = class FollowController {
     }
 
     //Give Ratings to a User
-    static async apiRatingUser(req,res,next){
-        try {
-            const RatingResult = await FollowUnfollowService.RatingToUser(req.body, req.user_ID);
-            if(RatingResult){
-                res.send({
-                    statusCode:"200",
-                    message:"Success"
-                })
-            }
-        } catch (error) {
+    // static async apiRatingUser(req,res,next){
+    //     try {
+    //         const RatingResult = await FollowUnfollowService.RatingToUser(req.body, req.user_ID);
+    //         if(RatingResult){
+    //             res.send({
+    //                 statusCode:"200",
+    //                 message:"Success"
+    //             })
+    //         }
+    //     } catch (error) {
             
-        }
-    }
+    //     }
+    // }
 }

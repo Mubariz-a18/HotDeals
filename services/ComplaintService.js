@@ -10,6 +10,9 @@ module.exports = class ComplainService {
   static async createComplaint(bodyData, userId) {
     console.log("Inside Complain Service");
     const user = await User.findOne({ _id: userId });
+
+    // if user is verified new complain doc is created 
+
     if (user) {
       const complaint = {
         complaint_id: ObjectId(),
@@ -23,6 +26,7 @@ module.exports = class ComplainService {
         _id : bodyData._id
       })
       if (findComplaint) {
+        // if complain doc is already created push another complain in the complaint array 
         console.log("inside complain " + findComplaint._id)
         const pushCmpln = await Complaint.findOneAndUpdate(
           { _id: ObjectId(bodyData._id) },
@@ -40,7 +44,11 @@ module.exports = class ComplainService {
           },
           { safe: true, upsert: true, new: true },
         )
-        console.log(pushCmpln)
+        // mixpanel create complain  
+        await track('create complaint', { 
+          distinct_id: pushCmpln._id,
+          reason: bodyData.complaint.reason
+        })
         return pushCmpln;
       }
       else {
@@ -51,7 +59,8 @@ module.exports = class ComplainService {
           complaint: complaint,
   
         });
-        await track('create complain', { 
+        // mixpanel create complain 
+        await track('create complaint', { 
           distinct_id: createcomplaint._id,
           reason: bodyData.complaint.reason,
         })
@@ -59,6 +68,12 @@ module.exports = class ComplainService {
       }
     }
     else{
+      // mixpanel failed to create complain
+      await track('failed create complaint', { 
+        distinct_id: userId,
+        reason: bodyData.complaint.reason
+      });
+
       res.send({
         statusCode:200,
         message:"User Not Found"
@@ -71,6 +86,7 @@ module.exports = class ComplainService {
     const complain = await Complaint.findOne({ad_id:ObjectId(bodyData.ad_id)})
     console.log(complain)
     if(user){
+      // if user is verified complain is find and update 
       const updatecomplaintDoc = await Complaint.findOneAndUpdate(
         { ad_id:ObjectId(bodyData.ad_id) },
         {
@@ -86,11 +102,21 @@ module.exports = class ComplainService {
         },
         {new: true }
       )
+      // mix panel tack for updating a complain
       await track('update complain', { 
         distinct_id: updatecomplaintDoc._id,
         reason: bodyData.complaint.reason
-      })
+      });
       return updatecomplaintDoc;
+    }else{
+      // mixpanel track -failed to update complain
+      await track('failed to update complaint', { 
+        distinct_id: updatecomplaintDoc._id,
+        reason: bodyData.complaint.reason
+      })
+      return {
+        message:"user not found"
+      }
     }
   }
 };

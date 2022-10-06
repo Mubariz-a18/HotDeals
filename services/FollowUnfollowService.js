@@ -7,16 +7,17 @@ const { track } = require("./mixpanel-service");
 module.exports = class FollowUnfollowService {
   static async followUser(res,bodyData, userId) {
     try {
+        // finding user if exist
         const dbUser = await Profile.findById({ _id: userId })
         if (dbUser) {
+            // if user exist find user_to_follow 
             const user_to_follow = await Profile.findById({ _id: bodyData.following_id })
             if (user_to_follow) {
-
+                    //if user_to_follow exist -- check if both contains each`s id in following and follow feild
                 const alreadyExistInFollowers = user_to_follow.followers.includes(dbUser._id)
                 const alreadyExistInfollowing = dbUser.followings.includes(bodyData.following_id)
 
-                console.log(alreadyExistInFollowers, alreadyExistInfollowing)
-
+                // if false user_id is pushed inside user_to_follow followers feild
                 if (alreadyExistInFollowers == false && alreadyExistInfollowing == false) {
                     const user_followed = await Profile.findByIdAndUpdate(bodyData.following_id,
                         {
@@ -25,6 +26,7 @@ module.exports = class FollowUnfollowService {
                             }
                         }
                     )
+                    // also user`s following is also updated
                     const user_update = await Profile.findByIdAndUpdate(dbUser._id,
                         {
                             $push: {
@@ -36,6 +38,7 @@ module.exports = class FollowUnfollowService {
                     const followInfo = {
                         user_followed, user_update
                     }
+                    // mix panel track for user folowed
                        await track("user followed",{
                             distinct_id : userId,
                             message:`${dbUser.name} followed ${user_followed.name}`,
@@ -63,6 +66,12 @@ module.exports = class FollowUnfollowService {
         }
     }
     catch (e) {
+            // mix panel track for user folowed
+            await track("user followed",{
+                distinct_id : userId,
+                message:` ${dbUser.name} tried following ${user_followed.name} -- failed `,
+                userfollowed : bodyData.following_id 
+            })
         res.send(e)
     }
 }
@@ -71,13 +80,17 @@ static async UnfollowUser(bodyData, userId) {
     try {
         const dbUser = await Profile.findById({ _id: userId })
         console.log(dbUser)
+         // finding user if exist
         if (dbUser) {
+            // if user exist find user_to_unfollow 
+
             const user_to_unfollow = await Profile.findById({ _id: bodyData.unfollowing_id })
             if (user_to_unfollow) {
-
+                    //if user_to_unfollow exist -- check if both contains each`s id in following and follow feild
                 const alreadyExistInFollowers = user_to_unfollow.followers.includes(dbUser._id)
                 const alreadyExistInfollowing = dbUser.followings.includes(bodyData.unfollowing_id)
-
+               
+                // if true user_id is removed from  user_to_unfollow -  followers feild
                 if (alreadyExistInFollowers == true && alreadyExistInfollowing == true) {
                     const user_unfollowed = await Profile.findByIdAndUpdate(bodyData.unfollowing_id,
                         {
@@ -86,6 +99,7 @@ static async UnfollowUser(bodyData, userId) {
                             }
                         }
                     )
+                    // also user`s following is also updated
                     const user_update = await Profile.findByIdAndUpdate(dbUser._id,
                         {
                             $pull: {
@@ -98,6 +112,7 @@ static async UnfollowUser(bodyData, userId) {
                         user_unfollowed,
                         user_update
                     }
+                    // mix panel track for user unfolowed
                     await track("user unfollowed",{
                         distinct_id : userId,
                         message:`${dbUser.name} unfollowed ${user_unfollowed.name}`,
@@ -117,6 +132,12 @@ static async UnfollowUser(bodyData, userId) {
                 })
             }
         } else {
+            //mixpanel track -- failed to unfollow
+            await track("user failed to followed",{
+                distinct_id : userId,
+                message:`${dbUser.name} tried followed ${user_unfollowed.name} -- failed`,
+                userUnfollowed : bodyData.Unfollowing_id 
+            });
             return ({
                 statusCode: 403,
                 message: "unauthorized"
@@ -124,46 +145,14 @@ static async UnfollowUser(bodyData, userId) {
         }
     }
     catch (e) {
+             //mixpanel track -- failed to unfollow
+              await track("user failed to unfollowed",{
+                 distinct_id : userId,
+                 message:`${dbUser.name} tried unfollowed ${user_unfollowed.name} -- failed`,
+                 userUnfollowed : bodyData.Unfollowing_id 
+             });
         console.log(e.message)
-    }
-}
-  
-
-  // Rating A User
-  static async RatingToUser(bodyData, userId) {
-    console.log("here in f2uf")
-    const findUsr = await Profile.find({
-      _id: userId,
-    })
-    if (findUsr) {
-      const findRatedUsr = await Profile.findOne({
-        user_id: bodyData.rated_user_id
-      })
-      if (findRatedUsr) {
-        console.log(userId)
-        console.log(bodyData.rated_user_id)
-        const findRatedUsr = await Rating.findOneAndUpdate({
-          user_id: bodyData.rated_user_id
-        },
-          {
-            $push: {
-              RatingInfo: {
-                rating: bodyData.rating,
-                rating_given_by: userId,
-                rating_given_date: currentDate,
-                rating_updated_date: currentDate
-              }
-            }
-          }
-        );
-        await track("user rating",{
-            distinct_id : userId,
-            rating_given_to :  bodyData.rated_user_id
-        });
-        return findRatedUsr;
-      }
-    }
-
-  }
+    };
+};
 };
 

@@ -96,7 +96,7 @@ module.exports = class HomeService {
       id += digits[Math.floor(Math.random() * 10)];
     }
     await track('home page ', { 
-      distinct_id: id ,      
+      distinct_id: id ,
       $latitude: +lat,
       $longitude: +lng,
     })
