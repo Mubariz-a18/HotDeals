@@ -6,42 +6,41 @@ module.exports = class HelpController {
   // Create New Help
   static async apiCreateHelp(req, res, next) {
     try {
-      const helpData = await HelpService.createHelp(req.body,req.user_ID);
-      if (helpData) {
+      const { type, message, newCmpln, statusCode } = await HelpService.createHelp(req.body, req.user_ID);
+      if (type !== "Error") {
         res.status(200).send({
           message: "Success",
-          data: helpData,
+          data: newCmpln,
         });
       }
-      else{
+      else {
         res
-        .status(400)
-        .json({ error: "Something went wrong" });
+          .status(statusCode)
+          .json({ message: message });
       }
-    } catch (error) {}
+    } catch (error) {
+      res.send(error.message).status(500)
+    }
   }
 
   // Delete Help
-  static async apiDeleteHelp(req,res,next){
+  static async apiDeleteHelp(req, res, next) {
     try {
-      const deleteHelp = await HelpService.deleteHelp(req.body,req.user_ID);
-      if(deleteHelp){
-        res.send({
-          message:"success",
-          statusCode:"200"
-        })
+      const { type, message, deleteHelp, statusCode } = await HelpService.deleteHelp(req.body, req.user_ID);
+      if (type !== "Error") {
+        res.status(200).send({
+          message: "success"
+        });
       }
-      else{
+      else {
         res.send({
-          error:"Something went wrong in deleting the help api/Bad Request",
-          statusCode:400
-        })
+          message
+        }).status(statusCode)
       }
     } catch (error) {
       res.send({
-        error:"Something went wrong in deleting the help api",
-        statusCode:400
-      })
+        message
+      }).status(statusCode)
     }
   }
 };

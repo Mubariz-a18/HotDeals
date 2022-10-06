@@ -8,6 +8,6 @@ const FollowUnfollowController = require('../controllers/followUnfollowControlle
 // Follow Unfollow  & Ratings Route
 router.post('/user/follow',verifyToken,FollowUnfollowController.apiFollowUser);
 router.post('/user/unfollow',verifyToken,FollowUnfollowController.apiUnfollowUser);
-router.post('/user/rating',verifyToken,FollowUnfollowController.apiRatingUser)
+// router.post('/user/rating',verifyToken,FollowUnfollowController.apiRatingUser)
 
 module.exports = router;

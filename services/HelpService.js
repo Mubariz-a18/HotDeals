@@ -31,27 +31,35 @@ module.exports = class HelpService {
           }
         })
         return newCmpln;
+      }else{
+        return {
+          type: 'Error',
+          message: "user not found",
+          statusCode:403
+        };
       }
   }
 
   // Delete Help
   static async deleteHelp(bodyData, userId) {
     const helpID = bodyData.helpID;
-
+    // create Help doc
     const findUsr = await Profile.findOne({
       _id: userId
-    })
+    });
+    // verify if the user is authorized -- if authorized find help doc with users id
     if (findUsr) {
       const findHelp = await Help.findOne({
         _id: helpID
       })
-      console.log(findHelp)
+      // if helpdoc exists remove helpid from user`s help_center feild
       if (findHelp) {
         const deleteHelp = await Profile.findOneAndUpdate(
           { _id: userId },
           { $pull: { help_center: helpID } },
           { new: true }
         );
+        // mixpanel track -- delete help
         await track('help deleted ', { 
           distinct_id : userId,
           helpID: helpID
@@ -59,17 +67,19 @@ module.exports = class HelpService {
         return deleteHelp;
       }
       else {
-        res.send({
-          message: "No Ad Found!!",
-          statusCode: "404"
-        })
+       return {
+         type:"Error",
+          message: "No helpdoc Found!!",
+          statusCode: 404
+        } 
       }
     }
     else {
-      res.send({
+      return {
+        type:"Error",
         message: "User not found!!",
-        statusCode: "404"
-      })
+        statusCode: 403
+      }
     }
   }
 };

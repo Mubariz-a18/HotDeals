@@ -1,4 +1,6 @@
+const { getAdDetails } = require("../../services/AdService");
 const AdService = require("../../services/AdService");
+const ErrorHandler = require("../../utils/ErrorHandler");
 
 module.exports = class AdController {
   // Ad Created -- data is saved &  retured from AdService  
@@ -7,16 +9,19 @@ module.exports = class AdController {
       console.log("this is the request");
       const adDocument = await AdService.createAd(req.body, req.user_ID);
       // response code is send 
-      res.status(200).send({
-        message: "Ad Successfully created!",
-        statusCode: 200,
-        Ad: adDocument,
-      });
+      if(adDocument){
+        res.status(200).send({
+          message: "Ad Successfully created!",
+          statusCode: 200,
+          Ad: adDocument,
+        });  
+      }
+      
     } catch (error) {
-      console.log(error);
-      res
-        .status(400)
-        .json({ error: "Something went wrong in create Ad API!!" });
+      res.status(400)
+        .json({
+          message: "Something went Wrong try again "
+        });
     }
   }
 
@@ -24,8 +29,9 @@ module.exports = class AdController {
   static async apiGetMyAds(req, res, next) {
     try {
       const getDocument = await AdService.getMyAds(req.user_ID);
+      console.log(getDocument)
       // Response code is send 
-      if (getDocument) {
+      if (!getDocument.message) {
         res.status(200).send({
           message: "success!",
           Selling: getDocument[0].Selling,
@@ -34,15 +40,15 @@ module.exports = class AdController {
         });
       }
       else {
-        res.send({
-          "message": "No  Ads Found!",
-          "statusCode": 400,
+        res.status(400).send({
+          message:getDocument.message
         })
       }
     } catch (error) {
-      res
-        .status(400)
-        .json({ error: "Something went wrong in Get My ADS API!!" });
+      res.status(400)
+        .json({
+          message: "Something went Wrong try again "
+        });
     }
   }
 
@@ -127,19 +133,19 @@ module.exports = class AdController {
   static async apiDeleteAds(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      console.log(ad_id)
-      const deleteAd = await AdService.deleteAds(req.body, req.user_ID, ad_id);
+      const { type, message, statusCode} = await AdService.deleteAds(req.body, req.user_ID, ad_id);
       // Reponse code is sent 
-      if (deleteAd) {
-        res.send({
-          message: 'Ad deleted successfully',
-          statusCode: 200
+      if (type == "sucesss") {
+        res.status(statusCode).send({
+          message
         })
       }
       else {
-        res.send({
-          message: "Something went wrong in deleting Ad API"
-        })
+        res.status(statusCode).send(
+          {
+            message,
+          }
+        )
       }
     } catch (error) {
       res.send({
@@ -152,17 +158,22 @@ module.exports = class AdController {
   static async apiGetParticularAdDetails(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      const getAdDetails = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
+      const { type, findAd, message, statusCode } = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
       // Response is sent 
-      if (getAdDetails) {
+      if (type == "success") {
         res.send({
           message: "success",
           statusCode: 200,
-          AdDetails: getAdDetails
+          AdDetails: findAd
         })
+      }else if(type == "Error"){
+        res.status(statusCode).send({
+          message })
       }
     } catch (error) {
-
+      res.status(500).send({
+        message:"something gone wrong try again"
+      })
     }
   }
 };
