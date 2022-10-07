@@ -52,32 +52,6 @@ module.exports = class AdController {
     }
   }
 
-  // Get Favourite Ads -- Ads are fetched and returned from Adservice 
-  static async apiGetFavouriteAds(req, res, next) {
-    try {
-      console.log("Inside Get Favourite Ads Controller");
-      const getFavDocs = await AdService.getFavouriteAds(req.user_ID);
-      // Response code is sent 
-      if (getFavDocs) {
-        res.send({
-          "message": "success",
-          "statusCode": 200,
-          "FavoriteAds": getFavDocs
-        })
-      }
-      else {
-        res.send({
-          "message": "No Favourite Ads Found!",
-          "statusCode": 400,
-        })
-      }
-    } catch (error) {
-      res
-        .status(400)
-        .json({ error: "Something went wrong in Getting Favourite ADS API!!" });
-    }
-  }
-
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
   static async apiChangeAdStatus(req, res, next) {
     try {
@@ -104,28 +78,56 @@ module.exports = class AdController {
         .json({ error: "Something went wrong in changing the status of AD API!!" });
     }
   }
+
   // Get Favourite Ads-- Ads are fetched  and returned from Adservice to favads
   static async apiFavouriteAds(req, res, next) {
     try {
       const adID = req.body.ad_id;
-      const favAds = AdService.favouriteAds(req.body, req.user_ID, adID);
-      if (favAds) {
-        res.send({
-          message: "Success",
-          statusCode: 200
+      const { type, findAd, message, statusCode } = await  AdService.favouriteAds(req.body, req.user_ID, adID);
+      if ( type !== "Error") {
+        res.status(statusCode).send({
+          message : "success", findAd
         })
       }
       // Reponse code is sent 
       else {
-        res.send({
-          message: "Unable to make Favourite ",
-          statusCode: 400
+        res.status(statusCode).send({
+          message
+        })
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "something went wrong try again "});
+    }
+  }
+
+  // Get Favourite Ads -- Ads are fetched and returned from Adservice 
+  static async apiGetFavouriteAds(req, res, next) {
+    try {
+      console.log("Inside Get Favourite Ads Controller");
+      const {type , message , getMyFavAds , statusCode} = await AdService.getFavouriteAds(req.user_ID);
+      // Response code is sent 
+      if (type !== "Error") {
+        res.status(statusCode).send({
+          "message": message,
+          "FavoriteAds": getMyFavAds
+        })
+      }
+      else if(type == "No Ads"){
+        res.status(statusCode).send({
+          message : message
+        })
+      }
+      else {
+        res.status(statusCode).send({
+          "message": message,
         })
       }
     } catch (error) {
       res
         .status(400)
-        .json({ error: "Something went wrong in making the ads as favourite API!!" });
+        .json({ error: "Something Went Wrong try again" });
     }
   }
 

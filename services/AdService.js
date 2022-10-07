@@ -269,13 +269,9 @@ module.exports = class AdService {
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
     console.log("I'm inside Favourite Ads!!")
-    const findUsr = Profile.findOne({_id:userId});
-
-
-    if (findUsr) {
-
-      // micpanel Track - when Ad is selected for favourite
-
+    const findUser = await Profile.findOne({ _id: userId });
+    if (findUser) {
+      // mixpanel Track - when Ad is selected for favourite
       await track('Make Ad favourite ', {
         distinct_id: userId,
         ad_id: ad_id
@@ -297,41 +293,56 @@ module.exports = class AdService {
             { $inc: { saved: 1 } }
           )
 
-          return makeFavAd;
+          return {
+            type: "success",
+            statusCode: 200,
+            findAd
+          };
         }
       }
       // Ad is find from Generics collection if body contains "UnFavourite"  Ad _id is removed from  user`s profile (faviourite_ads)
-      else if (bodyData.value == "Unfavourite") {
-        const makeUnFavAd = await Profile.findOneAndUpdate(
-          { _id: userId },
-          { $pull: { favourite_ads: ad_id } },
-          { new: true }
-        );
+      else if (bodyData.value == "UnFavourite") {
+        const findAd = await Generic.findOne({
+          _id: ad_id
+        })
+        if (findAd) {
+          const makeUnFavAd = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { favourite_ads: ad_id } },
+            { new: true }
+          );
 
-        // Generic collection is also updated with the count of saved favourite ads
-        const updateAd = await Generic.findByIdAndUpdate(
-          { _id: ad_id },
-          { $inc: { saved: -1 } }
-        )
-        return makeUnFavAd;
+          // Generic collection is also updated with the count of saved favourite ads
+          const updateAd = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $inc: { saved: -1 } }
+          )
+          return {
+            type: "success",
+            statusCode: 200,
+            findAd
+          };
+        }
       }
     } else {
-        if(bodyData.value == 'Favourite'){
-          await track('failed to make ad favourites ', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-        }else {
-          await track('failed to remove ad from favourites ', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-        }
-      console.log('unauthorized')
+      if (bodyData.value == 'Favourite') {
+        await track('failed to make ad favourites ', {
+          distinct_id: userId,
+          ad_id: ad_id
+        })
+      } else {
+        await track('failed to remove ad from favourites ', {
+          distinct_id: userId,
+          ad_id: ad_id
+        })
+      }
+      return {
+        type: "Error",
+        message: "user not found",
+        statusCode: 400
+      }
     }
-
   }
-
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
   static async getFavouriteAds(userId) {
@@ -351,19 +362,34 @@ module.exports = class AdService {
       // mixpanel - when get favourite ads
       await track('get favourite Ads ', {
         distinct_id: userId
-      })
-      return getMyFavAds
+      });
+      
+      if(getMyFavAds.length == 0){
+        return {
+          type:"No Ads",
+          statusCode:200,
+          message:"No Ads found"
+        };
+      }
+      return {
+        type:"success",
+        statusCode:200,
+        getMyFavAds
+      };
     }
     else {
+      // mixpanel track -- failed to get favorite ads
       await track('failed to get favourite Ads ', {
         distinct_id: userId
-      })
-      res.send({
-        statusCode: 400,
-        message: "No User Found"
-      })
-    }
-  }
+      });
+
+      return{ 
+        type:"Error",
+        statusCode: 403,
+        message: "User not Found"
+      };
+    };
+  };
 
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
@@ -463,10 +489,12 @@ module.exports = class AdService {
       })
 
       mixpanel.people.increment(userId, 'views particular ad');
+      
       return {
         type: "success",
         findAd
       };
+
     }else{
       
       // mixpanel get ad detail failed
