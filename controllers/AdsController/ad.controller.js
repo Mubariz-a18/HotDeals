@@ -1,28 +1,31 @@
-const { getAdDetails } = require("../../services/AdService");
 const AdService = require("../../services/AdService");
-const ErrorHandler = require("../../utils/ErrorHandler");
 
 module.exports = class AdController {
   // Ad Created -- data is saved &  retured from AdService  
   static async apiCreateAd(req, res, next) {
     try {
-      console.log("this is the request");
       const adDocument = await AdService.createAd(req.body, req.user_ID);
       // response code is send 
-      if(adDocument){
         res.status(200).send({
           message: "Ad Successfully created!",
           statusCode: 200,
           Ad: adDocument,
-        });  
-      }
-      
-    } catch (error) {
-      res.status(400)
-        .json({
-          message: "Something went Wrong try again "
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
-    }
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Get Ads -- Ads are Fetched and Returned from Adservice 
@@ -31,25 +34,27 @@ module.exports = class AdController {
       const getDocument = await AdService.getMyAds(req.user_ID);
       console.log(getDocument)
       // Response code is send 
-      if (!getDocument.message) {
         res.status(200).send({
           message: "success!",
           Selling: getDocument[0].Selling,
           Archived: getDocument[0].Archived,
           Drafts: getDocument[0].Drafts
         });
-      }
-      else {
-        res.status(400).send({
-          message:getDocument.message
-        })
-      }
-    } catch (error) {
-      res.status(400)
-        .json({
-          message: "Something went Wrong try again "
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
-    }
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
@@ -58,32 +63,31 @@ module.exports = class AdController {
       const ad_id = req.body.ad_id;
       const body = req.body;
       const userId = req.user_ID;
-      const updatedDoc = await AdService.changeAdStatus(body, userId, ad_id);
-      // Reponse code is sent 
-      if (updatedDoc) {
-        res.send({
-          statusCode: 200,
-          updatedAd: updatedDoc
-        })
-      }
-      else {
-        res.send({
-          "message": "Unable to change ad status!",
-          "statusCode": 400,
-        })
-      }
-    } catch (error) {
-      res
-        .status(400)
-        .json({ error: "Something went wrong in changing the status of AD API!!" });
-    }
-  }
+      const updatedAd = await AdService.changeAdStatus(body, userId, ad_id);
+      // Reponse code is sent
+      res.status(200).json({ data: updatedAd })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
 
   // Get Favourite Ads-- Ads are fetched  and returned from Adservice to favads
   static async apiFavouriteAds(req, res, next) {
     try {
       const adID = req.body.ad_id;
-      const { type, findAd, message, statusCode } = await  AdService.favouriteAds(req.body, req.user_ID, adID);
+      const { type, findAd, message, statusCode } = await AdService.favouriteAds(req.body, req.user_ID, adID);
       if ( type !== "Error") {
         res.status(statusCode).send({
           message : "success", findAd
@@ -135,47 +139,49 @@ module.exports = class AdController {
   static async apiDeleteAds(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      const { type, message, statusCode} = await AdService.deleteAds(req.body, req.user_ID, ad_id);
+      await AdService.deleteAds(req.body, req.user_ID, ad_id);
       // Reponse code is sent 
-      if (type == "sucesss") {
-        res.status(statusCode).send({
-          message
-        })
-      }
-      else {
-        res.status(statusCode).send(
-          {
-            message,
+      res.status(200).send({ message: "Ad deleted successfully !" })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
           }
-        )
-      }
-    } catch (error) {
-      res.send({
-        error: error.message
-      })
-    }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
   static async apiGetParticularAdDetails(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      const { type, findAd, message, statusCode } = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
+      const getAdDetails = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
       // Response is sent 
-      if (type == "success") {
-        res.send({
-          message: "success",
-          statusCode: 200,
-          AdDetails: findAd
+        res.status(200).json({
+          AdDetails: getAdDetails
         })
-      }else if(type == "Error"){
-        res.status(statusCode).send({
-          message })
-      }
-    } catch (error) {
-      res.status(500).send({
-        message:"something gone wrong try again"
-      })
-    }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 };
