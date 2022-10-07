@@ -56,6 +56,15 @@ module.exports = class ProfileService {
         const createDefaultRating = await Rating.create({
           user_id: profileDoc1._id,
         });
+        
+       //mix panel set thenew User id with given properties
+       await mixpanel.people.set(userID, {
+         $first_name: profileDoc1.name,
+         $email: profileDoc1.email.text,
+         $created: (new Date()).toISOString()
+       }, {
+         $ip: '127.0.0.1'
+         });
 
         await track('New Profile Created ', { 
           distinct_id : profileDoc1._id ,

@@ -1,63 +1,73 @@
 const Profile = require("../models/Profile/Profile");
 const GlobalSearch = require("../models/GlobalSearch");
-const Generic = require("../models/Ads/genericSchema")
 const ObjectId = require('mongodb').ObjectId;
 const {track} = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
-
 const {currentDate,DateAfter30Days} = require("../utils/moment");
+const Generic = require("../models/Ads/genericSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    console.log(bodyData.ad_posted_location.coordinates[0] , bodyData.ad_posted_location.coordinates[1])
     const findUsr = await Profile.findOne({
       _id: ObjectId(userId)
     })
-
-    if (findUsr) {
-      //mix panel set thenew User id with given properties
-
-      await mixpanel.people.set(userId, {
-        $first_name: findUsr.name,
-        $email:findUsr.email.text,
-        $created: (new Date()).toISOString()
-    }, {
-      $ip: '127.0.0.1'
-  });
+    if (!findUsr){
+      // Mixpanel -- ad creation failed
+      await track('ad creation failed !!', { 
+        distinct_id: userId,
+      })
+      throw ({ status: 404, message : 'USER_NOT_EXISTS'})
+    }
+    else{
       if (bodyData.ad_id) {
-        const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
-          {
-            $set: {
-              ad_status: 'Selling',
-              ad_expire_date: DateAfter30Days,
-              created_at: currentDate,
-              updated_at: currentDate,
-            }
-          })
-      }
+          const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
+            {
+              $set: {
+                ad_status: 'Selling',
+                ad_expire_date: DateAfter30Days,
+                created_at: currentDate,
+                updated_at: currentDate,
+              }
+            })
+        }
       // Generic AdDoc is created 
       else {
-        let adDoc = await Generic.create({
+        const {
+          category,
+          sub_category,
+          field,
+          description,
+          SelectFields,
+          special_mention,
+          title,
+          price,
+          image_url,
+          ad_present_location,
+          ad_posted_location,
+          ad_status,
+          is_negotiable,
+          is_ad_posted,
+        } = bodyData
+          let adDoc = await Generic.create({
           user_id: findUsr._id,
-          category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          field: bodyData.field,
-          description: bodyData.description,
-          SelectFields: bodyData.SelectFields,
-          special_mention: bodyData.special_mention,
-          title: bodyData.title,
-          price: bodyData.price,
-          image_url: bodyData.image_url,
-          ad_present_location: bodyData.ad_present_location,
-          ad_posted_location: bodyData.ad_posted_location,
-          ad_expire_date: DateAfter30Days,
-          ad_status: bodyData.ad_status,
-          is_negotiable: bodyData.is_negotiable,
-          is_ad_posted: bodyData.is_ad_posted,
+          category,
+          sub_category,
+          field,
+          description,
+          SelectFields,
+          special_mention,
+          title,
+          price,
+          image_url,
+          ad_present_location,
+          ad_posted_location,
+          ad_status,
+          is_negotiable,
+          is_ad_posted,
           created_at: currentDate,
-          updated_at: currentDate,
-          loc: bodyData.loc,
+          ad_expire_date: DateAfter30Days,
+          updated_at: currentDate
         });
         // mixpanel track -- Ad create 
         await track('Ad creation succeed', { 
@@ -66,15 +76,11 @@ module.exports = class AdService {
           $latitude: bodyData.ad_posted_location.coordinates[1],
           $longitude: bodyData.ad_posted_location.coordinates[0],
         })
-
-
-
         const updateMyAdsInUser = await Profile.findByIdAndUpdate({_id:userId},{
           $push :{
             my_ads :ObjectId(adDoc._id)
           }
         })
-
         //Create new Ad in GlobalSearch Model 
         const createGlobalSearch = await GlobalSearch.create({
           ad_id: adDoc._id,
@@ -95,24 +101,25 @@ module.exports = class AdService {
         return adDoc["_doc"];
       }
     }
-    else {
-      await track('ad creation failed !! ', { 
-        distinct_id: userId,
-      })
-      return ({
-        message: "User Not found"
-      })
-    }
   }
 
 
   // Get my Ads -- user is authenticated from token and  Aggregation is of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
   static async getMyAds(userId) {
-    const user = await Profile.findOne({
+   
+    const findUsr = await Profile.findOne({
       _id: ObjectId(userId)
     });
-    console.log(user.my_ads);
-    if (user) {
+
+    if(!findUsr){
+      // mixpanel -- track failed get my ads
+      await track('failed !! get my ads', { 
+        distinct_id: userId,
+        message :"failed to load My Ads"
+      })
+      throw ({ status: 404, message : 'USER_NOT_EXISTS'})
+    }
+    else{
       const myAdsDocs = await Generic.aggregate([
         {
           $match: { _id: { $in: user.my_ads } }
@@ -174,19 +181,17 @@ module.exports = class AdService {
         },
       ]);
       if(!myAdsDocs){
-        return "Ads not Found"
+        throw ({ status: 404, message : 'ADS_NOT_EXISTS'})
       }
-
+      else {
       // mixpanel track for Get My Ads
       await track('get my ads', { 
         distinct_id: userId
       });
-      return myAdsDocs;
+        return myAdsDocs;
+      }
+
       
-    }else {
-      await track('failed to get myAads ', { 
-        distinct_id: userId
-      });
     }
   }
 
@@ -195,87 +200,78 @@ module.exports = class AdService {
     const userExist = await Profile.findOne({
       _id: userId
     });
-    if (userExist) {
-      const findAd = await Generic.findOne({
-        _id: ad_id
-      });
-      if (findAd) {
-        if (bodyData.status == "ARCHIVED") {
-          const adDoc = await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $set: { ad_status: "Archive" } }
-          )
-          console.log("AD Status Changed" + adDoc);
-          return adDoc;
-        } else if (bodyData.status == "SOLD") {
-          const adDoc = await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $set: { ad_status: "Sold" } }
-          )
-          console.log("AD Status Changed" + adDoc);
-          return adDoc;
-        }
-        else if (bodyData.status == "DELETE") {
-          const adDoc = await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $set: { ad_status: "Deleted" } }
-          )
-          console.log("AD Status Changed" + adDoc);
-          return adDoc;
-        }
-        else if (bodyData.status == "PREMEIUM") {
-          // only after payment is done 
-          const adDoc = await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $set: { ad_status: "PREMEIUM" } }
-          )
-          console.log("AD Status Changed" + adDoc);
-         
-      // mixpanel track - when Status Of Ad changed 
-      await track('ad status changed', { 
-        distinct_id: userId,
-        ad_id:ad_id,
-        status : bodyData.status
-      })
-
-          return adDoc;
-        }
-      }
-      else {
-        await track('failed !! to chaange ad status', { 
-          distinct_id: userId,
-          ad_id:ad_id,
-          status : bodyData.status
-        })
-        res.send({
-          statusCode: 404,
-          message: "Ad Not Found!!"
-        })
-      }
+    if(!userExist){
+            // mixpanel -- track failed to chane ad status 
+            await track('failed !! to chaange ad status', { 
+              distinct_id: userId,
+              ad_id:ad_id,
+              status : bodyData.status
+            })
+            throw ({ status: 404, message : 'USER_NOT_EXISTS'})
     }
-    else {
-      await track('failed !! to chaange ad status', { 
-        distinct_id: userId,
-        ad_id:ad_id,
-        status : bodyData.status
-      })
-      res.send({
-        statusCode: 404,
-        message: "User Not Found!!"
-      })
-    };
-  };
+    else{
+          const findAd = await Generic.findOne({
+            _id: ad_id
+          }); 
+          console.log(findAd)
+          if(!findAd){
+            await track('failed !! to chaange ad status', { 
+              distinct_id: userId,
+              ad_id:ad_id,
+              status : bodyData.status
+            }) 
+            throw ({ status: 404, message : 'AD_NOT_EXISTS'})
+          }
+        else {
+              // mixpanel track - when Status Of Ad changed 
+              await track('ad status changed', { 
+                distinct_id: userId,
+                ad_id:ad_id,
+                status : bodyData.status
+               })
+
+            if (bodyData.status == "ARCHIVED") {
+              const adDoc = await Generic.findByIdAndUpdate(
+                { _id: ad_id },
+                { $set: { ad_status: "Archive" } } , 
+                {returnOriginal :false , new :true}
+              )
+              return adDoc;
+            } else if (bodyData.status == "SOLD") {
+              const adDoc = await Generic.findByIdAndUpdate(
+                { _id: ad_id },
+                { $set: { ad_status: "Sold" } }, 
+                {returnOriginal :false , new :true}
+              )
+              return adDoc;
+            }
+            else if (bodyData.status == "DELETE") {
+              const adDoc = await Generic.findByIdAndUpdate(
+                { _id: ad_id },
+                { $set: { ad_status: "Deleted" } }, 
+                {returnOriginal :false , new :true}
+              )
+              return adDoc;
+            }
+            else if (bodyData.status == "PREMEIUM") {
+              // only after payment is done 
+              const adDoc = await Generic.findByIdAndUpdate(
+                { _id: ad_id },
+                { $set: { ad_status: "PREMEIUM" } }, 
+                {returnOriginal :false , new :true}
+              )
+              return adDoc;
+            };
+          };
+       };
+      };
 
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
     console.log("I'm inside Favourite Ads!!")
-    const findUsr = Profile.findOne({_id:userId});
-
-
-    if (findUsr) {
-
-      // micpanel Track - when Ad is selected for favourite
-
+    const findUser = await Profile.findOne({ _id: userId });
+    if (findUser) {
+      // mixpanel Track - when Ad is selected for favourite
       await track('Make Ad favourite ', {
         distinct_id: userId,
         ad_id: ad_id
@@ -297,41 +293,56 @@ module.exports = class AdService {
             { $inc: { saved: 1 } }
           )
 
-          return makeFavAd;
+          return {
+            type: "success",
+            statusCode: 200,
+            findAd
+          };
         }
       }
       // Ad is find from Generics collection if body contains "UnFavourite"  Ad _id is removed from  user`s profile (faviourite_ads)
-      else if (bodyData.value == "Unfavourite") {
-        const makeUnFavAd = await Profile.findOneAndUpdate(
-          { _id: userId },
-          { $pull: { favourite_ads: ad_id } },
-          { new: true }
-        );
+      else if (bodyData.value == "UnFavourite") {
+        const findAd = await Generic.findOne({
+          _id: ad_id
+        })
+        if (findAd) {
+          const makeUnFavAd = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { favourite_ads: ad_id } },
+            { new: true }
+          );
 
-        // Generic collection is also updated with the count of saved favourite ads
-        const updateAd = await Generic.findByIdAndUpdate(
-          { _id: ad_id },
-          { $inc: { saved: -1 } }
-        )
-        return makeUnFavAd;
+          // Generic collection is also updated with the count of saved favourite ads
+          const updateAd = await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $inc: { saved: -1 } }
+          )
+          return {
+            type: "success",
+            statusCode: 200,
+            findAd
+          };
+        }
       }
     } else {
-        if(bodyData.value == 'Favourite'){
-          await track('failed to make ad favourites ', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-        }else {
-          await track('failed to remove ad from favourites ', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-        }
-      console.log('unauthorized')
+      if (bodyData.value == 'Favourite') {
+        await track('failed to make ad favourites ', {
+          distinct_id: userId,
+          ad_id: ad_id
+        })
+      } else {
+        await track('failed to remove ad from favourites ', {
+          distinct_id: userId,
+          ad_id: ad_id
+        })
+      }
+      return {
+        type: "Error",
+        message: "user not found",
+        statusCode: 403
+      }
     }
-
   }
-
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
   static async getFavouriteAds(userId) {
@@ -351,19 +362,34 @@ module.exports = class AdService {
       // mixpanel - when get favourite ads
       await track('get favourite Ads ', {
         distinct_id: userId
-      })
-      return getMyFavAds
+      });
+
+      if(getMyFavAds.length == 0){
+        return {
+          type:"No Ads",
+          statusCode:200,
+          message:"No Ads found"
+        };
+      }
+      return {
+        type:"success",
+        statusCode:200,
+        getMyFavAds
+      };
     }
     else {
+      // mixpanel track -- failed to get favorite ads
       await track('failed to get favourite Ads ', {
         distinct_id: userId
-      })
-      res.send({
-        statusCode: 400,
-        message: "No User Found"
-      })
-    }
-  }
+      });
+
+      return{ 
+        type:"Error",
+        statusCode: 403,
+        message: "User not Found"
+      };
+    };
+  };
 
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
@@ -371,13 +397,28 @@ module.exports = class AdService {
     const userExist = await Profile.findOne({
       _id: userId
     });
-    // checking whether the ad exists or not 
-    if (userExist) {
+    // checking whether the ad exists or not
+    if(!userExist){
+      // mix-panel Track for -Failed  Removing Ad
+      await track(' failed to remove  Ad', { 
+        distinct_id: userId,
+        ad_id:ad_id
+      });
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    } 
+    else {
+      //if exist checking the body whether it conataon : FAVOURITE or MY_ADS then ads are removed from user`s profile
       const findAd = await Generic.findOne({
         _id: ad_id
       });
-      //if exist checking the body whether it conataon : FAVOURITE or MY_ADS then ads are removed from user`s profile
-      console.log(findAd)
+      if(!findAd){
+        // mix-panel Track for -Failed  Removing Ad
+        await track(' failed to remove  Ad', { 
+          distinct_id: userId,
+          ad_id:ad_id
+        });
+        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+      }
       if (findAd) {
         if (bodyData.AD_SECTION == 'FAVOURITE') {
           const remove_fav_ad = await Profile.findOneAndUpdate(
@@ -403,39 +444,10 @@ module.exports = class AdService {
             ad_id:ad_id
           })
     
-          return {
-            type:"success",
-            message:"removed ad  successfully",
-            statusCode:200,
-            };
+          return findAd
         }
-
-      }
-      else {
-        // mix-panel Track for -Failed  Removing Ad
-        await track(' failed to remove  Ad', { 
-          distinct_id: userId,
-          ad_id:ad_id
-        });
-        return ({
-          type:"Error",
-          message: "Ad Not Found",
-          statusCode: 404
-        })
       }
     }
-    else {
-        // mix-panel Track for -Failed  Removing Ad
-      await track(' failed to remove  Ad', { 
-        distinct_id: userId,
-        ad_id:ad_id
-      });
-      return ({
-        type:"Error",
-        message: "User Not Found",
-        statusCode: 404,
-      })
-    };
   };
 
   // Get Detail from Ad --  user is authenticated - Aggregation is created between Profile and Generic 
@@ -444,13 +456,27 @@ module.exports = class AdService {
       _id: userId
     });
     // if user Exist-- and _ids are matched Ads is returned 
-    if (userExist) {
-      const findAd = await Generic.aggregate([
-        {
-          $match: { _id: ObjectId(ad_id) }
-        },
-      ])
-    //Ad doc will be updated , veiw count is incremented
+    if (!userExist) {
+      // mixpanel get ad detail failed
+      await track('viewed ad failed', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    const findAd = await Generic.aggregate([{
+      $match: { _id: ObjectId(ad_id) }
+    },
+    ])
+    if (!findAd) {
+      await track('viewed ad failed', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
+      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+    }
+    else {
+      //Ad doc will be updated , veiw count is incremented
       const updateAd = await Generic.findByIdAndUpdate(
         { _id: ad_id },
         { $inc: { views: 1 } },
@@ -461,24 +487,9 @@ module.exports = class AdService {
         distinct_id: userId,
         ad_id: ad_id
       })
-
+      //Mixpanel increment of user views count on ad view count
       mixpanel.people.increment(userId, 'views particular ad');
-      return {
-        type: "success",
-        findAd
-      };
-    }else{
-      
-      // mixpanel get ad detail failed
-      await track('viewed ad failed', {
-        distinct_id: userId,
-        ad_id: ad_id
-      })
-      return {
-        type:"Error",
-        message:"user not found",
-        statusCode:400
-      }
+      return updateAd;
     }
   }
 };
