@@ -87,61 +87,56 @@ module.exports = class AdController {
   static async apiFavouriteAds(req, res, next) {
     try {
       const adID = req.body.ad_id;
-      const { type, findAd, message, statusCode } = await AdService.favouriteAds(req.body, req.user_ID, adID);
-      if ( type !== "Error") {
-        res.status(statusCode).send({
-          message : "success", findAd
-        })
-      }
-      // Reponse code is sent 
-      else {
-        res.status(statusCode).send({
-          message
-        })
-      }
-    } catch (error) {
-      res
-        .status(500)
-        .json({ error: "something went wrong try again "});
-    }
+      const updated_Ad = await AdService.favouriteAds(req.body, req.user_ID, adID);
+      res.status(200).send({ message: "success" , updated_Ad })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Get Favourite Ads -- Ads are fetched and returned from Adservice 
   static async apiGetFavouriteAds(req, res, next) {
     try {
       console.log("Inside Get Favourite Ads Controller");
-      const {type , message , getMyFavAds , statusCode} = await AdService.getFavouriteAds(req.user_ID);
+      const Get_My_Fav_Ads= await AdService.getFavouriteAds(req.user_ID);
       // Response code is sent 
-      if (type !== "Error") {
-        res.status(statusCode).send({
-          "message": message,
-          "FavoriteAds": getMyFavAds
-        })
-      }
-      else if(type == "No Ads"){
-        res.status(statusCode).send({
-          message : message
-        })
-      }
-      else {
-        res.status(statusCode).send({
-          "message": message,
-        })
-      }
-    } catch (error) {
-      res
-        .status(400)
-        .json({ error: "Something Went Wrong try again" });
-    }
+      res.status(200).send({ message: "My Favourite Ads " , Get_My_Fav_Ads })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Delete Ads -- Ads are Deleted  and returned from Adservice to deleteAds
   static async apiDeleteAds(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      await AdService.deleteAds(req.body, req.user_ID, ad_id);
+      const deletedAd = await AdService.deleteAds(req.body, req.user_ID, ad_id);
       // Reponse code is sent 
-      res.status(200).send({ message: "Ad deleted successfully !" })
+      res.status(200).send({ message: "Ad deleted successfully !" , deletedAd })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

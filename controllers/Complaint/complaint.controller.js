@@ -6,47 +6,50 @@ module.exports = class ComplainController {
   static async apiCreateComplaint(req, res, next) {
     try {
       console.log("Inside Complaint Controller")
-      const complnData = await ComplaintService.createComplaint(
-        req.body,
-        req.user_ID,
-      );
-      if (complnData) {
-        res.send({
-          statusCode: 200,
-          message: "Complaint created successfully"
-        })
+      const complaintData = await ComplaintService.createComplaint(req.body,req.user_ID,);
+      res.status(200).json({
+        message:"successfully created",
+        complaintData
+      }) 
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
       } else {
-        res.send({
-          statusCode: 201,
-          message: "Something went wrong creating theComplaint"
-        })
-      }
-    } catch (error) {
-      res.send({
-        statusCode: 500,
-        message: error.message
-      })
-    }
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
   static async apiUpdateController(req,res,next){
     try{
       const updatedComplain = await ComplaintService.updateComplain(req.body,req.user_ID);
-      if(updatedComplain){
-        res.send({
-          statusCode:200,
-          message:"Complain updated successfully"
-        })
+      console.log(updatedComplain)
+      res.status(200).json({
+        message:"successfully updated",
+        updatedComplain
+      }) 
+    } catch (e) {
+      if (!e.status) {
+        console.log(e)
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
       } else {
-        res.send({
-          statusCode:201,
-          message:"something went wrong in updatecomplaint"
-        })
-      }
-    } catch(error){
-      res.send({
-        statusCode:500,
-        message:error.message
-      })
-    }
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 };
