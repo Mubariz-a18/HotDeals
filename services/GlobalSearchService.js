@@ -3,41 +3,42 @@ const Analytics = require("../models/Analytics");
 const { track } = require("./mixpanel-service");
 
 module.exports = class GlobalSearchService {
-    static async getGlobalSearch(seachKeyword1, seachKeyword2, user_ID) {
+    static async getGlobalSearch(queries, user_ID) {
         try{
+            const {category ,sub_category , title , description } = queries
             const result = await GlobalSearch.find({
-                $text: { $search: `${seachKeyword1},${seachKeyword2}` },
+                $text: { $search: `${category},${sub_category},${title},${description}` },
             });
             await track('Global search  ', { 
                 distinct_id : user_ID,
-                keywords: [seachKeyword1, seachKeyword2]
+                keywords: [category, sub_category,title,description]
               });
             return result;
         }catch (e) {
             // mixpanel - track blobal search failed 
             await track('failed -- Global search  ', { 
                 distinct_id : user_ID,
-                keywords: [seachKeyword1, seachKeyword2]
+                keywords: [category, sub_category,title,description]
               });
         }       
     }
 
-    static async createAnalyticsKeyword(seachKeyword1, seachKeyword2, user_ID) {
+    static async createAnalyticsKeyword(queries, user_ID) {
         try{
             const User = await Analytics.findOne({
                 user_id: user_ID,
             });
             if (User) {
-                await User.keywords.push(seachKeyword1, seachKeyword2);
+                await User.keywords.push(category, sub_category,title,description);
                 await User.save();
             } else {
                 const createAnalytics = await Analytics.create({
                     user_id: user_ID,
-                    keywords: [seachKeyword1, seachKeyword2],
+                    keywords: [category, sub_category,title,description],
                 });
                 await track('Global search keywords saved  ', { 
                     distinct_id : user_ID,
-                    keywords: [seachKeyword1, seachKeyword2]
+                    keywords: [category, sub_category,title,description]
                   });
             }
         }

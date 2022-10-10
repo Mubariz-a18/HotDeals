@@ -6,6 +6,10 @@ const userSchema = mongoose.Schema({
     unique: true,
     required: true,
   },
+  email:{
+    type:String,
+    default:""
+  },
   displayName: {
     type: String,
     default: "",
@@ -15,7 +19,7 @@ const userSchema = mongoose.Schema({
     default: "",
   },
   photoURL: {
-    type: String,
+    type: Array,
     default: "",
   },
   created_at:{

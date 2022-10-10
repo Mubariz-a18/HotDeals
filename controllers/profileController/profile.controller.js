@@ -9,16 +9,26 @@ module.exports = class ProfileController {
         req.user_ID,
         req.user_phoneNumber
       );
-      res.send({
-        message:"Success",
-        statusCode:200,
-        Profile_Data:profileDocument
+      //response code is sent
+      res.status(200).json({
+        message:"successfully created",
+        profileDocument: profileDocument
       })
-    } catch (error) {
-      res
-        .status(400)
-        .json({ error: "Something went wrong in profile controller" });
-    }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   //API to Get Profile
