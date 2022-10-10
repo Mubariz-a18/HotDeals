@@ -3,52 +3,50 @@ const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
+const { currentDate } = require("../utils/moment");
+const mixpanel = require("mixpanel");
 
-var moment = require('moment');
-moment().format();
 
-const now = moment().format('YYYY-MM-DD HH:mm:ss');
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
-  static async createProfile(bodyData, userID, phoneNuber) {
-
+  static async createProfile(bodyData, userID, phoneNumber) {
     //checking if profile already exist
     let profileDoc = await User.findOne({
-      userNumber: phoneNuber,
+      userNumber: phoneNumber,
     });
-    console.log(userID)
+    console.log(profileDoc)
     if (profileDoc) {
-
-      const userProfile = await Profile.findOne({
-        _id: userID,
-      });
+      const userProfile = await Profile.findOne({_id: userID});
       if (!userProfile) {
-        let email = bodyData.text.email;
-        let user_type = bodyData.text.user_type;
-        let city = bodyData.text.city;
-        let about = bodyData.text.about;
         let contactNumber = profileDoc.userNumber
-        
         // Creating Profile
         const profileDoc1 = await Profile.create({
           _id: userID,
           name: bodyData.name,
           userNumber: contactNumber,
           country_code: bodyData.country_code,
-          email: email,
+          email: {
+            text:bodyData.email
+          },
+          user_type: {
+            text:bodyData.user_type
+          },
+          city:  {
+            text:bodyData.city
+          },
+          about:{
+            text: bodyData.about
+          },
           date_of_birth: bodyData.date_of_birth,
           age: bodyData.age,
           gender: bodyData.gender,
-          user_type: user_type,
           language_preference: bodyData.language_preference,
-          city: city,
-          about: about,
           free_credit: bodyData.free_credit,
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
-          created_date: now,
-          updated_date: now
+          created_date: currentDate,
+          updated_date: currentDate
         });
 
         console.log(profileDoc1)
@@ -56,21 +54,10 @@ module.exports = class ProfileService {
         const createDefaultRating = await Rating.create({
           user_id: profileDoc1._id,
         });
-        
-       //mix panel set thenew User id with given properties
-       await mixpanel.people.set(userID, {
-         $first_name: profileDoc1.name,
-         $email: profileDoc1.email.text,
-         $created: (new Date()).toISOString()
-       }, {
-         $ip: '127.0.0.1'
-         });
-
         await track('New Profile Created ', { 
           distinct_id : profileDoc1._id ,
           $email :  profileDoc.email.text
         });
-
         return profileDoc1;
       } else {
         console.log("inside else")
@@ -139,7 +126,7 @@ module.exports = class ProfileService {
           free_credit: bodyData.free_credit,
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
-          updated_date: moment().format('DD-MM-YY HH:mm:ss'),
+          updated_date:currentDate
         },
       },
       {
