@@ -8,53 +8,51 @@ module.exports = class FollowController {
         try {
             // console.log("inside Follow Controller:" + req.user_ID);
             const followUser = await FollowUnfollowService.followUser(req, req.body, req.user_ID);
-            console.log(followUser)
-            if(followUser){
-                console.log("inside if")
-                res.send({
-                    message:"success",
-                    statusCode:200
-                })
-            }else {
-                return res.send("user not found")
-            }
-        } catch (error) {
-            return res.status(500).send({ error: "User Follow Failed" });
-
-        }
+            res.status(200).json({
+                message:"successfully followed ",
+                followUser
+              }) 
+        } catch (e) {
+            if (!e.status) {
+              console.log(e)
+              res.status(500).json({
+                error: {
+                  message: ` something went wrong try again : ${e.message} `
+                }
+              });
+            } else {
+              res.status(e.status).json({
+                error: {
+                  message: e.message
+                }
+              });
+            };
+          };
     }
 
     //Unfollow Existing User
     static async apiUnfollowUser(req,res,next){
         try {
-            const unfollowUser = await FollowUnfollowService.UnfollowUser(req.body, req.user_ID)
-            if(unfollowUser){
-                console.log("inside if")
-                res.send({
-                    message:"successfully unfollowed",
-                    statusCode:200
-                })
-            }else{
-                res.send("user not found")
-            }
-        } catch (error) {
-            return res.status(500).send({ error: "User Follow Failed" });
-
-        }
+            const unfollowUser = await FollowUnfollowService.UnfollowUser(req.body, req.user_ID);
+            res.status(200).json({
+                message:"successfully unfollowed",
+                unfollowUser
+              }) 
+        } catch (e) {
+            if (!e.status) {
+              console.log(e)
+              res.status(500).json({
+                error: {
+                  message: ` something went wrong try again : ${e.message} `
+                }
+              });
+            } else {
+              res.status(e.status).json({
+                error: {
+                  message: e.message
+                }
+              });
+            };
+          };
     }
-
-    //Give Ratings to a User
-    // static async apiRatingUser(req,res,next){
-    //     try {
-    //         const RatingResult = await FollowUnfollowService.RatingToUser(req.body, req.user_ID);
-    //         if(RatingResult){
-    //             res.send({
-    //                 statusCode:"200",
-    //                 message:"Success"
-    //             })
-    //         }
-    //     } catch (error) {
-            
-    //     }
-    // }
 }

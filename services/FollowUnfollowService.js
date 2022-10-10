@@ -6,7 +6,6 @@ const { track } = require("./mixpanel-service");
 
 module.exports = class FollowUnfollowService {
   static async followUser(res,bodyData, userId) {
-    try {
         // finding user if exist
         const dbUser = await Profile.findById({ _id: userId })
         if (dbUser) {
@@ -47,37 +46,29 @@ module.exports = class FollowUnfollowService {
 
                     return (followInfo)
                 } else {
-                    return ({
-                        statusCode: 403,
-                        message: "already following"
-                    })
+                    throw ({ status: 200, message: 'USER_ALREADY_FOLLOWED' });
                 }
             } else {
-                return ({
-                    statusCode: 403,
-                    message: "Following Info Not Found"
-                })
-            }
-        } else {
-            return ({
-                statusCode: 403,
-                message: "unauthorized"
-            })
-        }
-    }
-    catch (e) {
-            // mix panel track for user folowed
-            await track("user followed",{
+                            // mix panel track for user folowed
+            await track("user failed to  followed",{
                 distinct_id : userId,
-                message:` ${dbUser.name} tried following ${user_followed.name} -- failed `,
+                message:`${dbUser.name} tried to follow ${user_to_follow.name} -- FAILED`,
                 userfollowed : bodyData.following_id 
             })
-        res.send(e)
-    }
+                throw ({ status: 404, message: 'USER_TO_FOLLOW_NOT_EXISTS' });
+            }
+        } else {
+            // mix panel track for user folowed
+            await track("user failed to  followed",{
+                distinct_id : userId,
+                userfollowed : bodyData.following_id 
+            })
+             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+        }
+
 }
 
 static async UnfollowUser(bodyData, userId) {
-    try {
         const dbUser = await Profile.findById({ _id: userId })
         console.log(dbUser)
          // finding user if exist
@@ -120,39 +111,24 @@ static async UnfollowUser(bodyData, userId) {
                     });
                     return (followInfo)
                 } else {
-                    return ({
-                        statusCode: 403,
-                        message: "already removed"
-                    })
+                    throw ({ status: 404, message: 'USER_ALREADY_REMOVED' });
                 }
             } else {
-                return ({
-                    statusCode: 403,
-                    message: "Following Info Not Found"
-                })
+                await track("user failed to followed",{
+                    distinct_id : userId,
+                    userUnfollowed : bodyData.Unfollowing_id 
+                });
+                throw ({ status: 404, message: 'USER_INFO_NOT_EXISTS' });
             }
         } else {
             //mixpanel track -- failed to unfollow
             await track("user failed to followed",{
                 distinct_id : userId,
-                message:`${dbUser.name} tried followed ${user_unfollowed.name} -- failed`,
                 userUnfollowed : bodyData.Unfollowing_id 
             });
-            return ({
-                statusCode: 403,
-                message: "unauthorized"
-            })
+            throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         }
-    }
-    catch (e) {
-             //mixpanel track -- failed to unfollow
-              await track("user failed to unfollowed",{
-                 distinct_id : userId,
-                 message:`${dbUser.name} tried unfollowed ${user_unfollowed.name} -- failed`,
-                 userUnfollowed : bodyData.Unfollowing_id 
-             });
-        console.log(e.message)
-    };
+
 };
 };
 

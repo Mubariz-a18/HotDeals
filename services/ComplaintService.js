@@ -72,10 +72,11 @@ module.exports = class ComplainService {
       }
     }
   }
-  
+  // update complaint
   static async updateComplain (bodyData, userId){
     const user = await User.findOne({ _id: userId });
     const complain = await Complaint.findOne({_id:ObjectId(bodyData._id)})
+    // check if user exists -if not throw error
     if(!user){
       await track('failed !! to update complaint', { 
         distinct_id: bodyData._id,
@@ -84,7 +85,7 @@ module.exports = class ComplainService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      // if user is verified complain is find and update 
+      // if user is verified - check if complaint exist  
       if(!complain){
         await track('failed !! to update complaint', { 
           distinct_id: bodyData._id,
@@ -93,6 +94,7 @@ module.exports = class ComplainService {
         throw ({ status: 404, message: 'COMPLAINT_NOT_EXISTS' });
       }
       else {
+        //if user and complaint exist update the complaint object
         const updatecomplaintDoc = await Complaint.findOneAndUpdate(
           { 
              _id : ObjectId(bodyData._id) , 
