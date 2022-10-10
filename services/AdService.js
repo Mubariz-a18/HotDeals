@@ -268,20 +268,30 @@ module.exports = class AdService {
 
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
-    console.log("I'm inside Favourite Ads!!")
     const findUser = await Profile.findOne({ _id: userId });
-    if (findUser) {
-      // mixpanel Track - when Ad is selected for favourite
-      await track('Make Ad favourite ', {
+    if(! findUser) {
+      await track('failed !! Make Ad favourite ', {
         distinct_id: userId,
         ad_id: ad_id
       })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else {
+      // mixpanel Track - when Ad is selected for favourite
+
       // Ad is find from Generics collection    if body contains "Favourite"
       if (bodyData.value == "Favourite") {
         const findAd = await Generic.findOne({
           _id: ad_id
         })
-        if (findAd) {
+        if(! findAd ) {
+          await track('failed !! Make Ad favourite ', {
+            distinct_id: userId,
+            ad_id: ad_id
+          })
+          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+        }
+        else{
           //Ad _id is pushed in user`s profile (faviourite_ads)
           const makeFavAd = await Profile.findOneAndUpdate(
             { _id: userId },
@@ -292,12 +302,11 @@ module.exports = class AdService {
             { _id: ad_id },
             { $inc: { saved: 1 } }
           )
-
-          return {
-            type: "success",
-            statusCode: 200,
-            findAd
-          };
+          await track('Make Ad favourite ', {
+            distinct_id: userId,
+            ad_id: ad_id
+          })
+          return  findAd ; 
         }
       }
       // Ad is find from Generics collection if body contains "UnFavourite"  Ad _id is removed from  user`s profile (faviourite_ads)
@@ -305,43 +314,30 @@ module.exports = class AdService {
         const findAd = await Generic.findOne({
           _id: ad_id
         })
-        if (findAd) {
+        if(!findAd){
+          await track('failed !! Make Ad favourite ', {
+            distinct_id: userId,
+            ad_id: ad_id
+          })
+         throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+        }
+         else {
           const makeUnFavAd = await Profile.findOneAndUpdate(
             { _id: userId },
             { $pull: { favourite_ads: ad_id } },
             { new: true }
           );
-
           // Generic collection is also updated with the count of saved favourite ads
           const updateAd = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $inc: { saved: -1 } }
           )
           return {
-            type: "success",
-            statusCode: 200,
             findAd
           };
         }
       }
-    } else {
-      if (bodyData.value == 'Favourite') {
-        await track('failed to make ad favourites ', {
-          distinct_id: userId,
-          ad_id: ad_id
-        })
-      } else {
-        await track('failed to remove ad from favourites ', {
-          distinct_id: userId,
-          ad_id: ad_id
-        })
-      }
-      return {
-        type: "Error",
-        message: "user not found",
-        statusCode: 403
-      }
-    }
+    } 
   }
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
@@ -352,7 +348,14 @@ module.exports = class AdService {
 
     //-- $match is used to create a relation between User_id and Ads 
     // favourite ads are Fetched
-    if (userExist) {
+    if(!userExist){
+            // mixpanel track -- failed to get favorite ads
+            await track('failed to get favourite Ads ', {
+              distinct_id: userId
+            });
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else{
       const getMyFavAds = await Generic.aggregate([
         {
           $match: { _id: { $in: userExist.favourite_ads } }
@@ -365,30 +368,11 @@ module.exports = class AdService {
       });
 
       if(getMyFavAds.length == 0){
-        return {
-          type:"No Ads",
-          statusCode:200,
-          message:"No Ads found"
-        };
+        throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
       }
-      return {
-        type:"success",
-        statusCode:200,
-        getMyFavAds
-      };
+      return getMyFavAds
+      
     }
-    else {
-      // mixpanel track -- failed to get favorite ads
-      await track('failed to get favourite Ads ', {
-        distinct_id: userId
-      });
-
-      return{ 
-        type:"Error",
-        statusCode: 403,
-        message: "User not Found"
-      };
-    };
   };
 
 
@@ -411,6 +395,7 @@ module.exports = class AdService {
       const findAd = await Generic.findOne({
         _id: ad_id
       });
+      console.log(findAd)
       if(!findAd){
         // mix-panel Track for -Failed  Removing Ad
         await track(' failed to remove  Ad', { 
@@ -427,9 +412,7 @@ module.exports = class AdService {
             { new: true }
           );
           return {
-            type:"success",
-            message:"removed ad successfully",
-            statusCode:200,
+            message:"removed ad successfully",remove_fav_ad
             }
         }
         else if (bodyData.AD_SECTION == 'MY_ADS') {
@@ -443,8 +426,9 @@ module.exports = class AdService {
             distinct_id: userId,
             ad_id:ad_id
           })
-    
-          return findAd
+          return {
+            message:"removed ad successfully",remove_my_ad
+            }
         }
       }
     }

@@ -10,19 +10,25 @@ module.exports = class AlertController {
       const body = req.body
       const alertData = await AlertService.createAlert(body , userId);
       // Response code is sent with alertData 
-      if (alertData) {
-        res.status(200).send({
-          message: "Alert created successfully",
-          Data: alertData,
+      res.status(200).json({
+        message:"successfully created",
+        alertData: alertData
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
       } else {
-        res.status(404).send({
-          error: "User not found",
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
         });
-      }
-    } catch (error) {
-      res.status(404).send({ error: error.message });
-    }
+      };
+    };
   };
 
 
@@ -31,22 +37,27 @@ module.exports = class AlertController {
     try {
       const userId = req.user_ID
       const body = req.body
-      const getAlert = await AlertService.getAlert(body,userId);
-      
+      const getAlert = await AlertService.getAlert(body,userId); 
+      console.log(getAlert)
       // Response code is sent with getAlert
-      if (getAlert) {
-        res.status(200).send({
-          statusCode: 200,
-          Alerts: getAlert,
+      res.status(200).json({
+        getAlert
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
       } else {
-        res.status(404).send({
-          error: "Alert not found",
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
         });
-      }
-    } catch (error) {
-      res.status(404).send({ error: error.message });
-    }
+      };
+    };
   };
 
   //Update Alert -- Alert doc is Updated and retured from adservice  in updateAlert
@@ -57,19 +68,25 @@ module.exports = class AlertController {
       const userId = req.user_ID;
       const updateAlert = await AlertService.updateAlert(body, alert_id,userId);
      // Response code is sent with updateAlert
-      if (updateAlert) {
-        res.status(200).send({
-          Alerts: updateAlert,
-          statusCode: 200,
+     res.status(200).json({
+      message:"successfully updated",
+      alertData: updateAlert
+    })
+    }  catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
       } else {
-        res.status(404).send({
-          error: "Alert not found",
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
         });
-      }
-    } catch (error) {
-      res.status(404).send({ error: error.message });
-    }
+      };
+    };
   };
 
 
@@ -79,18 +96,24 @@ module.exports = class AlertController {
       const { alert_id } = req.body;
       const userId = req.user_ID;
       const deleteAlert = await AlertService.deleteAlert(alert_id, userId);
-      if (deleteAlert) {
-        res.status(200).send({
-          message: "SuccessFully Deleted Alert",
-          statusCode: 200,
+      res.status(200).json({
+        message:deleteAlert,
+       
+      });
+    }  catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
         });
       } else {
-        res.status(404).send({
-          error: "Alert not found",
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
         });
-      }
-    } catch (error) {
-      res.status(404).send({ error: error.message });
-    }
+      };
+    };
   }
 };
