@@ -33,6 +33,10 @@ const genericSchema = mongoose.Schema({
         type: Array,
         default: [],
     },
+    video_url: {
+        type: Array,
+        default: [],
+    },
     ad_present_location:{
         type: {type:String} ,
         coordinates: [],
@@ -53,7 +57,6 @@ const genericSchema = mongoose.Schema({
     ad_expire_date: {
         type: String,
     },
-
     ad_promoted: {
         type: String,
     },
@@ -86,11 +89,6 @@ const genericSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
-    // loc: {
-    //     type: String ,
-    //     coordinates: [],
-    // },
-
     created_at: {
         type: Date,
     },

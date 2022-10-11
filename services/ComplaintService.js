@@ -10,13 +10,14 @@ module.exports = class ComplainService {
   static async createComplaint(bodyData, userId) {
     console.log("Inside Complain Service");
     const user = await User.findOne({ _id: userId });
-
     // if user is verified new complain doc is created 
     if(!user){
      // mixpanel failed to create complain
-     await track('failed create complaint', { 
+     await track('failed !! create complaint  ', { 
        distinct_id: userId,
-       reason: bodyData.complaint.reason
+       complaint: bodyData.complaint.reason,
+        description: bodyData.complaint.description,
+       message:` user_id : ${userId} does not exist`
      });
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
@@ -30,7 +31,7 @@ module.exports = class ComplainService {
         status:bodyData.complaint.status
       }
       const findComplaint = await Complaint.findOne({
-        _id : bodyData._id
+        user_id : userId
       })
       if(!findComplaint) {
         const createcomplaint= await Complaint.create({
@@ -48,7 +49,7 @@ module.exports = class ComplainService {
         // if complain doc is already created push another complain in the complaint array 
         console.log("inside complain " + findComplaint._id)
         const pushCmpln = await Complaint.findOneAndUpdate(
-          { _id: ObjectId(bodyData._id) },
+          { user_id: userId},
           {
             $push: {
               complaint: {
@@ -64,9 +65,10 @@ module.exports = class ComplainService {
           { safe: true, upsert: true, new: true },
         )
         // mixpanel create complain  
-        await track('create complaint', { 
+        await track(' create complaint successfully ', { 
           distinct_id: pushCmpln._id,
-          reason: bodyData.complaint.reason
+          reason: bodyData.complaint.reason,
+          description: bodyData.complaint.description,
         })
         return pushCmpln;
       }
@@ -75,7 +77,7 @@ module.exports = class ComplainService {
   // update complaint
   static async updateComplain (bodyData, userId){
     const user = await User.findOne({ _id: userId });
-    const complain = await Complaint.findOne({_id:ObjectId(bodyData._id)})
+    const complain = await Complaint.findOne({user_id:ObjectId(userId)})
     // check if user exists -if not throw error
     if(!user){
       await track('failed !! to update complaint', { 
@@ -88,8 +90,9 @@ module.exports = class ComplainService {
       // if user is verified - check if complaint exist  
       if(!complain){
         await track('failed !! to update complaint', { 
-          distinct_id: bodyData._id,
-          reason: bodyData.reason
+          distinct_id: userId,
+          reason: bodyData.reason,
+          message: `complaint : ${bodyData._id}  doesnot exists `
         })
         throw ({ status: 404, message: 'COMPLAINT_NOT_EXISTS' });
       }
@@ -97,7 +100,7 @@ module.exports = class ComplainService {
         //if user and complaint exist update the complaint object
         const updatecomplaintDoc = await Complaint.findOneAndUpdate(
           { 
-             _id : ObjectId(bodyData._id) , 
+            user_id : ObjectId(userId) , 
              "complaint.complaint_id":ObjectId(bodyData.complaint_id) },
           {
             $set: {
@@ -114,7 +117,7 @@ module.exports = class ComplainService {
           }
         )
         // mix panel tack for updating a complain
-        await track('update complain', { 
+        await track('update complain successfully !!', { 
           distinct_id: updatecomplaintDoc._id,
           reason: bodyData.reason
         });

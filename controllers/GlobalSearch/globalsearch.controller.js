@@ -4,20 +4,24 @@ module.exports = class GlobalSearchController {
         try {
 
             const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
-            console.log(searchResult);
-            if (searchResult.length !== 0) {
-                res.status(200).send({
-                    message: "Successfull",
-                    result: searchResult
-                })
+            if(searchResult){
+              res.status(200).send({
+                searchResult
+              })
             }
-            else {
-                const createAnalytics = await GlobalSearchService.createAnalyticsKeyword(req.query, req.user_ID);
-                console.log(createAnalytics)
-                res.status(200).send({
-                    message: "Keywords Successfully Stored!"
-                })
-            }
+            // if (searchResult.length !== 0) {
+            //     res.status(200).send({
+            //         message: "Successfull",
+            //         result: searchResult
+            //     })
+            // }
+            // else {
+            //     const createAnalytics = await GlobalSearchService.createAnalyticsKeyword(req.query, req.user_ID);
+            //     console.log(createAnalytics)
+            //     res.status(200).send({
+            //         message: "Keywords Successfully Stored!"
+            //     })
+            // }
         }  catch (e) {
             if (!e.status) {
               console.log(e)

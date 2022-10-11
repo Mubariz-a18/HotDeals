@@ -1,4 +1,5 @@
 const AdService = require("../../services/AdService");
+const { track } = require("../../services/mixpanel-service");
 
 module.exports = class AdController {
   // Ad Created -- data is saved &  retured from AdService  
@@ -41,6 +42,7 @@ module.exports = class AdController {
           Drafts: getDocument[0].Drafts
         });
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -159,10 +161,27 @@ module.exports = class AdController {
     try {
       const ad_id = req.body.ad_id;
       const getAdDetails = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
-      // Response is sent 
+      // Response is sent
+      if(getAdDetails == null){
+        await track('viewed ad failed', {
+          distinct_id: req.user_ID,
+          ad_id: ad_id,
+          message:`Ad_id : ${ad_id}  does not exist`
+        })
+        res.status(404).json({
+          message:"Ad does not exist"
+        })
+      } 
+      else{
+        await track('viewed ad successfully', {
+          distinct_id: req.user_ID,
+          ad_id: ad_id, 
+          message:`user : ${req.user_ID} viewed Ad`
+        })
         res.status(200).json({
           AdDetails: getAdDetails
         })
+      }
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -173,7 +192,7 @@ module.exports = class AdController {
       } else {
         res.status(e.status).json({
           error: {
-            message: e.message
+            message: e.message 
           }
         });
       };

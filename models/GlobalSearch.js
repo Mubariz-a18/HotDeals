@@ -12,11 +12,12 @@ const GlobalSearchSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  title: [
-    {
+  title:{
       type: String,
     },
-  ]
+  description:{
+    type: String,
+  }
 });
 
 GlobalSearchSchema.index({ category: "text", sub_category: "text"});

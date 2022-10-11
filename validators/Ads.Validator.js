@@ -17,11 +17,11 @@ let commonFieldSchema = Joi.object().keys({
   reported_by: reportedBy,
   ad_status: Joi.string().default("").optional(),
   ad_type: Joi.boolean().default("free").optional(),
-  ad_expire_date: Joi.date().iso().required(),
+  ad_expire_date: Joi.date().iso().optional(),
   ad_promoted: Joi.string().optional(),
   ad_promoted_type: Joi.string().optional(),
-  ad_promoted_date: Joi.date().iso().required(),
-  ad_promoted_expire_date:Joi.date().iso().required(),
+  ad_promoted_date: Joi.date().iso().optional(),
+  ad_promoted_expire_date:Joi.date().iso().optional(),
 }).options({allowUnknown: true});;
 
 

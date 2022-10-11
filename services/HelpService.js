@@ -11,10 +11,8 @@ module.exports = class HelpService {
       if(!findUser){
         await track('Failed to create Help Doc ', { 
           distinct_id : userId,
-          message : bodyData.message,
-          title: bodyData.title,
-          description: bodyData.description,
-          attachment: bodyData.attachment,
+          help_message : bodyData.message,
+          $message:`user_id : ${userId} doesnot exists`
         });
         throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
@@ -28,9 +26,13 @@ module.exports = class HelpService {
           attachment: bodyData.attachment,
           message: msg,
         });
-        await track('help created ', { 
+        await track('help created successfully !!', { 
           distinct_id : userId,
-          helpID: helpdoc._id
+          helpID: helpdoc._id,
+          help_message : bodyData.message,
+          title: bodyData.title,
+          description: bodyData.description,
+          attachment: bodyData.attachment,
         });
         const updateUser = await Profile.findOneAndUpdate({
           _id:userId
@@ -53,9 +55,14 @@ module.exports = class HelpService {
     });
     // verify if the user is authorized -- if authorized find help doc with users id
     if(!findUser){
+      await track('failed to delete help !!', { 
+        distinct_id : userId,
+        message:`user_id : ${userId } doesnot exists `,
+        helpID: helpID
+      });
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    if (findUser) {
+    else {
       const findHelp = await Help.findOne({
         _id: helpID
       })
@@ -64,7 +71,7 @@ module.exports = class HelpService {
         await track('help deleted ', { 
           distinct_id : userId,
           message:`${findUser.name } tried to delete help doc -- failed`,
-          helpID: helpID
+          helpID: `help_id : ${helpID} doesnot exist `
         });
         throw ({ status: 404, message: 'HELP_DOC_NOT_EXISTS' });
       }
@@ -75,9 +82,9 @@ module.exports = class HelpService {
           { new: true }
         );
         // mixpanel track -- delete help
-        await track('help deleted ', { 
+        await track('help deleted successfully !! ', { 
           distinct_id : userId,
-          helpID: helpID
+          helpID: helpID,
         });
         return deleteHelp;
       }

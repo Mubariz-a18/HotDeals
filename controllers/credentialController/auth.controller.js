@@ -4,7 +4,6 @@ const testPhoneNumbers = require("../../data/testNumbers");
 const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
-const Profile = require("../../models/Profile/Profile");
 const { track } = require("../../services/mixpanel-service");
 const mixpanel = require("mixpanel");
 
@@ -14,7 +13,6 @@ module.exports = class AuthController {
   static async apiGetOTP(req, res, next) {
     const { phoneNumber } = req.body; 
     console.log(phoneNumber);
-
     try {
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
@@ -35,14 +33,19 @@ module.exports = class AuthController {
           await track("otp sent successfull", {
             distinct_id: phoneNumber.text,
           })
-          mixpanel.people.increment(userID, 'views particular ad');
+          mixpanel.people.increment(userID, 'logins');
         } else {
+          await track("otp sent failed !!", {
+            distinct_id: phoneNumber.text,
+          })
+          mixpanel.people.increment(userID, 'failed login attempt');
+
           res.status(400).json({
             message: msgResponse.data,
           });
         }
     } catch (error) {
-      res.status(400).json({
+      res.status(500).json({
         message: error.message,
       });
     }
