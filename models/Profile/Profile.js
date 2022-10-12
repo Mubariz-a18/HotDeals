@@ -159,10 +159,6 @@ const profileSchema = mongoose.Schema({
     type: Number,
     default: 0
   },
-  // rate_value: {
-  //   type: Number,
-  //   default: 0
-  // },
   rate_average: {
     type: Number,
     default: 0
