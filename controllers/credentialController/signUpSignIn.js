@@ -62,7 +62,10 @@ exports.signUpSignIn = async function (req, res) {
             },
             { otp: otp }
           );
-
+          // mixpanel track for otp verify 
+          await track('login success !1  ', { 
+              message:`user ${user._id} has login `
+          });
           res.status(201).json({
             type: "success",
             message: "OTP verified successfully",
@@ -83,7 +86,9 @@ exports.signUpSignIn = async function (req, res) {
             },
             { otp: otp }
           );
-
+          await track('login success !1  ', { 
+            message:`user ${user._id} has login `
+        });
           res.status(200).send({
             message: "OTP sent successfully!!!!!",
           });

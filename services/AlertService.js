@@ -15,6 +15,7 @@ module.exports = class AlertService {
         category: bodyData.category,
         sub_category: bodyData.sub_category,
         keyword: bodyData.keyword,
+        message:`user_id : ${userId}  does not exist`
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
@@ -53,8 +54,9 @@ module.exports = class AlertService {
       const userExist = await Profile.findOne({ _id: userId });
       // if user is verified alerts are fetched from alert collection 
       if(!userExist){
-        await track('failed get alert ', { 
+        await track('failed !! get alert ', { 
           distinct_id: bodyData._id,
+          message:`user : ${userId}  does not exist`
         })
         throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
@@ -62,7 +64,8 @@ module.exports = class AlertService {
         const myAlert = await Alert.find({_id: [bodyData._id]})
         if(myAlert.length == 0 ){
           await track('failed !! get alert ', { 
-            distinct_id: bodyData._id,
+            distinct_id: userId,
+            message:` alert_id : ${bodyData._id}  does not exist`
           })
           throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
         }
@@ -90,11 +93,12 @@ module.exports = class AlertService {
       // if user is verified alert i updated in alert collection
       if(!user){
          // mixpanel track - failed to update alert
-         await track('failed to update alert ', { 
+         await track('failed !! to update alert ', { 
            sub_category: bodyData.sub_category,
            category: bodyData.category,
            keyword: bodyData.keyword,
            distinct_id: alert_id,
+           message:`user : ${userId}  does not exist`
          })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
@@ -112,7 +116,7 @@ module.exports = class AlertService {
         }, { new: true })
 
         // mixpanel track for update alert 
-        await track('update alert ', { 
+        await track('success !! update alert ', { 
           sub_category: bodyData.sub_category,
           category: bodyData.category,
           keyword: bodyData.keyword,
@@ -129,7 +133,8 @@ module.exports = class AlertService {
       //if user is authorized alert is removed from profile.alert[]
       if(!user){      
         await track('failed to delete alert ', { 
-        distinct_id: alert_id,
+        distinct_id: alert_id, 
+        message:`user : ${userId}  does not exist`
       })
         throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
@@ -139,10 +144,10 @@ module.exports = class AlertService {
           { $pull: { alert: ObjectId(alert_id) } },
           { new: true }
         );
-
         // mixpanel - delete alert from user alert feild
         await track('delete alert ', { 
           distinct_id: alert_id,
+          message:`${alert_id} deleted successfully`
         })
         return "successfully deleted"
       }

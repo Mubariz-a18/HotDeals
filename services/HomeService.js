@@ -1,18 +1,15 @@
 const generics = require('../models/Ads/genericSchema')
 const profiles = require('../models/Profile/Profile');
+const { generateOTP } = require('../utils/otp.util');
 const { track } = require('./mixpanel-service');
 module.exports = class HomeService {
 
   // Get Home - Using Aggregation and GeoNear 
 
   static async getHome(bodyData) {
-    console.log("Inside home Service");
-    console.log(bodyData)
     let lng = bodyData.lng;
     let lat = bodyData.lat;
     let maxDistance = +bodyData.maxDistance;
-    console.log(+lng, +lat)
-
     // Aggregate Generics with  geonear (longitute and latitues are provided in coordinates )
     const ads = await generics.aggregate([
       [
@@ -90,17 +87,12 @@ module.exports = class HomeService {
         }
       ]
     ])
-    var digits = "0123456789";
-    let id = "";
-    for (let i = 0; i < 10; i++) {
-      id += digits[Math.floor(Math.random() * 10)];
-    }
+    const id = generateOTP(15)
     await track('home page ', { 
       distinct_id: id ,
       $latitude: +lat,
       $longitude: +lng,
     })
-    console.log(ads , ads.length)
     return ads;
   };
 };

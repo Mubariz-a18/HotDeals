@@ -4,9 +4,6 @@ const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
 const { currentDate } = require("../utils/moment");
-const mixpanel = require("mixpanel");
-
-
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -17,27 +14,34 @@ module.exports = class ProfileService {
     });
     console.log(profileDoc)
     if (profileDoc) {
-      const userProfile = await Profile.findOne({_id: userID});
+      const userProfile = await Profile.findOne({ _id: userID });
       if (!userProfile) {
         let contactNumber = profileDoc.userNumber
         // Creating Profile
         const profileDoc1 = await Profile.create({
           _id: userID,
           name: bodyData.name,
-          userNumber: contactNumber,
-          country_code: bodyData.country_code,
+          userNumber: {
+            text: contactNumber,
+            private: bodyData.userNumber.private
+          },
           email: {
-            text:bodyData.email
+            text: bodyData.email.text,
+            private: bodyData.email.private
           },
           user_type: {
-            text:bodyData.user_type
+            text: bodyData.user_type.text,
+            private: bodyData.user_type.private
           },
-          city:  {
-            text:bodyData.city
+          city: {
+            text: bodyData.city.text,
+            private: bodyData.city.private
           },
-          about:{
-            text: bodyData.about
+          about: {
+            text: bodyData.about.text,
+            private: bodyData.about.private
           },
+          country_code: bodyData.country_code,
           date_of_birth: bodyData.date_of_birth,
           age: bodyData.age,
           gender: bodyData.gender,
@@ -46,7 +50,7 @@ module.exports = class ProfileService {
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
           created_date: currentDate,
-          updated_date: currentDate
+          updated_date: currentDate,
         });
 
         console.log(profileDoc1)
@@ -54,9 +58,9 @@ module.exports = class ProfileService {
         const createDefaultRating = await Rating.create({
           user_id: profileDoc1._id,
         });
-        await track('New Profile Created ', { 
-          distinct_id : profileDoc1._id ,
-          $email :  profileDoc.email.text
+        await track('New Profile Created ', {
+          distinct_id: profileDoc1._id,
+          $email: profileDoc.email.text
         });
         return profileDoc1;
       } else {
@@ -98,8 +102,8 @@ module.exports = class ProfileService {
         },
       ]);
 
-      await track('User searched  ', { 
-        distinct_id : user_ID ,
+      await track('User searched  ', {
+        distinct_id: user_ID,
       });
 
       return profileData;
@@ -107,36 +111,96 @@ module.exports = class ProfileService {
     }
   }
 
+  // api get my profile service
+  static async getMyProfile(user_ID) {
+    const userExist = await Profile.findById({ _id: user_ID })
+    if (!userExist) {
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+    }
+    else {
+      const MyProfile = await Profile.aggregate([
+        {
+          $match: { _id: mongoose.Types.ObjectId(user_ID) },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            userNumber: 1,
+            email: 1,
+            city: 1,
+            about: 1,
+            gender: 1,
+            date_of_birth: 1,
+            user_type: 1,
+            about: 1,
+            profile_url: 1,
+            followers: 1,
+            followings: 1,
+            rate_average: 1
+          }
+        },
+      ])
+      return MyProfile
+    }
+
+  }
+
   // Updating Profile
   static async updateProfile(bodyData, userId) {
-    const updateUsr = await Profile.findByIdAndUpdate(userId,
-      {
-        $set: {
+    const userProfile = await Profile.findOne({ _id: userId });
+    if(!userProfile){
+      await track('Failed to  updated User Profile  ', {
+        distinct_id: userId,
+        $email: bodyData.email.text,
+      });
+      throw ({ status: 404, message : 'USER_NOT_EXISTS'})
+    }
+    else{
+      const updateUsr = await Profile.findByIdAndUpdate(userId,
+        {
+          $set: {
           name: bodyData.name,
-          phone_number: bodyData.phone,
+          userNumber: {
+            text: userProfile.userNumber.text,
+            private: bodyData.userNumber.private
+          },
+          email: {
+            text: bodyData.email.text,
+            private: bodyData.email.private
+          },
+          user_type: {
+            text: bodyData.user_type.text,
+            private: bodyData.user_type.private
+          },
+          city: {
+            text: bodyData.city.text,
+            private: bodyData.city.private
+          },
+          about: {
+            text: bodyData.about.text,
+            private: bodyData.about.private
+          },
           country_code: bodyData.country_code,
-          email: bodyData.email,
           date_of_birth: bodyData.date_of_birth,
           age: bodyData.age,
           gender: bodyData.gender,
-          user_type: bodyData.user_type,
           language_preference: bodyData.language_preference,
-          city: bodyData.city,
-          about: bodyData.about,
           free_credit: bodyData.free_credit,
           premium_credit: bodyData.premium_credit,
           profile_url: bodyData.profile_url,
-          updated_date:currentDate
+          updated_date: currentDate
         },
       },
       {
         new: true
       }
-    );
-    await track('User Profile updated  ', { 
-      distinct_id : userId ,
-      $email: bodyData.email
-    });
-    return updateUsr;
+      );
+      await track('User Profile updated  ', {
+        distinct_id: userId,
+        $email: bodyData.email
+      });
+      return updateUsr;
+    }
   }
 };
