@@ -53,9 +53,6 @@ app.use(DashBoardRouter);
 app.use(GlobalSearchRouter);
 app.use(cat_subCat_SearchRouter);
 
-
-
-
 //server listener
 server.listen(PORT, () => {
   console.log(`server listening at http://localhost:${PORT}`);

@@ -45,8 +45,10 @@ module.exports = class AdService {
           price,
           isPrime,
           image_url,
+          video_url,
           ad_present_location,
           ad_posted_location,
+          ad_posted_address,
           ad_status,
           is_negotiable,
           is_ad_posted,
@@ -63,8 +65,10 @@ module.exports = class AdService {
           price,
           isPrime,
           image_url,
+          video_url,
           ad_present_location,
           ad_posted_location,
+          ad_posted_address,
           ad_status,
           is_negotiable,
           is_ad_posted,
@@ -85,7 +89,6 @@ module.exports = class AdService {
           }
         })
         //Create new Ad in GlobalSearch Model 
-        console.log(bodyData.description)
         const createGlobalSearch = await GlobalSearch.create({
           ad_id: adDoc._id,
           category: bodyData.category,

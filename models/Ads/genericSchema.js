@@ -45,6 +45,10 @@ const genericSchema = mongoose.Schema({
         type: {type:String} ,
         coordinates: [],
     },
+    ad_posted_address:
+    {
+        type: String,
+    },
     ad_status: {
         type: String,
         enum: ["Selling", "Archive", "Sold", "Deleted", "Draft", "Expired"],

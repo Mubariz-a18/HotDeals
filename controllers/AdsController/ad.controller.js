@@ -9,7 +9,6 @@ module.exports = class AdController {
       // response code is send 
         res.status(200).send({
           message: "Ad Successfully created!",
-          statusCode: 200,
           Ad: adDocument,
       })
     } catch (e) {

@@ -4,9 +4,6 @@ const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
 const { currentDate } = require("../utils/moment");
-const mixpanel = require("mixpanel");
-
-
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -107,6 +104,40 @@ module.exports = class ProfileService {
     }
   }
 
+// api get my profile service
+  static async getMyProfile(user_ID) {
+    const userExist = await Profile.findById({_id:user_ID})
+    if(!userExist){
+      throw ({ status: 404, message : 'USER_NOT_EXISTS'})
+    }
+    else{
+      const MyProfile = await Profile.aggregate([
+        {
+          $match: { _id: mongoose.Types.ObjectId(user_ID) },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            userNumber: 1,
+            email: 1,
+            city: 1,
+            about: 1,
+            gender: 1,
+            date_of_birth:1,
+            user_type:1,
+            about:1,
+            profile_url:1,
+            followers:1,
+            followings:1,
+            rate_average:1
+          }
+        },
+      ])
+      return MyProfile
+    }
+
+  }
   // Updating Profile
   static async updateProfile(bodyData, userId) {
     const updateUsr = await Profile.findByIdAndUpdate(userId,

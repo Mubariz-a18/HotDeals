@@ -40,10 +40,46 @@ module.exports = class ProfileController {
       } else {
         res.status(400).json({ error: "Profile Not Found" });
       }
-    } catch (error) {
-      console.log(error);
-      res.status(400).json({ error: error });
-    }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  }
+  static async apiGetMyProfile(req,res,next){
+    try{
+      const MyProfileData = await ProfileService.getMyProfile(req.user_ID);
+        // response code is send 
+       res.status(200).send({
+        message: "Get My Profile Success",
+        MyProfileData : MyProfileData
+       });
+            
+    }catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   static async apiUpdateProfile(req, res, next) {
