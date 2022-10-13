@@ -6,7 +6,6 @@ module.exports = class FollowController {
     // New Follow User
     static async apiFollowUser(req, res, next) {
         try {
-            // console.log("inside Follow Controller:" + req.user_ID);
             const followUser = await FollowUnfollowService.followUser(req, req.body, req.user_ID);
             res.status(200).json({
                 message:"successfully followed ",
@@ -14,7 +13,6 @@ module.exports = class FollowController {
               }) 
         } catch (e) {
             if (!e.status) {
-              console.log(e)
               res.status(500).json({
                 error: {
                   message: ` something went wrong try again : ${e.message} `
@@ -40,7 +38,6 @@ module.exports = class FollowController {
               }) 
         } catch (e) {
             if (!e.status) {
-              console.log(e)
               res.status(500).json({
                 error: {
                   message: ` something went wrong try again : ${e.message} `

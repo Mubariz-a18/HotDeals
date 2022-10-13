@@ -6,15 +6,34 @@ module.exports = class HomeController {
   
   static async apiGetHome(req, res, next) {
     try {
-        console.log("Inside home Controller")
-        console.log(req.query)
-        const homeData = await HomeService.getHome(req.query);
+      const page = +req.query.page;
+      const limit = +req.query.limit 
+      const homeData = await HomeService.getHome(req.query , page , limit);
+      console.log(homeData[0]["PremiumAds"].length)
       if (homeData) {
-        res.send(homeData)
+        res.status(200).json([
+        { TotalPremiumAds: homeData[0]["PremiumAds"].length ,
+          PremiumAds: homeData[0]["PremiumAds"],},
+
+        {TotalRecentAds :homeData[0]["RecentAds"].length,
+          RecentAds :homeData[0]["RecentAds"]}
+        ])
       }
-    } catch (error) {
-        console.log(error)
-    }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 };
 

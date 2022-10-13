@@ -3,13 +3,16 @@ const profiles = require('../models/Profile/Profile');
 const { generateOTP } = require('../utils/otp.util');
 const { track } = require('./mixpanel-service');
 module.exports = class HomeService {
-
+  
   // Get Home - Using Aggregation and GeoNear 
 
-  static async getHome(bodyData) {
+  static async getHome(bodyData , page ,limit) {
     let lng = bodyData.lng;
     let lat = bodyData.lat;
-    let maxDistance = +bodyData.maxDistance;
+    let maxDistance = +bodyData.maxDistance
+    let pageVal = page 
+    let limitval = limit || 40
+     console.log(pageVal , limitval) 
     // Aggregate Generics with  geonear (longitute and latitues are provided in coordinates )
     const ads = await generics.aggregate([
       [
@@ -67,6 +70,8 @@ module.exports = class HomeService {
             "dist":1
           }
         },
+        { $skip: page * limitval},
+        { $limit: limitval },
         {
           '$facet': {
             'PremiumAds': [
@@ -84,7 +89,8 @@ module.exports = class HomeService {
               }
             ]
           }
-        }
+        },
+
       ]
     ])
     const id = generateOTP(15)

@@ -12,7 +12,6 @@ module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
     const { phoneNumber } = req.body; 
-    console.log(phoneNumber);
     try {
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
@@ -58,8 +57,6 @@ module.exports = class AuthController {
     try {
       //Verfying again otp collection to check the otp is valid
       const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
-      console.log("verification_checkstatus: ", verficationStatus);
-
       if (verficationStatus === "approved") {
         //Get user from Database
         const oldUser = await User.findOne({
@@ -110,7 +107,6 @@ module.exports = class AuthController {
         distinct_id:phoneNumber,
         })
         mixpanel.people.increment(phoneNumber , 'login unsuccessfull');
-      console.log("errorInVerifyingOTP: ", error);
       return res.status(400).send(error);
     }
   }

@@ -86,7 +86,7 @@ module.exports = class ProfileController {
     try {
       const profileData = await ProfileService.updateProfile(req.body,req.user_ID);
         res.send({
-          message:"success",
+          message:"success updated Profile",
           ProfileDoc:profileData
         });
     } catch (e) {

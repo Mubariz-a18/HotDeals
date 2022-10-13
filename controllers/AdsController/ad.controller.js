@@ -32,7 +32,6 @@ module.exports = class AdController {
   static async apiGetMyAds(req, res, next) {
     try {
       const getDocument = await AdService.getMyAds(req.user_ID);
-      console.log(getDocument)
       // Response code is send 
         res.status(200).send({
           message: "success!",
@@ -41,7 +40,6 @@ module.exports = class AdController {
           Drafts: getDocument[0].Drafts
         });
     } catch (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -110,7 +108,6 @@ module.exports = class AdController {
   // Get Favourite Ads -- Ads are fetched and returned from Adservice 
   static async apiGetFavouriteAds(req, res, next) {
     try {
-      console.log("Inside Get Favourite Ads Controller");
       const Get_My_Fav_Ads= await AdService.getFavouriteAds(req.user_ID);
       // Response code is sent 
       res.status(200).send({ message: "My Favourite Ads " , Get_My_Fav_Ads })
@@ -192,6 +189,50 @@ module.exports = class AdController {
         res.status(e.status).json({
           error: {
             message: e.message 
+          }
+        });
+      };
+    };
+  }
+  
+   // Get Premium Ads  -- Ad is Fetched   and returned from Adservice to getPremiumAds
+  static async apiGetPremiumAds(req, res, next) {
+    try {
+      let page = +req.query.page || 1;
+      --page
+      let limit = 20;
+      const user_ID = req.user_ID
+      const getPremiumAds = await AdService.getPremiumAdsService(user_ID, page, limit);
+      // Response is sent
+      if (getPremiumAds == null) {
+        await track('viewed Premium ads failed', {
+          distinct_id: req.user_ID,
+        })
+        res.status(404).json({
+          message: "Ad does not exist"
+        })
+      }
+      else {
+        await track('viewed Premium ads successfully', {
+          distinct_id: req.user_ID,
+          message: `user : ${req.user_ID} viewed Premium Ad`
+        })
+        res.status(200).json({
+          PremiumAds: getPremiumAds,
+          TotalPremiumAds: getPremiumAds.length
+        })
+      }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
           }
         });
       };
