@@ -3,9 +3,8 @@ const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const {track} = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
-const {currentDate,DateAfter30Days} = require("../utils/moment");
 const Generic = require("../models/Ads/genericSchema");
-
+const { currentDate, DateAfter30Days } = require("../utils/moment");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
@@ -125,7 +124,7 @@ module.exports = class AdService {
       throw ({ status: 404, message : 'USER_NOT_EXISTS'})
     }
     else{
-      const myAdsDocs = await Generic.aggregate([
+      const myAdsList = await Generic.aggregate([
         {
           $match: { _id: { $in: findUsr.my_ads } }
         },
@@ -185,7 +184,7 @@ module.exports = class AdService {
           }
         },
       ]);
-      if(!myAdsDocs){
+      if(!myAdsList){
       // mixpanel -- track failed get my ads
       await track('failed !! get my ads', { 
         distinct_id: userId,
@@ -198,7 +197,7 @@ module.exports = class AdService {
       await track('get my ads successfully !!', { 
         distinct_id: userId
       });
-        return myAdsDocs;
+        return myAdsList;
       }
 
     }
@@ -505,8 +504,13 @@ module.exports = class AdService {
     }
   }
 
-  
-  static async getPremiumAdsService(userId, page, limit) {
+  // Get Premium Ads -- User is authentcated and Ads Are filtered
+  static async getPremiumAdsService(userId, query) {
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
     //if not exist throw error
@@ -516,14 +520,167 @@ module.exports = class AdService {
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    //else find Premium ads byfiltering isPrime
+    //else find Premium ads byfiltering isPrime true
     else {
       // .limit  &  .skip for pagination
-      const premiumAdsData = await Generic.find({ isPrime: true }).limit(limit).skip(page * limit)
+      const premiumAdsData = await Generic.aggregate([
+        [
+          {
+            '$geoNear': {
+              'near': { type: 'Point', coordinates: [+lng, +lat] },
+              "distanceField": "dist.calculated",
+              'maxDistance': maxDistance,
+              "includeLocs": "dist.location",
+              'spherical': true
+            }
+          },
+          {
+            '$lookup': {
+              'from': 'profiles',
+              'localField': 'user_id',
+              'foreignField': '_id',
+              'as': 'sample_result'
+            }
+          },
+          {
+            '$unwind': {
+              'path': '$sample_result'
+            }
+          },
+          {
+            '$addFields': {
+              'Seller_Name': '$sample_result.name',
+              'Seller_Id': '$sample_result._id',
+              'Seller_Joined': '$sample_result.created_date',
+              'Seller_Image': '$sample_result.profile_url',
+            }
+          },
+          {
+            '$project': {
+              '_id': 1,
+              'Seller_Id': 1,
+              'Seller_Name': 1,
+              'Seller_Joined': 1,
+              'Seller_Image': 1,
+              'category': 1,
+              'sub_category': 1,
+              'title': 1,
+              'price': 1,
+              'image_url': 1,
+              'special_mention': 1,
+              'description': 1,
+              'reported': 1,
+              'reported_by': 1,
+              'ad_status': 1,
+              'ad_type': 1,
+              'ad_expire_date': 1,
+              'ad_promoted': 1,
+              'isPrime': 1,
+              "dist": 1
+            }
+          },
+          {
+            '$match': {
+              'isPrime': true
+            }
+          },
+
+        ]
+      ]).skip(pageVal * (limitval-1)).limit(limitval)
       await track('get Premium Ads Successfully', {
         distinct_id: userId
       })
       return premiumAdsData;
+    };
+  };
+  // Get Recent Ads  -- User is authentcated and Ads Are filtered
+  static async getRecentAdsService(userId, query) {
+
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 20;
+    //  check if user exist 
+    const userExist = await Profile.findOne({ _id: userId });
+    //if not exist throw error
+    if (!userExist) {
+      await track('failed To get Recent Ads', {
+        distinct_id: userId
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-  }
+    //else find recent ads by filtering isPrime false
+    else {
+      // .limit  &  .skip for pagination
+      const getRecentAds = await Generic.aggregate([
+        [
+          {
+            '$geoNear': {
+              'near': { type: 'Point', coordinates: [+lng, +lat] },
+              "distanceField": "dist.calculated",
+              'maxDistance': maxDistance,
+              "includeLocs": "dist.location",
+              'spherical': true
+            }
+          },
+          {
+            '$lookup': {
+              'from': 'profiles',
+              'localField': 'user_id',
+              'foreignField': '_id',
+              'as': 'sample_result'
+            }
+          },
+          {
+            '$unwind': {
+              'path': '$sample_result'
+            }
+          },
+          {
+            '$addFields': {
+              'Seller_Name': '$sample_result.name',
+              'Seller_Id': '$sample_result._id',
+              'Seller_Joined': '$sample_result.created_date',
+              'Seller_Image': '$sample_result.profile_url',
+            }
+          },
+          {
+            '$project': {
+              '_id': 1,
+              'Seller_Id': 1,
+              'Seller_Name': 1,
+              'Seller_Joined': 1,
+              'Seller_Image': 1,
+              'category': 1,
+              'sub_category': 1,
+              'title': 1,
+              'price': 1,
+              'image_url': 1,
+              'special_mention': 1,
+              'description': 1,
+              'reported': 1,
+              'reported_by': 1,
+              'ad_status': 1,
+              'ad_type': 1,
+              'ad_expire_date': 1,
+              'ad_promoted': 1,
+              'isPrime': 1,
+              "dist": 1
+            }
+          },
+          {
+            '$match': {
+              'isPrime': false
+            }
+          },
+
+        ]
+      ]).skip(pageVal * (limitval - 1)).limit(limitval)
+      await track('get recent Ads Successfully', {
+        distinct_id: userId
+      })
+      return getRecentAds;
+    };
+  };
 };
