@@ -194,7 +194,8 @@ module.exports = class AdController {
       };
     };
   }
-
+  
+   // Get Premium Ads  -- Ad is Fetched   and returned from Adservice to getPremiumAds
   static async apiGetPremiumAds(req, res, next) {
     try {
       let page = +req.query.page || 1;
