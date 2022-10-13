@@ -237,5 +237,49 @@ module.exports = class AdController {
         });
       };
     };
-  }
+  };
+
+     // Get recent Ads  -- Ad is Fetched   and returned from Adservice to getRecentAds
+     static async apiGetRecentAds(req, res, next) {
+      try {
+        let page = +req.query.page || 1;
+        --page
+        let limit = 20;
+        const user_ID = req.user_ID
+        const getRecentAds = await AdService.getRecentAdsService(user_ID, page, limit);
+        // Response is sent
+        if (getRecentAds == null) {
+          await track('viewed Recent ads failed', {
+            distinct_id: req.user_ID,
+          })
+          res.status(404).json({
+            message: "Ad does not exist"
+          })
+        }
+        else {
+          await track('viewed Recent ads successfully', {
+            distinct_id: req.user_ID,
+            message: `user : ${req.user_ID} viewed recent Ad`
+          })
+          res.status(200).json({
+            getRecentAds: getRecentAds,
+            TotalRecentAds: getRecentAds.length
+          })
+        }
+      } catch (e) {
+        if (!e.status) {
+          res.status(500).json({
+            error: {
+              message: ` something went wrong try again : ${e.message} `
+            }
+          });
+        } else {
+          res.status(e.status).json({
+            error: {
+              message: e.message
+            }
+          });
+        };
+      };
+    };
 };

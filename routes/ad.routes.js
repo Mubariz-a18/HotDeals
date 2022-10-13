@@ -15,6 +15,7 @@ router.get('/api/v1/getFavouriteAds',verifyToken,AdController.apiGetFavouriteAds
 router.post('/api/v1/deleteAd',verifyToken,AdController.apiDeleteAds);
 router.post('/api/v1/get-particular-ad-details',verifyToken,AdController.apiGetParticularAdDetails);
 router.get('/api/v1/getPremiumAds',verifyToken,AdController.apiGetPremiumAds);
+router.get('/api/v1/getRecentAds',verifyToken,AdController.apiGetRecentAds);
 
 module.exports = router;
  

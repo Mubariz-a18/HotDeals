@@ -3,9 +3,10 @@ const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const {track} = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
-const {currentDate,DateAfter30Days} = require("../utils/moment");
 const Generic = require("../models/Ads/genericSchema");
-
+const moment = require('moment');
+const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+const  DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
@@ -505,7 +506,7 @@ module.exports = class AdService {
     }
   }
 
-  
+   // Get Premium Ads -- User is authentcated and Ads Are filtered
   static async getPremiumAdsService(userId, page, limit) {
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -516,7 +517,7 @@ module.exports = class AdService {
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    //else find Premium ads byfiltering isPrime
+    //else find Premium ads byfiltering isPrime true
     else {
       // .limit  &  .skip for pagination
       const premiumAdsData = await Generic.find({ isPrime: true }).limit(limit).skip(page * limit)
@@ -524,6 +525,27 @@ module.exports = class AdService {
         distinct_id: userId
       })
       return premiumAdsData;
+    };
+  };
+  // Get Recent Ads  -- User is authentcated and Ads Are filtered
+  static async getRecentAdsService(userId, page, limit) {
+    //  check if user exist 
+    const userExist = await Profile.findOne({ _id: userId });
+    //if not exist throw error
+    if (!userExist) {
+      await track('failed To get Recent Ads', {
+        distinct_id: userId
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-  }
+    //else find recent ads by filtering isPrime false
+    else {
+      // .limit  &  .skip for pagination
+      const getRecentAds = await Generic.find({ isPrime: false }).limit(limit).skip(page * limit)
+      await track('get Premium Ads Successfully', {
+        distinct_id: userId
+      })
+      return getRecentAds;
+    };
+  };
 };

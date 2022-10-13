@@ -94,7 +94,7 @@ const genericSchema = mongoose.Schema({
         default:false
     },
     created_at: {
-        type: Date,
+        type: String,
     },
     updated_at: {
         type: String
