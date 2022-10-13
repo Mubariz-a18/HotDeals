@@ -581,7 +581,8 @@ module.exports = class AdService {
           },
           {
             '$match': {
-              'isPrime': true
+              'isPrime': true,
+              'ad_status':"Selling"
             }
           },
 
@@ -671,7 +672,8 @@ module.exports = class AdService {
           },
           {
             '$match': {
-              'isPrime': false
+              'isPrime': false,
+              'ad_status':"Selling"
             }
           },
 

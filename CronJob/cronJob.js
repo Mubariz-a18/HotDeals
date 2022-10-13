@@ -9,7 +9,7 @@ var now = moment().format('YYYY-MM-DD HH:mm:ss');
     Ads.forEach(ad => {   
         if (now > (ad.ad_expire_date) ) {
             const updateAd =  Generic.findByIdAndUpdate(ad._id,
-              { $set: { ad_status: "Expired" } },
+              { $set: { ad_status: "Expired"  , isPrime : false} },
                 {new: true})
                 .then((res)=>{
                  res
