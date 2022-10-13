@@ -5,7 +5,6 @@ module.exports = class AlertController {
   // create Alert --  Alert doc is created and retured from adservice  in AlertData
   static async apiCreateAlert(req, res, next) {
     try {
-      console.log(req.user_ID)
       const userId = req.user_ID
       const body = req.body
       const alertData = await AlertService.createAlert(body , userId);
@@ -38,7 +37,6 @@ module.exports = class AlertController {
       const userId = req.user_ID
       const body = req.body
       const getAlert = await AlertService.getAlert(body,userId); 
-      console.log(getAlert)
       // Response code is sent with getAlert
       res.status(200).json({
         getAlert

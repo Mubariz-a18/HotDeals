@@ -9,8 +9,6 @@ async function getSelectionData(profileData) {
   let seeProfileData = {};
 
   Object.keys(tempProfileData).map((profileKey) => {
-    
-    console.log(profileKey + "::: " + profileData[profileKey]);
     if (
       typeof profileData[profileKey] === "object" &&
       !profileData[profileKey]?.private
@@ -28,13 +26,10 @@ async function getSelectionData(profileData) {
     }
 
   });
-  console.log("here:" + seeProfileData.email)
-
   return seeProfileData;
 }
 
 async function getFormattedDate(ISODate){
-    console.log("Inside function" +ISODate)
     let date = new Date(ISODate);
     if (date === undefined || date === null) return "";
     return date.toISOString().substring(0, 10);

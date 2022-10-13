@@ -430,7 +430,6 @@ module.exports = class AdService {
       const findAd = await Generic.findOne({
         _id: ad_id , user_id : userId
       });
-      console.log(findAd)
       if(!findAd){
         // mix-panel Track for -Failed  Removing Ad
         await track(' failed to remove  Ad', { 
@@ -477,6 +476,10 @@ module.exports = class AdService {
     });
     // if user Exist-- and _ids are matched Ads is returned 
     if (!userExist) {
+      await track('failed viewed ad', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     const findAd = await Generic.aggregate([{
@@ -499,6 +502,28 @@ module.exports = class AdService {
       //Mixpanel increment of user views count on ad view count
       mixpanel.people.increment(userId, 'views particular ad');
       return updateAd;
+    }
+  }
+
+  
+  static async getPremiumAdsService(userId, page, limit) {
+    //  check if user exist 
+    const userExist = await Profile.findOne({ _id: userId });
+    //if not exist throw error
+    if (!userExist) {
+      await track('failed To get Premium Ads', {
+        distinct_id: userId
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    //else find Premium ads byfiltering isPrime
+    else {
+      // .limit  &  .skip for pagination
+      const premiumAdsData = await Generic.find({ isPrime: true }).limit(limit).skip(page * limit)
+      await track('get Premium Ads Successfully', {
+        distinct_id: userId
+      })
+      return premiumAdsData;
     }
   }
 };

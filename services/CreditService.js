@@ -8,7 +8,6 @@ module.exports = class CreditService {
     try {
       const user = await User.findOne({ _id: userId });
       if (user) {
-        console.log("inside credit service");
         const newCredit = await  Credit.create({
           user_id: userId,
           free_credits_info : {
@@ -26,7 +25,6 @@ module.exports = class CreditService {
             expires_on:"22-9-2023"
           },
         });
-        console.log(newCredit);
         return newCredit;
       } else {
         return res
@@ -34,7 +32,6 @@ module.exports = class CreditService {
           .send({ error: "something went wrong in credit service" });
       }
     } catch (error) {
-     console.log(error)
     }
   }
 };

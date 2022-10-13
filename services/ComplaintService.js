@@ -8,7 +8,6 @@ module.exports = class ComplainService {
 
   // Create Complaint
   static async createComplaint(bodyData, userId) {
-    console.log("Inside Complain Service");
     const user = await User.findOne({ _id: userId });
     // if user is verified new complain doc is created 
     if(!user){
@@ -47,7 +46,6 @@ module.exports = class ComplainService {
       }
       else {
         // if complain doc is already created push another complain in the complaint array 
-        console.log("inside complain " + findComplaint._id)
         const pushCmpln = await Complaint.findOneAndUpdate(
           { user_id: userId},
           {

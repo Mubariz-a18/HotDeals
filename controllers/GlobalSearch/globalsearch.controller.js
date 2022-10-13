@@ -7,7 +7,6 @@ module.exports = class GlobalSearchController {
       res.status(200).send({ searchResult });
 
     } catch (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {

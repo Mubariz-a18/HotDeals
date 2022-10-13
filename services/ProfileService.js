@@ -12,7 +12,6 @@ module.exports = class ProfileService {
     let profileDoc = await User.findOne({
       userNumber: phoneNumber,
     });
-    console.log(profileDoc)
     if (profileDoc) {
       const userProfile = await Profile.findOne({ _id: userID });
       if (!userProfile) {
@@ -52,9 +51,6 @@ module.exports = class ProfileService {
           created_date: currentDate,
           updated_date: currentDate,
         });
-
-        console.log(profileDoc1)
-
         const createDefaultRating = await Rating.create({
           user_id: profileDoc1._id,
         });
@@ -64,8 +60,6 @@ module.exports = class ProfileService {
         });
         return profileDoc1;
       } else {
-        console.log("inside else")
-        console.log(userProfile)
         return userProfile;
       }
     }
@@ -76,9 +70,7 @@ module.exports = class ProfileService {
     const profileDoc = await Profile.findOne({
       _id: user_ID,
     });
-    console.log(profileDoc)
     if (profileDoc) {
-      console.log("I'm inside profile Service")
       const profileData = await Profile.aggregate([
         {
           $match: { _id: mongoose.Types.ObjectId(user_ID) },

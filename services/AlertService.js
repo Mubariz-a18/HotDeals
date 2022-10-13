@@ -77,7 +77,6 @@ module.exports = class AlertService {
               await track('get alert ', { 
                 distinct_id: bodyData._id,
               })
-              console.log(userExist.alert[i] )
               return myAlert
             }
           };
@@ -87,7 +86,6 @@ module.exports = class AlertService {
 
   //Update Alert
   static async updateAlert(bodyData, alert_id, userId) {
-    console.log("Inside Alert update Service");
 
       const user = await Profile.findOne({ _id: userId });
       // if user is verified alert i updated in alert collection
@@ -128,7 +126,6 @@ module.exports = class AlertService {
 
   // Delete Alert
   static async deleteAlert(alert_id, userId) {
-    console.log("I'm inside Delete Alert")
       const user = await Profile.findOne({ _id: userId });
       //if user is authorized alert is removed from profile.alert[]
       if(!user){      
