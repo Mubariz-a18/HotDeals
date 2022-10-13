@@ -7,7 +7,7 @@ module.exports = class HomeController {
   static async apiGetHome(req, res, next) {
     try {
       const page = +req.query.page;
-      const limit = +req.query.limit 
+      const limit = +req.query.limit ;
       const homeData = await HomeService.getHome(req.query , page , limit);
       console.log(homeData[0]["PremiumAds"].length)
       if (homeData) {

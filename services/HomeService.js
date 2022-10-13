@@ -6,7 +6,7 @@ module.exports = class HomeService {
   
   // Get Home - Using Aggregation and GeoNear 
 
-  static async getHome(bodyData , page ,limit) {
+  static async getHome(bodyData) {
     let lng = bodyData.lng;
     let lat = bodyData.lat;
     let maxDistance = +bodyData.maxDistance

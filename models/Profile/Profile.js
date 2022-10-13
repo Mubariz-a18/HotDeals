@@ -19,7 +19,7 @@ const profileSchema = mongoose.Schema({
     type: String,
   },
   date_of_birth: {
-    type: Date,
+    type: String,
   },
   email: {
     text: {

@@ -195,14 +195,10 @@ module.exports = class AdController {
     };
   }
   
-   // Get Premium Ads  -- Ad is Fetched   and returned from Adservice to getPremiumAds
+  // Get Premium Ads  -- Ad is Fetched   and returned from Adservice to getPremiumAds
   static async apiGetPremiumAds(req, res, next) {
     try {
-      let page = +req.query.page || 1;
-      --page
-      let limit = 20;
-      const user_ID = req.user_ID
-      const getPremiumAds = await AdService.getPremiumAdsService(user_ID, page, limit);
+      const getPremiumAds = await AdService.getPremiumAdsService(req.user_ID, req.query);
       // Response is sent
       if (getPremiumAds == null) {
         await track('viewed Premium ads failed', {
@@ -224,6 +220,7 @@ module.exports = class AdController {
       }
     } catch (e) {
       if (!e.status) {
+        console.log(e)
         res.status(500).json({
           error: {
             message: ` something went wrong try again : ${e.message} `
@@ -239,47 +236,44 @@ module.exports = class AdController {
     };
   };
 
-     // Get recent Ads  -- Ad is Fetched   and returned from Adservice to getRecentAds
-     static async apiGetRecentAds(req, res, next) {
-      try {
-        let page = +req.query.page || 1;
-        --page
-        let limit = 20;
-        const user_ID = req.user_ID
-        const getRecentAds = await AdService.getRecentAdsService(user_ID, page, limit);
-        // Response is sent
-        if (getRecentAds == null) {
-          await track('viewed Recent ads failed', {
-            distinct_id: req.user_ID,
-          })
-          res.status(404).json({
-            message: "Ad does not exist"
-          })
-        }
-        else {
-          await track('viewed Recent ads successfully', {
-            distinct_id: req.user_ID,
-            message: `user : ${req.user_ID} viewed recent Ad`
-          })
-          res.status(200).json({
-            getRecentAds: getRecentAds,
-            TotalRecentAds: getRecentAds.length
-          })
-        }
-      } catch (e) {
-        if (!e.status) {
-          res.status(500).json({
-            error: {
-              message: ` something went wrong try again : ${e.message} `
-            }
-          });
-        } else {
-          res.status(e.status).json({
-            error: {
-              message: e.message
-            }
-          });
-        };
+  // Get recent Ads  -- Ad is Fetched   and returned from Adservice to getRecentAds
+  static async apiGetRecentAds(req, res, next) {
+    try {
+      const user_ID = req.user_ID
+      const getRecentAds = await AdService.getRecentAdsService(user_ID, req.query);
+      // Response is sent
+      if (getRecentAds == null) {
+        await track('viewed Recent ads failed', {
+          distinct_id: req.user_ID,
+        })
+        res.status(404).json({
+          message: "Ad does not exist"
+        })
+      }
+      else {
+        await track('viewed Recent ads successfully', {
+          distinct_id: req.user_ID,
+          message: `user : ${req.user_ID} viewed recent Ad`
+        })
+        res.status(200).json({
+          getRecentAds: getRecentAds,
+          TotalRecentAds: getRecentAds.length
+        })
+      }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
       };
     };
+  };
 };

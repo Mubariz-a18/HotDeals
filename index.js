@@ -55,5 +55,6 @@ app.use(cat_subCat_SearchRouter);
 
 //server listener
 server.listen(PORT, () => {
+  console.log(`server is running On port : ${PORT}`)
   ScheduleTask
 });
