@@ -140,8 +140,8 @@ module.exports = class AdService {
                   views: 1,
                   isPrime: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
-                  createdAt: 1,
-                  ad_promoted_date: 1
+                  created_at: 1,
+                  ad_Premium_Date:1
                 }
               }
             ],
