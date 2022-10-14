@@ -287,7 +287,40 @@ module.exports = class AdService {
         }
         else if (bodyData.status == "REPOSTED") {
           // only after payment is done 
-          const adDoc = await Generic.findByIdAndUpdate(
+          const adCopy = await Generic.findById({ _id: ad_id });
+          const {
+            user_id,
+            category,
+            sub_category,
+            description,
+            SelectFields,
+            special_mention,
+            title,
+            price,
+            image_url,
+            video_url,
+            ad_present_location,
+            ad_posted_location,
+            ad_posted_address,
+          } = adCopy
+          const newDoc =  await Generic.create({_id:ObjectId() ,
+            user_id,
+            category,
+            sub_category,
+            description,
+            SelectFields,
+            special_mention,
+            title,
+            price,
+            image_url,
+            video_url,
+            ad_present_location,
+            ad_posted_location,
+            ad_posted_address,
+            created_at:currentDate,
+            updated_at :currentDate
+          });
+          const updatedDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             {
               $set:
@@ -297,9 +330,10 @@ module.exports = class AdService {
                 is_Reposted: true
               }
             },
-            { returnOriginal: true  }
-          )
-          return adDoc;
+            { returnOriginal: false  }
+          );
+
+          return updatedDoc;
         };
       };
     };
