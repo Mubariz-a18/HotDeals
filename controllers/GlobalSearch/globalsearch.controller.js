@@ -4,7 +4,7 @@ module.exports = class GlobalSearchController {
     try {
       const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
       await GlobalSearchService.createAnalyticsKeyword(searchResult, req.query, req.user_ID);
-      res.status(200).send({ searchResult });
+      res.status(200).json({ data: searchResult  , totalAdsSearched : searchResult.length });
 
     } catch (e) {
       if (!e.status) {

@@ -37,7 +37,7 @@ module.exports = class AuthController {
           await track("otp sent failed !!", {
             distinct_id: phoneNumber.text,
           })
-          mixpanel.people.increment(userID, 'failed login attempt');
+          mixpanel.people.increment(phoneNumber.text, 'failed login attempt');
 
           res.status(400).json({
             message: msgResponse.data,

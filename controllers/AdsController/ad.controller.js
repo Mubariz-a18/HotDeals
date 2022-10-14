@@ -156,9 +156,9 @@ module.exports = class AdController {
   static async apiGetParticularAdDetails(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
-      const getAdDetails = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
+      const {updateAd , owner} = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
       // Response is sent
-      if(getAdDetails == null){
+      if(updateAd == null){
         await track('viewed ad failed', {
           distinct_id: req.user_ID,
           ad_id: ad_id,
@@ -175,7 +175,8 @@ module.exports = class AdController {
           message:`user : ${req.user_ID} viewed Ad`
         })
         res.status(200).json({
-          AdDetails: getAdDetails
+          AdDetails: updateAd ,
+          owner: owner
         })
       }
     } catch (e) {

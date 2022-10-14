@@ -106,7 +106,7 @@ module.exports = class AdService {
         return adDoc["_doc"];
       }
     }
-  }
+  };
 
   // Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
   static async getMyAds(userId) {
@@ -201,7 +201,7 @@ module.exports = class AdService {
       }
 
     }
-  }
+  };
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
@@ -284,7 +284,7 @@ module.exports = class AdService {
             };
           };
        };
-      };
+  };
 
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
@@ -365,7 +365,7 @@ module.exports = class AdService {
         }
       }
     } 
-  }
+  };
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
   static async getFavouriteAds(userId) {
@@ -407,7 +407,6 @@ module.exports = class AdService {
       
     }
   };
-
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
   static async deleteAds(bodyData, userId, ad_id) {
@@ -493,6 +492,15 @@ module.exports = class AdService {
         { $inc: { views: 1 } },
         { new: true }
       )
+      const owner = await Profile.findById(
+          {_id:updateAd.user_id} , {              
+            _id:0,
+            name:1,
+            // profile_url:0
+          }
+      );
+        console.log(owner)
+
       // mix panel tack - when Particular ad is viewed 
       await track('viewed ad', {
         distinct_id: userId,
@@ -500,9 +508,9 @@ module.exports = class AdService {
       })
       //Mixpanel increment of user views count on ad view count
       mixpanel.people.increment(userId, 'views particular ad');
-      return updateAd;
+      return {updateAd , owner};
     }
-  }
+  };
 
   // Get Premium Ads -- User is authentcated and Ads Are filtered
   static async getPremiumAdsService(userId, query) {

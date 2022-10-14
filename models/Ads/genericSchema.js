@@ -4,6 +4,10 @@ const genericSchema = mongoose.Schema({
     user_id: {
         type: mongoose.Types.ObjectId,
     },
+    views:{
+        type:Number,
+        default : 0
+    },
     category: {
         type: String,
     },
@@ -102,7 +106,6 @@ const genericSchema = mongoose.Schema({
 });
 
 genericSchema.index({ category: "text", sub_category: "text", ad_posted_location: "2dsphere" });
-genericSchema.index({ created_at: 1 }, { expireAfterSeconds: 30, partialFilterExpression: { ad_status: 'EXPIRED' } })
 const Generic = mongoose.model("Generic", genericSchema,);
 
 module.exports = Generic;
