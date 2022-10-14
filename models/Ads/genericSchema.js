@@ -8,6 +8,10 @@ const genericSchema = mongoose.Schema({
         type:Number,
         default : 0
     },
+    saved:{
+        type:Number,
+        default : 0
+    },
     category: {
         type: String,
     },
@@ -55,8 +59,12 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft", "Expired"],
+        enum: ["Selling", "Archive", "Sold", "Deleted", "Draft", "Expired" , "Reposted"],
         default: "Selling"
+    },
+    is_Reposted :{
+        type:Boolean,
+        default:false
     },
     ad_type: {
         type: String,
@@ -82,20 +90,27 @@ const genericSchema = mongoose.Schema({
     is_negotiable: {
         type: Boolean,
     },
-    is_ad_posted: {
-        type: Boolean
-    },
-    is_ad_favourite: {
-        type: Boolean,
-        default: false
-    },
-    is_reposted: {
-        type: Boolean,
-        default: false
-    },
+    // is_ad_posted: {
+    //     type: Boolean
+    // },
     isPrime:{
         type:Boolean,
         default:false
+    },
+    ad_Premium_Date :{
+        type:String
+    },
+    ad_Sold_Date:{
+        type:String
+    },
+    ad_Archive_Date:{
+        type:String
+    },
+    ad_Draft_Date:{
+        type:String
+    },
+    ad_Reposted_Date:{
+        type:String
     },
     created_at: {
         type: String,
