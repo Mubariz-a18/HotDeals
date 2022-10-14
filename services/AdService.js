@@ -244,14 +244,14 @@ module.exports = class AdService {
           status: bodyData.status
         })
 
-        if (bodyData.status == "ARCHIVED") {
+        if (bodyData.status == "Archive") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $set: { ad_status: "Archive", ad_Archive_Date: currentDate } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
-        } else if (bodyData.status == "SOLD") {
+        } else if (bodyData.status == "Sold") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $set: { ad_status: "Sold" } },
@@ -259,24 +259,24 @@ module.exports = class AdService {
           )
           return adDoc;
         }
-        else if (bodyData.status == "DELETE") {
+        else if (bodyData.status == "Delete") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Deleted" } },
+            { $set: { ad_status: "Delete" } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
         }
-        else if (bodyData.status == "PREMEIUM") {
+        else if (bodyData.status == "Premium") {
           // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "PREMEIUM", ad_Premium_Date: currentDate, isPrime: true } },
+            { $set: { ad_status: "Premium", ad_Premium_Date: currentDate, isPrime: true } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
         }
-        else if (bodyData.status == "DRAFT") {
+        else if (bodyData.status == "Draft") {
           // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
@@ -285,7 +285,7 @@ module.exports = class AdService {
           )
           return adDoc;
         }
-        else if (bodyData.status == "REPOSTED") {
+        else if (bodyData.status == "Reposted") {
           // only after payment is done 
           const adCopy = await Generic.findById({ _id: ad_id });
           const {
