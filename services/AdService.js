@@ -145,7 +145,7 @@ module.exports = class AdService {
                 }
               }
             ],
-            "Archived": [
+            "Archive": [
               { $match: { ad_status: "Archive" } },
               {
                 $project: {
@@ -174,16 +174,35 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
-
                   title: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
                   ad_expire_date: 1,
-
                 }
               }
-            ]
+            ],
+            "Deleted": [
+              { $match: { ad_status: "Delete" } },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  image_url: { $arrayElemAt: ["$image_url", 0] }
+                }
+              }
+            ],
+            "Reposted": [
+              { $match: { ad_status: "Reposted" } },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  ad_Reposted_Date:1
+                }
+              }
+            ],
           }
         },
       ]);

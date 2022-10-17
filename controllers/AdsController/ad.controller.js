@@ -36,8 +36,11 @@ module.exports = class AdController {
         res.status(200).send({
           message: "success!",
           Selling: getDocument[0].Selling,
-          Archived: getDocument[0].Archived,
-          Drafts: getDocument[0].Drafts
+          Archived: getDocument[0].Archive,
+          Drafts: getDocument[0].Drafts,
+          Expired:getDocument[0].Expired,
+          Deleted:getDocument[0].Deleted,
+          Reposted:getDocument[0].Reposted
         });
     } catch (e) {
       if (!e.status) {

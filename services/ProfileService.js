@@ -152,36 +152,36 @@ module.exports = class ProfileService {
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
-          name: bodyData.name,
-          userNumber: {
-            text: userProfile.userNumber.text,
-            private: bodyData.userNumber.private
-          },
-          email: {
-            text: bodyData.email.text,
-            private: bodyData.email.private
-          },
-          user_type: {
-            text: bodyData.user_type.text,
-            private: bodyData.user_type.private
-          },
-          city: {
-            text: bodyData.city.text,
-            private: bodyData.city.private
-          },
-          about: {
-            text: bodyData.about.text,
-            private: bodyData.about.private
-          },
-          country_code: bodyData.country_code,
-          date_of_birth: bodyData.date_of_birth,
-          age: bodyData.age,
-          gender: bodyData.gender,
-          language_preference: bodyData.language_preference,
-          free_credit: bodyData.free_credit,
-          premium_credit: bodyData.premium_credit,
-          profile_url: bodyData.profile_url,
-          updated_date: currentDate
+                name: bodyData.name,
+                userNumber: {
+                    text: userProfile.userNumber.text,
+                    private: bodyData.userNumber.private
+                  },
+                email: {
+                    text: bodyData.email.text,
+                    private: bodyData.email.private
+                  },
+                user_type: {
+                    text: bodyData.user_type.text,
+                    private: bodyData.user_type.private
+                  },
+                city: {
+                    text: bodyData.city.text,
+                    private: bodyData.city.private
+                  },
+                about: {
+                    text: bodyData.about.text,
+                    private: bodyData.about.private
+                  },
+                country_code: bodyData.country_code,
+                date_of_birth: bodyData.date_of_birth,
+                age: bodyData.age,
+                gender: bodyData.gender,
+                language_preference: bodyData.language_preference,
+                free_credit: bodyData.free_credit,
+                premium_credit: bodyData.premium_credit,
+                profile_url: bodyData.profile_url,
+                updated_date: currentDate
         },
       },
       {
