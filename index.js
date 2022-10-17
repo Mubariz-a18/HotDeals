@@ -29,7 +29,7 @@ const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
-const {ScheduleTask , ScheduleTask_Display_Historic_Ads} = require("./CronJob/cronJob");
+const {ScheduleTask , ScheduleTask_Display_Historic_Ads, ScheduleTask_Alert_activation} = require("./CronJob/cronJob");
 connectDB();
 
 //Middlewares
@@ -58,4 +58,5 @@ server.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
   ScheduleTask
   ScheduleTask_Display_Historic_Ads
+  ScheduleTask_Alert_activation
 });

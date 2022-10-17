@@ -1,6 +1,7 @@
 const Profile = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
 const { track } = require("./mixpanel-service");
+const { DateAfter15Days, currentDate } = require("../utils/moment");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class AlertService {
@@ -25,8 +26,10 @@ module.exports = class AlertService {
         category: bodyData.category,
         sub_category: bodyData.sub_category,
         name: bodyData.name,
-        keyword: bodyData.keyword,
+        keywords: bodyData.keywords,
         activate_status: bodyData.activate_status,
+        created_Date:currentDate,
+        alert_Expiry_Date:DateAfter15Days
       });
       // push alertDoc._id in profile.alert
       await Profile.findByIdAndUpdate(userId, {
@@ -110,6 +113,7 @@ module.exports = class AlertService {
           name: bodyData.name,
           keyword: bodyData.keyword,
           activate_status: bodyData.activate_status,
+          updated_Date:currentDate
         },
       }, { new: true })
 
