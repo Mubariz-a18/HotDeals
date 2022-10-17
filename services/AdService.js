@@ -572,8 +572,6 @@ module.exports = class AdService {
         // profile_url:0
       }
       );
-      console.log(owner)
-
       // mix panel tack - when Particular ad is viewed 
       await track('viewed ad', {
         distinct_id: userId,
