@@ -141,7 +141,7 @@ module.exports = class AdService {
                   isPrime: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   created_at: 1,
-                  ad_Premium_Date:1
+                  ad_Premium_Date: 1
                 }
               }
             ],
@@ -188,7 +188,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  ad_Deleted_Date:1,
+                  ad_Deleted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
               }
@@ -199,7 +199,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  ad_Reposted_Date:1,
+                  ad_Reposted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -274,7 +274,7 @@ module.exports = class AdService {
         } else if (bodyData.status == "Sold") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Sold" , ad_Sold_Date:currentDate , ad_Historic_Duration_Date : Ad_Historic_Duration ,} },
+            { $set: { ad_status: "Sold", ad_Sold_Date: currentDate, ad_Historic_Duration_Date: Ad_Historic_Duration, } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
@@ -282,7 +282,7 @@ module.exports = class AdService {
         else if (bodyData.status == "Delete") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Delete" , ad_Deleted_Date :currentDate , ad_Historic_Duration_Date : Ad_Historic_Duration} },
+            { $set: { ad_status: "Delete", ad_Deleted_Date: currentDate, ad_Historic_Duration_Date: Ad_Historic_Duration } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
@@ -323,7 +323,8 @@ module.exports = class AdService {
             ad_posted_location,
             ad_posted_address,
           } = adCopy
-          const newDoc =  await Generic.create({_id:ObjectId() ,
+          const newDoc = await Generic.create({
+            _id: ObjectId(),
             user_id,
             category,
             sub_category,
@@ -337,8 +338,8 @@ module.exports = class AdService {
             ad_present_location,
             ad_posted_location,
             ad_posted_address,
-            created_at:currentDate,
-            updated_at :currentDate
+            created_at: currentDate,
+            updated_at: currentDate
           });
           const updatedDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
@@ -350,7 +351,7 @@ module.exports = class AdService {
                 is_Reposted: true
               }
             },
-            { returnOriginal: false  }
+            { returnOriginal: false }
           );
 
           return updatedDoc;

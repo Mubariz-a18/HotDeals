@@ -7,15 +7,15 @@ module.exports = class AlertService {
 
   // Create Alert 
   static async createAlert(bodyData, userId) {
-    const  userExist = await Profile.findOne({ _id: userId });
+    const userExist = await Profile.findOne({ _id: userId });
     // if user is authorized create a new alert
-    if(!userExist){
-      await track('failed to create alert ', { 
+    if (!userExist) {
+      await track('failed to create alert ', {
         distinct_id: userId,
         category: bodyData.category,
         sub_category: bodyData.sub_category,
         keyword: bodyData.keyword,
-        message:`user_id : ${userId}  does not exist`
+        message: `user_id : ${userId}  does not exist`
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
@@ -38,7 +38,7 @@ module.exports = class AlertService {
       });
 
       // mixpanel track for create alert 
-      await track('alert created ', { 
+      await track('alert created ', {
         distinct_id: userId,
         category: bodyData.category,
         sub_category: bodyData.sub_category,
@@ -48,105 +48,105 @@ module.exports = class AlertService {
       return alertDoc;
     }
   }
-    // get Alert
+  // get Alert
   static async getAlert(bodyData, userId) {
 
-      const userExist = await Profile.findOne({ _id: userId });
-      // if user is verified alerts are fetched from alert collection 
-      if(!userExist){
-        await track('failed !! get alert ', { 
-          distinct_id: bodyData._id,
-          message:`user : ${userId}  does not exist`
+    const userExist = await Profile.findOne({ _id: userId });
+    // if user is verified alerts are fetched from alert collection 
+    if (!userExist) {
+      await track('failed !! get alert ', {
+        distinct_id: bodyData._id,
+        message: `user : ${userId}  does not exist`
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else {
+      const myAlert = await Alert.find({ _id: [bodyData._id] })
+      if (myAlert.length == 0) {
+        await track('failed !! get alert ', {
+          distinct_id: userId,
+          message: ` alert_id : ${bodyData._id}  does not exist`
         })
-        throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+        throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
       }
       else {
-        const myAlert = await Alert.find({_id: [bodyData._id]})
-        if(myAlert.length == 0 ){
-          await track('failed !! get alert ', { 
-            distinct_id: userId,
-            message:` alert_id : ${bodyData._id}  does not exist`
-          })
-          throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
-        }
-        else{
-          for (let i = 0 ;i<=userExist.alert.length ;i++){
-            if(userExist.alert[i]== bodyData._id){
-  
-              // mixpanel - tracker for get alert
-              await track('get alert ', { 
-                distinct_id: bodyData._id,
-              })
-              return myAlert
-            }
-          };
+        for (let i = 0; i <= userExist.alert.length; i++) {
+          if (userExist.alert[i] == bodyData._id) {
+
+            // mixpanel - tracker for get alert
+            await track('get alert ', {
+              distinct_id: bodyData._id,
+            })
+            return myAlert
+          }
         };
-     };
-};
+      };
+    };
+  };
 
   //Update Alert
   static async updateAlert(bodyData, alert_id, userId) {
 
-      const user = await Profile.findOne({ _id: userId });
-      // if user is verified alert i updated in alert collection
-      if(!user){
-         // mixpanel track - failed to update alert
-         await track('failed !! to update alert ', { 
-           sub_category: bodyData.sub_category,
-           category: bodyData.category,
-           keyword: bodyData.keyword,
-           distinct_id: alert_id,
-           message:`user : ${userId}  does not exist`
-         })
+    const user = await Profile.findOne({ _id: userId });
+    // if user is verified alert i updated in alert collection
+    if (!user) {
+      // mixpanel track - failed to update alert
+      await track('failed !! to update alert ', {
+        sub_category: bodyData.sub_category,
+        category: bodyData.category,
+        keyword: bodyData.keyword,
+        distinct_id: alert_id,
+        message: `user : ${userId}  does not exist`
+      })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-      }
-      else{
-        const updateAds = await Alert.findOneAndUpdate({
-          _id: alert_id
-        }, {
-          $set: {
-            category: bodyData.category,
-            sub_category: bodyData.sub_category,
-            name: bodyData.name,
-            keyword: bodyData.keyword,
-            activate_status: bodyData.activate_status,
-          },
-        }, { new: true })
-
-        // mixpanel track for update alert 
-        await track('success !! update alert ', { 
-          sub_category: bodyData.sub_category,
+    }
+    else {
+      const updateAds = await Alert.findOneAndUpdate({
+        _id: alert_id
+      }, {
+        $set: {
           category: bodyData.category,
+          sub_category: bodyData.sub_category,
+          name: bodyData.name,
           keyword: bodyData.keyword,
-          distinct_id: alert_id,
-        })
-        return updateAds;
-      }
+          activate_status: bodyData.activate_status,
+        },
+      }, { new: true })
+
+      // mixpanel track for update alert 
+      await track('success !! update alert ', {
+        sub_category: bodyData.sub_category,
+        category: bodyData.category,
+        keyword: bodyData.keyword,
+        distinct_id: alert_id,
+      })
+      return updateAds;
+    }
   }
 
   // Delete Alert
   static async deleteAlert(alert_id, userId) {
-      const user = await Profile.findOne({ _id: userId });
-      //if user is authorized alert is removed from profile.alert[]
-      if(!user){      
-        await track('failed to delete alert ', { 
-        distinct_id: alert_id, 
-        message:`user : ${userId}  does not exist`
+    const user = await Profile.findOne({ _id: userId });
+    //if user is authorized alert is removed from profile.alert[]
+    if (!user) {
+      await track('failed to delete alert ', {
+        distinct_id: alert_id,
+        message: `user : ${userId}  does not exist`
       })
-        throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-      }
-      else{
-        const deleteAlert = await Profile.findOneAndUpdate(
-          { _id: userId },
-          { $pull: { alert: ObjectId(alert_id) } },
-          { new: true }
-        );
-        // mixpanel - delete alert from user alert feild
-        await track('delete alert ', { 
-          distinct_id: alert_id,
-          message:`${alert_id} deleted successfully`
-        })
-        return "successfully deleted"
-      }
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else {
+      const deleteAlert = await Profile.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { alert: ObjectId(alert_id) } },
+        { new: true }
+      );
+      // mixpanel - delete alert from user alert feild
+      await track('delete alert ', {
+        distinct_id: alert_id,
+        message: `${alert_id} deleted successfully`
+      })
+      return "successfully deleted"
+    }
   }
 };
