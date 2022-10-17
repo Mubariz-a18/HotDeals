@@ -1,5 +1,6 @@
 const GlobalSearchService = require('../../services/GlobalSearchService');
 module.exports = class GlobalSearchController {
+  // api get global search
   static async apiGetGlobalSearch(req, res, next) {
     try {
       const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
