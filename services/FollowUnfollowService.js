@@ -5,6 +5,7 @@ const {currentDate} = require('../utils/moment');
 const { track } = require("./mixpanel-service");
 
 module.exports = class FollowUnfollowService {
+    // follow user
   static async followUser(res,bodyData, userId) {
         // finding user if exist
         const dbUser = await Profile.findById({ _id: userId })
@@ -73,7 +74,7 @@ module.exports = class FollowUnfollowService {
         }
 
 }
-
+    // unfollow user
 static async UnfollowUser(bodyData, userId) {
         const dbUser = await Profile.findById({ _id: userId })
          // finding user if exist

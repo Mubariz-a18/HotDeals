@@ -90,9 +90,6 @@ const genericSchema = mongoose.Schema({
     is_negotiable: {
         type: Boolean,
     },
-    // is_ad_posted: {
-    //     type: Boolean
-    // },
     isPrime:{
         type:Boolean,
         default:false
@@ -111,6 +108,16 @@ const genericSchema = mongoose.Schema({
     },
     ad_Reposted_Date:{
         type:String
+    },
+    ad_Deleted_Date:{
+        type:String
+    },
+    ad_Historic_Duration_Date:{
+        type:String
+    },
+    is_ad_Historic_Duration_Flag :{
+        type:Boolean,
+        default:false
     },
     created_at: {
         type: String,

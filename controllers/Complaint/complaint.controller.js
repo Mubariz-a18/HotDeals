@@ -26,6 +26,7 @@ module.exports = class ComplainController {
       };
     };
   }
+  //Update Complain
   static async apiUpdateController(req,res,next){
     try{
       const updatedComplain = await ComplaintService.updateComplain(req.body,req.user_ID);

@@ -4,7 +4,7 @@ const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
-const { currentDate, DateAfter30Days } = require("../utils/moment");
+const { currentDate, DateAfter30Days, Ad_Historic_Duration } = require("../utils/moment");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
@@ -188,6 +188,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  ad_Deleted_Date:1,
                   image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
               }
@@ -198,8 +199,8 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  ad_Reposted_Date:1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
-                  ad_Reposted_Date:1
                 }
               }
             ],
@@ -273,7 +274,7 @@ module.exports = class AdService {
         } else if (bodyData.status == "Sold") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Sold" } },
+            { $set: { ad_status: "Sold" , ad_Sold_Date:currentDate , ad_Historic_Duration_Date : Ad_Historic_Duration ,} },
             { returnOriginal: false, new: true }
           )
           return adDoc;
@@ -281,7 +282,7 @@ module.exports = class AdService {
         else if (bodyData.status == "Delete") {
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Delete" } },
+            { $set: { ad_status: "Delete" , ad_Deleted_Date :currentDate , ad_Historic_Duration_Date : Ad_Historic_Duration} },
             { returnOriginal: false, new: true }
           )
           return adDoc;
