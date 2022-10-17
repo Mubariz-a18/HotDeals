@@ -23,7 +23,8 @@ module.exports = class FollowUnfollowService {
                         {
                             $push: {
                                 followers: ObjectId(userId),
-                            }
+                            },
+                            $inc: { followers_count: 1 }
                         }
                     )
                     // also user`s following is also updated
@@ -33,7 +34,8 @@ module.exports = class FollowUnfollowService {
                                 followings:
                                     ObjectId(bodyData.following_id),
 
-                            }
+                            },
+                            $inc: { followings_count: 1 } 
                         })
                     const followInfo = {
                         user_followed, user_update
@@ -93,7 +95,8 @@ static async UnfollowUser(bodyData, userId) {
                         {
                             $pull: {
                                 followers: ObjectId(userId),
-                            }
+                            },
+                            $inc: { followers_count: -1 } 
                         }
                     )
                     // also user`s following is also updated
@@ -102,8 +105,8 @@ static async UnfollowUser(bodyData, userId) {
                             $pull: {
                                 followings:
                                     ObjectId(bodyData.unfollowing_id),
-
-                            }
+                            },
+                            $inc: { followings_count : -1 } 
                         })
                     const followInfo = {
                         user_unfollowed,

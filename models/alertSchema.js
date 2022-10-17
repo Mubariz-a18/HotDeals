@@ -14,16 +14,26 @@ const alertSchema = mongoose.Schema(
     name: {
       type: String,
     },
-    keyword: [
+    keywords: [
       {
         type: String,
       },
     ],
     activate_status: {
       type: Boolean,
+      default:true
     },
+    alert_Expiry_Date:{
+      type:String
+    },
+    created_Date:{
+    type:String
+    },
+    updated_Date:{
+      type:String
+      }
   },
-  { timestamps: true }
+
 );
 
 const Alert = mongoose.model('Alert',alertSchema);

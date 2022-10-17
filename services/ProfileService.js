@@ -3,7 +3,8 @@ const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
-const { currentDate } = require("../utils/moment");
+const { currentDate , DOB} = require("../utils/moment");
+const moment = require('moment');
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -66,7 +67,7 @@ module.exports = class ProfileService {
   }
 
   //DB Service to Get Profile By Phone Number
-  static async getProfile(user_ID) {
+  static async getOthersProfile(user_ID) {
     const profileDoc = await Profile.findOne({
       _id: user_ID,
     });
@@ -89,7 +90,10 @@ module.exports = class ProfileService {
             about: {
               $cond: { if: { $eq: ["$about.private", false] }, then: "$about.text", else: "" }
             },
-            gender: 1,
+            user_type:1,
+            followers_count:1,
+            followings_count:1,
+            rate_average:1
           }
         },
       ]);
@@ -149,14 +153,18 @@ module.exports = class ProfileService {
       throw ({ status: 404, message : 'USER_NOT_EXISTS'})
     }
     else{
+      var date1 = moment(DOB);
+      var date2 = moment(bodyData.date_of_birth);
+      var age = date1.diff(date2 , "years");
+
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
                 name: bodyData.name,
-                userNumber: {
-                    text: userProfile.userNumber.text,
-                    private: bodyData.userNumber.private
-                  },
+                // userNumber: {
+                //     text: userProfile.userNumber.text,
+                //     private: bodyData.userNumber.private
+                //   },
                 email: {
                     text: bodyData.email.text,
                     private: bodyData.email.private
@@ -173,13 +181,11 @@ module.exports = class ProfileService {
                     text: bodyData.about.text,
                     private: bodyData.about.private
                   },
-                country_code: bodyData.country_code,
+                // country_code: bodyData.country_code,
                 date_of_birth: bodyData.date_of_birth,
-                age: bodyData.age,
+                age: age,
                 gender: bodyData.gender,
                 language_preference: bodyData.language_preference,
-                free_credit: bodyData.free_credit,
-                premium_credit: bodyData.premium_credit,
                 profile_url: bodyData.profile_url,
                 updated_date: currentDate
         },

@@ -43,11 +43,7 @@ const profileSchema = mongoose.Schema({
       type: String,
       enum: ["Agent", "Owner"],
       default: "Owner",
-    },
-    private: {
-      type: Boolean,
-      default: true,
-    },
+    }
   },
   language_preference: {
     type: String,
@@ -143,14 +139,16 @@ const profileSchema = mongoose.Schema({
   profile_url: {
     type: String
   },
-  help_center: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-  ],
-  followers:  Array
-  ,
+  followers:  Array,
+  followers_count:{
+    type: Number,
+    default: 0
+  },
   followings: Array,
+  followings_count:{
+    type: Number,
+    default: 0
+  },
   isVerified:{
     type:Boolean,
     default:false

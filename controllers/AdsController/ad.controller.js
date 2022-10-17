@@ -224,7 +224,6 @@ module.exports = class AdController {
       }
     } catch (e) {
       if (!e.status) {
-        console.log(e)
         res.status(500).json({
           error: {
             message: ` something went wrong try again : ${e.message} `

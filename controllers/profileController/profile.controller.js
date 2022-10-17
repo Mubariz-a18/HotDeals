@@ -31,9 +31,9 @@ module.exports = class ProfileController {
     };
   }
   //API to Get Profile
-  static async apiGetProfile(req, res, next) {
+  static async apiGetOthersProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.getProfile(req.body.user_Id);
+      const profileData = await ProfileService.getOthersProfile(req.body.user_Id);
       if (profileData) {
         res.send(profileData);
       } else {
