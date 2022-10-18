@@ -104,14 +104,6 @@ module.exports = class AdService {
           distinct_id: createGlobalSearch._id,
           keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
         })
-        //save the premium ad id in users profile in premium_ad
-        if(bodyData.isPrime==true){
-          await Profile.findOneAndUpdate({_id:userId},{
-            $push : {
-              premium_ad:adDoc.id
-            }
-          });
-        }
         return adDoc["_doc"];
       }
     }
@@ -350,6 +342,12 @@ module.exports = class AdService {
             created_at: currentDate,
             updated_at: currentDate
           });
+        //save the ad id in users profile in myads
+        await Profile.findByIdAndUpdate({ _id: userId }, {
+          $push: {
+            my_ads: ObjectId(newDoc._id)
+          }
+        })
           const updatedDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             {

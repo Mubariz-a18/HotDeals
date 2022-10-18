@@ -1,7 +1,9 @@
 const Profile = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
+const cron = require('node-cron')
 const { track } = require("./mixpanel-service");
 const { DateAfter15Days, currentDate } = require("../utils/moment");
+const Generic = require("../models/Ads/genericSchema");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class AlertService {
@@ -22,11 +24,15 @@ module.exports = class AlertService {
     }
     else {
       let alertDoc = await Alert.create({
-        userId,
+        user_ID:userId,
+        name: bodyData.name,
+        title:bodyData.title,
         category: bodyData.category,
         sub_category: bodyData.sub_category,
-        name: bodyData.name,
         keywords: bodyData.keywords,
+        condition:bodyData.condition,
+        location:bodyData.location,
+        price:bodyData.price,
         activate_status: bodyData.activate_status,
         created_Date:currentDate,
         alert_Expiry_Date:DateAfter15Days
@@ -40,13 +46,14 @@ module.exports = class AlertService {
         },
       });
 
-      // mixpanel track for create alert 
-      await track('alert created ', {
-        distinct_id: userId,
-        category: bodyData.category,
-        sub_category: bodyData.sub_category,
-        keyword: bodyData.keyword,
-      });
+      // // mixpanel track for create alert 
+      // await track('alert created ', {
+      //   distinct_id: userId,
+      //   title:bodyData.title,
+      //   category: bodyData.category,
+      //   sub_category: bodyData.sub_category,
+      //   keyword: bodyData.keyword,
+      // });
 
       return alertDoc;
     }
@@ -64,29 +71,32 @@ module.exports = class AlertService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      const myAlert = await Alert.find({ _id: [bodyData._id] })
-      if (myAlert.length == 0) {
-        await track('failed !! get alert ', {
-          distinct_id: userId,
-          message: ` alert_id : ${bodyData._id}  does not exist`
-        })
-        throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
-      }
-      else {
-        for (let i = 0; i <= userExist.alert.length; i++) {
-          if (userExist.alert[i] == bodyData._id) {
-
-            // mixpanel - tracker for get alert
-            await track('get alert ', {
-              distinct_id: bodyData._id,
-            })
-            return myAlert
+      const alertDoc = await Alert.findOne({ user_ID: userId , _id:ObjectId(bodyData.alert_id)});
+      const {
+        title,
+        category,
+        sub_category,
+        name,
+        keyword,
+        location,
+        price,
+        condition
+      } = alertDoc
+      console.log(alertDoc)
+      const alertNotificationDoc = await Generic.find(
+        {
+          "category": category,
+          "sub_category": sub_category,
+          $text:
+          {
+            $search:
+              `${title}`
           }
-        };
-      };
+        }
+      )
+      return alertNotificationDoc
     };
   };
-
   //Update Alert
   static async updateAlert(bodyData, alert_id, userId) {
 
