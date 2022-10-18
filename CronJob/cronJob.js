@@ -3,8 +3,8 @@ const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
 const { currentDate, Ad_Historic_Duration } = require('../utils/moment');
 
-// (ScheduleTask) will update the status the of ad to Expired after checking if the date has past the (current date)
-const ScheduleTask = cron.schedule('0 0 0  * * *', async () => {
+// (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
+const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0  * * *', async () => {
   const Ads = await Generic.find();
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_expire_date)) {
@@ -36,7 +36,7 @@ const ScheduleTask_Display_Historic_Ads = cron.schedule('0 0 0  * * *', async ()
     }
   });
 });
-
+//(ScheduleTask_Alert_activation) will update the (activate_status) to "false" if the (alert_Expiry_Date) has past the (current date)
 const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => {
   const Alerts = await Alert.find();
   Alerts.forEach(alert => {
@@ -50,10 +50,22 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
     }
   });
 });
-
+//(Schedule_Task_Alert_6am_to_10pm) 
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 09-22 * * *', async () => {
+  // const Alerts = await Alert.find();
+  // Alerts.forEach(alert => {
+  // });
+});
 
 //Starting the schedular
-ScheduleTask.start()
+ScheduleTask_Ad_Status_Expire.start()
 ScheduleTask_Display_Historic_Ads.start()
 ScheduleTask_Alert_activation.start()
-module.exports = { ScheduleTask , ScheduleTask_Display_Historic_Ads , ScheduleTask_Alert_activation };
+Schedule_Task_Alert_6am_to_10pm.start()
+
+module.exports = {
+  ScheduleTask_Ad_Status_Expire,
+  ScheduleTask_Display_Historic_Ads,
+  ScheduleTask_Alert_activation,
+  Schedule_Task_Alert_6am_to_10pm
+};

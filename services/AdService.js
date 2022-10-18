@@ -82,7 +82,8 @@ module.exports = class AdService {
           $latitude: bodyData.ad_posted_location.coordinates[1],
           $longitude: bodyData.ad_posted_location.coordinates[0],
         })
-        const updateMyAdsInUser = await Profile.findByIdAndUpdate({ _id: userId }, {
+        //save the ad id in users profile in myads
+        await Profile.findByIdAndUpdate({ _id: userId }, {
           $push: {
             my_ads: ObjectId(adDoc._id)
           }
@@ -103,6 +104,14 @@ module.exports = class AdService {
           distinct_id: createGlobalSearch._id,
           keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
         })
+        //save the premium ad id in users profile in premium_ad
+        if(bodyData.isPrime==true){
+          await Profile.findOneAndUpdate({_id:userId},{
+            $push : {
+              premium_ad:adDoc.id
+            }
+          });
+        }
         return adDoc["_doc"];
       }
     }
@@ -498,34 +507,16 @@ module.exports = class AdService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      //if exist checking the body whether it conataon : FAVOURITE or MY_ADS then ads are removed from user`s profile
-      const findAd = await Generic.findOne({
-        _id: ad_id, user_id: userId
-      });
-      if (!findAd) {
-        // mix-panel Track for -Failed  Removing Ad
-        await track(' failed to remove  Ad', {
-          distinct_id: userId,
-          ad_id: ad_id,
-          message: `ad_id : ${ad_id}  does not exist`
+      // check if body contains "FAVOURITE" 
+      if (bodyData.AD_SECTION == 'FAVOURITE') {
+        const findAd = await Generic.findOne({
+          _id: ad_id
         });
-        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-      }
-      if (findAd) {
-        if (bodyData.AD_SECTION == 'FAVOURITE') {
+        // if ad exist update users profile ( remove ad_id from favourite_ad)
+        if (findAd) {
           const remove_fav_ad = await Profile.findOneAndUpdate(
             { _id: userId },
             { $pull: { favourite_ads: ad_id } },
-            { new: true }
-          );
-          return {
-            message: "removed ad successfully", remove_fav_ad
-          }
-        }
-        else if (bodyData.AD_SECTION == 'MY_ADS') {
-          const remove_my_ad = await Profile.findOneAndUpdate(
-            { _id: userId },
-            { $pull: { my_ads: ad_id } },
             { new: true }
           );
           // mix-panel Track for - Removing Ad
@@ -533,12 +524,49 @@ module.exports = class AdService {
             distinct_id: userId,
             ad_id: ad_id
           })
-          return {
-            message: "removed ad successfully", remove_my_ad
-          }
+          return remove_fav_ad
+        }
+        else {
+          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
         }
       }
-    }
+      else if (bodyData.AD_SECTION == 'MY_ADS') {
+        const findAd = await Generic.findOne({
+          _id: ad_id, user_id: userId
+        });
+        console.log(findAd)
+        // if ad exist update users profile ( remove ad_id from m_ads)
+
+        if (findAd) {
+          const remove_my_ad = await Profile.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { my_ads: ad_id } },
+            { new: true }
+          );
+          //updating adstatus to Delete and ad_Delete_Date to current Date
+          findAd.ad_status = "Delete"
+          findAd.ad_Deleted_Date = currentDate
+          findAd.ad_Historic_Duration_Date = Ad_Historic_Duration
+          findAd.save()
+
+          // mix-panel Track for - Removing Ad
+          await track(' ad removed', {
+            distinct_id: userId,
+            ad_id: ad_id
+          })
+          return remove_my_ad
+        }
+        else {
+          // mix-panel Track for -Failed  Removing Ad
+          await track(' failed to remove  Ad', {
+            distinct_id: userId,
+            ad_id: ad_id,
+            message: `ad_id : ${ad_id}  does not exist`
+          });
+          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+        };
+      };
+    };
   };
 
   // Get Detail from Ad --  user is authenticated - Aggregation is created between Profile and Generic 
