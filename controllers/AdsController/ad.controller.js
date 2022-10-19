@@ -59,6 +59,31 @@ module.exports = class AdController {
     };
   }
 
+  static async apiGetMyAdsHistory(req, res, next) {
+    try {
+      const getHistoryAds = await AdService.getMyAdsHistory(req.user_ID);
+      // Response code is send 
+        res.status(200).send({
+          message: "success!",
+          getHistoryAds
+        });
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  }
+
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
   static async apiChangeAdStatus(req, res, next) {
     try {

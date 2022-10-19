@@ -20,6 +20,12 @@ const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
 const cat_subCat_SearchRouter = require('./routes/cat_subCat_search.routes')
+const {
+  ScheduleTask_Display_Historic_Ads,
+   ScheduleTask_Alert_activation,
+    Schedule_Task_Alert_6am_to_10pm,
+     ScheduleTask_Ad_Status_Expire
+    } = require("./CronJob/cronJob");
 
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
@@ -29,7 +35,6 @@ const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
-const {ScheduleTask , ScheduleTask_Display_Historic_Ads, ScheduleTask_Alert_activation} = require("./CronJob/cronJob");
 connectDB();
 
 //Middlewares
@@ -56,7 +61,8 @@ app.use(cat_subCat_SearchRouter);
 //server listener
 server.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
-  ScheduleTask
+  ScheduleTask_Ad_Status_Expire
   ScheduleTask_Display_Historic_Ads
   ScheduleTask_Alert_activation
+  Schedule_Task_Alert_6am_to_10pm
 });

@@ -91,7 +91,9 @@ const profileSchema = mongoose.Schema({
   ],
   favourite_ads: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      _id:false,
+      ad_id : mongoose.Schema.Types.ObjectId,
+      ad_Favourite_Date:String
     },
   ],
   help_center: [
@@ -120,22 +122,22 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  display_email: {
-    type: Boolean,
-    default: false,
-  },
-  display_phone_number: {
-    type: Boolean,
-    default: false,
-  },
-  display_city: {
-    type: Boolean,
-    default: false,
-  },
-  display_about: {
-    type: Boolean,
-    default: false,
-  },
+  // display_email: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // display_phone_number: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // display_city: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // display_about: {
+  //   type: Boolean,
+  //   default: false,
+  // },
   profile_url: {
     type: String
   },

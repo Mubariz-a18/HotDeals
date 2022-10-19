@@ -126,8 +126,6 @@ const genericSchema = mongoose.Schema({
         type: String
     },
 });
-
-genericSchema.index({ category: "text", sub_category: "text", ad_posted_location: "2dsphere" });
 const Generic = mongoose.model("Generic", genericSchema,);
 
 module.exports = Generic;
