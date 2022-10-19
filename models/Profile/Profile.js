@@ -91,7 +91,9 @@ const profileSchema = mongoose.Schema({
   ],
   favourite_ads: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      _id:false,
+      ad_id : mongoose.Schema.Types.ObjectId,
+      ad_Favourite_Date:String
     },
   ],
   help_center: [
