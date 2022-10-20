@@ -11,12 +11,23 @@ module.exports = class CreditController {
           message: "Success",
           data: creditDoc,
         });
-      } else {
-        res.status(400).json({ error: "Something went wrong in controller" });
       }
-    } catch (error) {
-      res.send(error.message).status(401)
-    }
+    } catch  (e) {
+      console.log(e)
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 };
 

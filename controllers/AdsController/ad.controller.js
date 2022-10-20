@@ -40,7 +40,8 @@ module.exports = class AdController {
           Drafts: getDocument[0].Drafts,
           Expired:getDocument[0].Expired,
           Deleted:getDocument[0].Deleted,
-          Reposted:getDocument[0].Reposted
+          Reposted:getDocument[0].Reposted,
+          Sold:getDocument[0].Sold,
         });
     } catch (e) {
       if (!e.status) {
