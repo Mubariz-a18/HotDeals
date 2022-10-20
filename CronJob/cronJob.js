@@ -51,21 +51,21 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
   });
 });
 //(Schedule_Task_Alert_6am_to_10pm) 
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 09-22 * * *', async () => {
+// const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async () => {
   // const Alerts = await Alert.find();
   // Alerts.forEach(alert => {
   // });
-});
+// });
 
 //Starting the schedular
 ScheduleTask_Ad_Status_Expire.start()
 ScheduleTask_Display_Historic_Ads.start()
 ScheduleTask_Alert_activation.start()
-Schedule_Task_Alert_6am_to_10pm.start()
+// Schedule_Task_Alert_6am_to_10pm.start()
 
 module.exports = {
   ScheduleTask_Ad_Status_Expire,
   ScheduleTask_Display_Historic_Ads,
   ScheduleTask_Alert_activation,
-  Schedule_Task_Alert_6am_to_10pm
+  // Schedule_Task_Alert_6am_to_10pm
 };

@@ -144,6 +144,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   saved: 1,
                   views: 1,
                   isPrime: 1,
@@ -159,6 +160,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
@@ -172,6 +174,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   ad_Draft_Date: 1,
                 }
@@ -183,6 +186,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
@@ -196,6 +200,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   ad_Deleted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
@@ -207,7 +212,20 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
+                  description:1,
                   ad_Reposted_Date: 1,
+                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                }
+              }
+            ],
+            "Sold": [
+              { $match: { ad_status: "Sold" } },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  description:1,
+                  ad_Sold_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -260,6 +278,7 @@ module.exports = class AdService {
       }, {
         _id: 1,
         title: 1,
+        description:1,
         image_url: { $arrayElemAt: ["$image_url", 0] },
         created_at: 1,
         ad_status: 1,
@@ -500,7 +519,11 @@ module.exports = class AdService {
         else {
           const makeUnFavAd = await Profile.findOneAndUpdate(
             { _id: userId },
-            { $pull: { favourite_ads: ad_id } },
+            { $pull: {
+              favourite_ads: {
+                ad_id: ad_id,
+              }
+            } },
             { new: true }
           );
           // Generic collection is also updated with the count of saved favourite ads
@@ -710,9 +733,9 @@ module.exports = class AdService {
       )
       const owner = await Profile.findById(
         { _id: updateAd.user_id }, {
-        _id: 0,
+        _id: 1,
         name: 1,
-        // profile_url:0
+        profile_url:1
       }
       );
       // mix panel tack - when Particular ad is viewed 

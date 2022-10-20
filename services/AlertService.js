@@ -41,20 +41,11 @@ module.exports = class AlertService {
       await Profile.findByIdAndUpdate(userId, {
         $push: {
           alert: {
-            _id: alertDoc._id,
+            alert_id : alertDoc._id,
+            alert_Expire_Date : DateAfter15Days
           },
         },
       });
-
-      // // mixpanel track for create alert 
-      // await track('alert created ', {
-      //   distinct_id: userId,
-      //   title:bodyData.title,
-      //   category: bodyData.category,
-      //   sub_category: bodyData.sub_category,
-      //   keyword: bodyData.keyword,
-      // });
-
       return alertDoc;
     }
   }
@@ -76,25 +67,33 @@ module.exports = class AlertService {
         title,
         category,
         sub_category,
-        name,
-        keyword,
+        keywords,
         location,
         price,
         condition
       } = alertDoc
-      console.log(alertDoc)
+      console.log(keywords)
       const alertNotificationDoc = await Generic.find(
         {
           "category": category,
           "sub_category": sub_category,
-          $text:
-          {
-            $search:
-              `${title}`
-          }
+          "title" : { "$regex": title, "$options":"i"} ,
+          "ad_posted_address" : { "$regex": location, "$options":"i"} ,
+          "$or": [
+            { "SelectFields.Condition" : { "$regex": condition, "$options":"i"} },
+            { "description" : { "$regex": keywords[0], "$options":"i"} },
+        ]
         }
       )
-      return alertNotificationDoc
+      const ad_Ids = []
+      alertNotificationDoc.forEach(e=> {
+        ad_Ids.push(e._id)
+      })
+        await Profile.updateOne(
+        { _id : userId , "alert.alert_id": ObjectId(bodyData.alert_id) },
+        {
+            $addToSet: {"alert.$.alerted_Ads" :  ad_Ids } 
+        })
     };
   };
   //Update Alert

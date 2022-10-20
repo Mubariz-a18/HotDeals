@@ -30,7 +30,8 @@ const creditSchema = mongoose.Schema({
                 type:String,
               },
               referral_Id :{
-                type: mongoose.Schema.Types.ObjectId,
+                // type: mongoose.Schema.Types.ObjectId,
+                type: String,
               },
               activationDate:{
                 type:String

@@ -39,9 +39,10 @@ module.exports = class AlertController {
       const getAlert = await AlertService.getAlert(body,userId); 
       // Response code is sent with getAlert
       res.status(200).json({
-        getAlert
+        
       })
     } catch (e) {
+      console.log(e.message)
       if (!e.status) {
         res.status(500).json({
           error: {

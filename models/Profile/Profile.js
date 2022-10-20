@@ -103,7 +103,14 @@ const profileSchema = mongoose.Schema({
   ],
   alert: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      _id:false,
+      alert_id: mongoose.Schema.Types.ObjectId,
+      alerted_Ads:[
+        {
+          type : mongoose.Schema.Types.ObjectId
+        }
+      ],
+      alert_Expire_Date:String
     },
   ],
   report: [
@@ -122,22 +129,6 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  // display_email: {
-  //   type: Boolean,
-  //   default: false,
-  // },
-  // display_phone_number: {
-  //   type: Boolean,
-  //   default: false,
-  // },
-  // display_city: {
-  //   type: Boolean,
-  //   default: false,
-  // },
-  // display_about: {
-  //   type: Boolean,
-  //   default: false,
-  // },
   profile_url: {
     type: String
   },
