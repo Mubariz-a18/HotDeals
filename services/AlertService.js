@@ -23,17 +23,28 @@ module.exports = class AlertService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
+      const {
+        name,
+        title,
+        category,
+        sub_category,
+        keywords,
+        condition,
+        location,
+        price,
+        activate_status,
+            } = bodyData
       let alertDoc = await Alert.create({
         user_ID: userId,
-        name: bodyData.name,
-        title: bodyData.title,
-        category: bodyData.category,
-        sub_category: bodyData.sub_category,
-        keywords: bodyData.keywords,
-        condition: bodyData.condition,
-        location: bodyData.location,
-        price: bodyData.price,
-        activate_status: bodyData.activate_status,
+        name,
+        title,
+        category,
+        sub_category,
+        keywords,
+        condition,
+        location,
+        price,
+        activate_status,
         created_Date: currentDate,
         alert_Expiry_Date: DateAfter15Days
       });
