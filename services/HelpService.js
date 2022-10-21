@@ -1,6 +1,7 @@
 const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
 const { track } = require('./mixpanel-service');
+const { currentDate } = require('../utils/moment');
  
 
 module.exports = class HelpService {
@@ -17,21 +18,21 @@ module.exports = class HelpService {
         throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
       else {
-        const msg = bodyData.message;
         const helpdoc = await Help.create({
           user_id: userId,
-          phone_number: bodyData.phone_number,
+          phone_Info: bodyData.phone_Info,
           title: bodyData.title,
           description: bodyData.description,
           attachment: bodyData.attachment,
-          message: msg,
+          created_Date:currentDate
         });
         await track('help created successfully !!', { 
           distinct_id : userId,
           helpID: helpdoc._id,
-          help_message : bodyData.message,
+          phone_Info: bodyData.phone_Info,
           title: bodyData.title,
           description: bodyData.description,
+          created_Date:currentDate,
           attachment: bodyData.attachment,
         });
         const updateUser = await Profile.findOneAndUpdate({

@@ -301,7 +301,6 @@ module.exports = class AdService {
         await track('get my ads history successfully !!', {
           distinct_id: userId
         });
-        console.log(myAdsList)
         return myAdsList;
       }
 
@@ -406,7 +405,6 @@ module.exports = class AdService {
             ad_posted_location,
             ad_posted_address,
           } = adCopy
-          console.log(userExist.my_ads.length)
           const newDoc = await Generic.create({
             _id: ObjectId(),
             user_id,
@@ -427,10 +425,11 @@ module.exports = class AdService {
           });
           if (newDoc) {
             //save the ad id in users profile in myads
-            console.log("new Id", newDoc._id)
-            userExist.my_ads.push(newDoc._id);
-            await userExist.save()
-            console.log(userExist.my_ads.length)
+            await Profile.findByIdAndUpdate({ _id: userId }, {
+              $push: {
+                my_ads: ObjectId(newDoc._id)
+              }
+            })
             const updatedDoc = await Generic.findByIdAndUpdate(
               { _id: ad_id },
               {
@@ -443,7 +442,6 @@ module.exports = class AdService {
               },
               { returnOriginal: false }
             );
-
             return updatedDoc;
           }
         };
@@ -671,9 +669,7 @@ module.exports = class AdService {
         const findAd = await Generic.findOne({
           _id: ad_id, user_id: userId
         });
-        console.log(findAd)
         // if ad exist update users profile ( remove ad_id from m_ads)
-
         if (findAd) {
           const remove_my_ad = await Profile.findOneAndUpdate(
             { _id: userId },

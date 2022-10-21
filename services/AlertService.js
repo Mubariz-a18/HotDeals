@@ -24,25 +24,25 @@ module.exports = class AlertService {
     }
     else {
       let alertDoc = await Alert.create({
-        user_ID:userId,
+        user_ID: userId,
         name: bodyData.name,
-        title:bodyData.title,
+        title: bodyData.title,
         category: bodyData.category,
         sub_category: bodyData.sub_category,
         keywords: bodyData.keywords,
-        condition:bodyData.condition,
-        location:bodyData.location,
-        price:bodyData.price,
+        condition: bodyData.condition,
+        location: bodyData.location,
+        price: bodyData.price,
         activate_status: bodyData.activate_status,
-        created_Date:currentDate,
-        alert_Expiry_Date:DateAfter15Days
+        created_Date: currentDate,
+        alert_Expiry_Date: DateAfter15Days
       });
       // push alertDoc._id in profile.alert
       await Profile.findByIdAndUpdate(userId, {
         $push: {
           alert: {
-            alert_id : alertDoc._id,
-            alert_Expire_Date : DateAfter15Days
+            alert_id: alertDoc._id,
+            alert_Expire_Date: DateAfter15Days
           },
         },
       });
@@ -62,7 +62,7 @@ module.exports = class AlertService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      const alertDoc = await Alert.findOne({ user_ID: userId , _id:ObjectId(bodyData.alert_id)});
+      const alertDoc = await Alert.findOne({ user_ID: userId, _id: ObjectId(bodyData.alert_id) });
       const {
         title,
         category,
@@ -77,22 +77,22 @@ module.exports = class AlertService {
         {
           "category": category,
           "sub_category": sub_category,
-          "title" : { "$regex": title, "$options":"i"} ,
-          "ad_posted_address" : { "$regex": location, "$options":"i"} ,
+          "title": { "$regex": title, "$options": "i" },
+          "ad_posted_address": { "$regex": location, "$options": "i" },
           "$or": [
-            { "SelectFields.Condition" : { "$regex": condition, "$options":"i"} },
-            { "description" : { "$regex": keywords[0], "$options":"i"} },
-        ]
+            { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
+            { "description": { "$regex": keywords[0], "$options": "i" } },
+          ]
         }
       )
       const ad_Ids = []
-      alertNotificationDoc.forEach(e=> {
+      alertNotificationDoc.forEach(e => {
         ad_Ids.push(e._id)
       })
-        await Profile.updateOne(
-        { _id : userId , "alert.alert_id": ObjectId(bodyData.alert_id) },
+      await Profile.updateOne(
+        { _id: userId, "alert.alert_id": ObjectId(bodyData.alert_id) },
         {
-            $addToSet: {"alert.$.alerted_Ads" :  ad_Ids } 
+          $addToSet: { "alert.$.alerted_Ads": ad_Ids }
         })
     };
   };
