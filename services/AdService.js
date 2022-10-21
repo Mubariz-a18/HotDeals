@@ -462,7 +462,6 @@ module.exports = class AdService {
     }
     else {
       // mixpanel Track - when Ad is selected for favourite
-
       // Ad is find from Generics collection    if body contains "Favourite"
       if (bodyData.value == "Favourite") {
         const findAd = await Generic.findOne({
@@ -477,19 +476,16 @@ module.exports = class AdService {
           throw ({ status: 404, message: 'AD_NOT_EXISTS' });
         }
         else {
-          //Ad _id is pushed in user`s profile (faviourite_ads)
-          const makeFavAd = await Profile.findOneAndUpdate(
+          await Profile.updateOne(
             { _id: userId },
             {
-              $push: {
-                favourite_ads: {
-                  ad_id: ad_id,
+              $addToSet: {
+                "favourite_ads": {
+                  ad_id: ObjectId(ad_id),
                   ad_Favourite_Date: currentDate
                 }
               }
-            },
-            { new: true }
-          )
+            })
           const updateAd = await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $inc: { saved: 1 } }
