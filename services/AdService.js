@@ -511,7 +511,7 @@ module.exports = class AdService {
           throw ({ status: 404, message: 'AD_NOT_EXISTS' });
         }
         else {
-          const makeUnFavAd = await Profile.findOneAndUpdate(
+          await Profile.findOneAndUpdate(
             { _id: userId },
             { $pull: {
               favourite_ads: {
@@ -521,7 +521,7 @@ module.exports = class AdService {
             { new: true }
           );
           // Generic collection is also updated with the count of saved favourite ads
-          const updateAd = await Generic.findByIdAndUpdate(
+          await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $inc: { saved: -1 } }
           )
@@ -538,11 +538,11 @@ module.exports = class AdService {
   };
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
-  static async getFavouriteAds(userId) {
+  static async getFavouriteAds(query,userId) {
     const userExist = await Profile.findOne({
       _id: userId
     });
-
+    console.log(query)
     //-- $match is used to create a relation between User_id and Ads 
     // favourite ads are Fetched
     if (!userExist) {
@@ -590,7 +590,12 @@ module.exports = class AdService {
             'ad_promoted': '$firstResult.ad_promoted', 
             'isPrime': '$firstResult.isPrime'
           }
-        }, {
+        },
+        {
+            $match:
+              { "category": query.category },
+        },
+        {
           '$project': {
             'ad_id': 1, 
             '_id': 0, 
@@ -760,11 +765,12 @@ module.exports = class AdService {
     //else find Premium ads byfiltering isPrime true
     else {
       // .limit  &  .skip for pagination
+      console.log(lat ,lng)
       const premiumAdsData = await Generic.aggregate([
         [
           {
             '$geoNear': {
-              'near': { type: 'Point', coordinates: [+lng, +lat] },
+              'near': { type: 'Point', coordinates: [lng, lat] },
               "distanceField": "dist.calculated",
               'maxDistance': maxDistance,
               "includeLocs": "dist.location",
@@ -824,7 +830,8 @@ module.exports = class AdService {
           },
 
         ]
-      ]).skip(pageVal * (limitval - 1)).limit(limitval)
+      ])
+      .skip(pageVal * (limitval - 1)).limit(limitval)
       await track('get Premium Ads Successfully', {
         distinct_id: userId
       })
