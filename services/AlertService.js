@@ -1,9 +1,7 @@
 const Profile = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
-const cron = require('node-cron')
 const { track } = require("./mixpanel-service");
 const { DateAfter15Days, currentDate } = require("../utils/moment");
-const Generic = require("../models/Ads/genericSchema");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class AlertService {
@@ -60,56 +58,8 @@ module.exports = class AlertService {
       return alertDoc;
     }
   }
-  // // get Alert
 
-  // static async getAlert(bodyData, userId) {
-
-  //   const userExist = await Profile.findOne({ _id: userId });
-  //   // if user is verified alerts are fetched from alert collection 
-  //   if (!userExist) {
-  //     await track('failed !! get alert ', {
-  //       distinct_id: bodyData._id,
-  //       message: `user : ${userId}  does not exist`
-  //     })
-  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-  //   }
-  //   else {
-  //     const alertDoc = await Alert.findOne({ user_ID: userId, _id: ObjectId(bodyData.alert_id) });
-  //     const {
-  //       title,
-  //       category,
-  //       sub_category,
-  //       keywords,
-  //       location,
-  //       price,
-  //       condition
-  //     } = alertDoc
-  //     console.log(keywords)
-  //     const alertNotificationDoc = await Generic.find(
-  //       {
-  //         "category": category,
-  //         "sub_category": sub_category,
-  //         "title": { "$regex": title, "$options": "i" },
-  //         "ad_posted_address": { "$regex": location, "$options": "i" },
-  //         "$or": [
-  //           { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
-  //           { "description": { "$regex": keywords[0], "$options": "i" } },
-  //         ]
-  //       }
-  //     )
-  //     const ad_Ids = []
-  //     alertNotificationDoc.forEach(e => {
-  //       ad_Ids.push(e._id)
-  //     })
-  //     await Profile.updateOne(
-  //       { _id: userId, "alert.alert_id": ObjectId(bodyData.alert_id) },
-  //       {
-  //         $addToSet: { "alert.$.alerted_Ads": ad_Ids }
-  //       })
-  //   };
-  // };
   //Update Alert
- 
   static async updateAlert(bodyData, alert_id, userId) {
     const {
       name,
