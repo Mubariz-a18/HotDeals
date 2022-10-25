@@ -10,7 +10,9 @@ const otpSchema = Schema({
     type: String,
   },
   email:{
-    type:String
+    type:String,
+    unique: true,
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
   },
   countryCode: {
     type: String,

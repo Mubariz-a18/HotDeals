@@ -5,8 +5,8 @@ const helpCenterSchema = mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
     },
-  phone_number: {
-    type: Number,
+  phone_Info: {
+    type: String,
   },
   title: {
     type: String,
@@ -14,17 +14,12 @@ const helpCenterSchema = mongoose.Schema({
   description: {
     type: String,
   },
-  attachment: {
+  attachment: [{
     type: String,
-  },
-  message: {
-    sender_message: {
-      type: String,
-    },
-    replied_mssage: {
-      type: String,
-    },
-  },
+  }],
+  created_Date:{
+    type:String
+  }
 });
 
 const HelpCenter = mongoose.model('HelpCenter', helpCenterSchema);

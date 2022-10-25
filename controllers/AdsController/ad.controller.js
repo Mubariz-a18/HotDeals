@@ -137,9 +137,12 @@ module.exports = class AdController {
   // Get Favourite Ads -- Ads are fetched and returned from Adservice 
   static async apiGetFavouriteAds(req, res, next) {
     try {
-      const Get_My_Fav_Ads= await AdService.getFavouriteAds(req.user_ID);
+      const Get_My_Fav_Ads= await AdService.getFavouriteAds(req.query,req.user_ID);
       // Response code is sent 
-      res.status(200).send({ message: "My Favourite Ads " , Get_My_Fav_Ads })
+      res.status(200).send({
+        message: "My Favourite Ads ",
+       Get_My_Fav_Ads
+      })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
