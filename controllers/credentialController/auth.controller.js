@@ -1,6 +1,5 @@
 const OtpService = require("../../services/OtpService");
 const User = require("../../models/Profile/User");
-const testPhoneNumbers = require("../../data/testNumbers");
 const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
@@ -11,43 +10,41 @@ const mixpanel = require("mixpanel");
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
-    const { phoneNumber } = req.body; 
+    const { phoneNumber } = req.body;
     try {
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
       let msgResponse = {};
-      // If testPhoneNumber
-      if (testPhoneNumbers.includes(phoneNumber)) {
-        msgResponse["status"] = "success";
+      msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
+      if (msgResponse.status === "success") {
+        res.status(200).json({
+          message: "OTP Sent Successfully",
+        });
+        await track("otp sent successfull", {
+          distinct_id: phoneNumber.text,
+        })
+        mixpanel.people.increment(phoneNumber.text, 'logins');
+      } else {
+        await track("otp sent failed !!", {
+          distinct_id: phoneNumber.text,
+        })
+        mixpanel.people.increment(phoneNumber.text, 'failed login attempt');
       }
-         else {
-          msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
-        }
-
-        if (msgResponse.status === "success") {
-          res.json({
-            statusCode:200,
-            message: "OTP Sent Successfully",
-          });
-          await track("otp sent successfull", {
-            distinct_id: phoneNumber.text,
-          })
-          mixpanel.people.increment(userID, 'logins');
-        } else {
-          await track("otp sent failed !!", {
-            distinct_id: phoneNumber.text,
-          })
-          mixpanel.people.increment(phoneNumber.text, 'failed login attempt');
-
-          res.status(400).json({
-            message: msgResponse.data,
-          });
-        }
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
   }
 
   // Verify OTP
@@ -67,16 +64,16 @@ module.exports = class AuthController {
           // If user exists
           const userID = oldUser["_id"];
           const token = createJwtToken(userID, phoneNumber.text);
-         
-          await track("login successfull",{
-          distinct_id:userID,
+
+          await track("login successfull", {
+            distinct_id: userID,
           })
-          mixpanel.people.increment(userID , 'login successfull');
-          
+          mixpanel.people.increment(userID, 'login successfull');
+
           return res.status(200).json({
             message: "success",
-            statusCode:200,
-            token,          
+            statusCode: 200,
+            token,
             existingUser: true,
           });
         }
@@ -93,22 +90,79 @@ module.exports = class AuthController {
 
         return res.status(200).json({
           message: "success",
-          statusCode:200,
+          statusCode: 200,
           token,
           existingUser: false,
         });
       }
-      return res.status(400).json({
+      return res.status(401).json({
         message: INVALID_OTP_ERR,
-        statusCode:401
       });
     } catch (error) {
-       await track("login unsuccessfull",{
-        distinct_id:phoneNumber,
-        })
-        mixpanel.people.increment(phoneNumber , 'login unsuccessfull');
-      return res.status(400).send(error);
+      await track("login unsuccessfull", {
+        distinct_id: phoneNumber,
+      })
+      mixpanel.people.increment(phoneNumber, 'login unsuccessfull');
+      return res.status(500).send({
+        error: {
+          message: ` something went wrong try again : ${e.message} `
+        }
+      });
     }
   }
-};
+
+  // Sent OTP by email
+  static async apiSentOtpByEmail(req, res, next) {
+    try {
+      const { email } = req.body;
+      const userId = req.user_ID
+      const EmailOtpDoc = await OtpService.generateEmail_OTPAndCreateDocument(email, userId)
+      res.status(200).send({
+        message: EmailOtpDoc
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
+  // verification of email by otp from nodemailer
+  static async apiEmailVerficationByOtp(req, res, next) {
+    try {
+      const userId = req.user_ID;
+      const Otp = req.body.otp;
+      const email = req.body.email;
+      const emailVerifiedDoc = await OtpService.verify_Email_By_otp_And_Delete_Document(Otp, email, userId)
+      res.status(200).send({
+        message: emailVerifiedDoc
+      })
+    }
+    catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+}
 

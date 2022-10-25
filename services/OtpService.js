@@ -1,6 +1,8 @@
 const { generateOTP } = require('../utils/otp.util');
 const OtpModel = require('../models/Otp');
-const testPhoneNumbers = require('../data/testNumbers');
+const EmailController = require('../controllers/CredentialController/email.controller');
+const Profile = require('../models/Profile/Profile');
+const { INVALID_OTP_ERR } = require('../error');
 
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
@@ -13,16 +15,13 @@ module.exports = class OtpService {
       return otpDoc;
     }
     else {
-        const otp = generateOTP(6);
-        return await OtpModel.create({
-          otp,
-          phoneNumber,
-        });
-      };
+      const otp = generateOTP(6);
+      return await OtpModel.create({
+        otp,
+        phoneNumber,
+      });
     };
-  
-
-
+  };
 
   //Verify Otp and Delete Document 
   static async verifyOTPAndDeleteDocument(phoneNumber, otp) {
@@ -44,4 +43,66 @@ module.exports = class OtpService {
       return "unapproved";
     };
   };
+
+  //Generating OTP for email and Creating a Document  
+  static async generateEmail_OTPAndCreateDocument(email, userId) {
+    //check if user is existing or not
+    const userExist = await Profile.findOne({
+      _id: userId
+    })
+    //if exist generate 6 digit otp to the email by nodemailer
+    if (userExist) {
+      const otp = generateOTP(6);
+      const email_OtpDoc = await OtpModel.findOne({
+        email,
+      });
+      if (email_OtpDoc) {
+        return email_OtpDoc;
+      }
+      else {
+        // sent email to user 
+        await EmailController.sendEmailWithNodemailer(email, otp)
+          .then(async (res) => {
+            await OtpModel.create({
+              otp,
+              email,
+            });
+          })
+        return "OTP_SENT_TO_EMAIL_SUCCESS"
+      };
+    }
+    else {
+      throw ({ status: 401, message: 'USER_NOT_EXIST' });
+    }
+  };
+
+  //Verify Otp and Delete Document 
+  static async verify_Email_By_otp_And_Delete_Document(otp, email, userId) {
+    //check if user exist 
+    const userExist = await Profile.findOne({
+      _id: userId
+    })
+    //if exist find document in otp collection
+    if (userExist) {
+      const verify_otp = await OtpModel.findOne({
+        email,
+        otp
+      })
+      //if exists update users profile email as well as is_email_verified 
+      if (verify_otp) {
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          "email.text": email,
+          "is_email_verified": true
+        })
+        //delete doc
+        await OtpModel.deleteOne({ email, otp })
+        return "EMAIL_VERIFICATION_SUCCESSFULL"
+      } else {
+        throw ({ status: 401, message: INVALID_OTP_ERR });
+      }
+    }
+    else {
+      throw ({ status: 401, message: 'USER_NOT_EXIST' });
+    }
+  }
 };
