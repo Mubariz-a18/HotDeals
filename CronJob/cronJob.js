@@ -38,25 +38,21 @@ const ScheduleTask_Display_Historic_Ads = cron.schedule('0 0 0  * * *', async ()
     }
   });
 });
-//(ScheduleTask_Alert_activation) will update the (activate_status) to "false" if the (alert_Expiry_Date) has past the (current date)
+//(ScheduleTask_Alert_activation) will update the (activate_status) to "false" if the (alert_Expiry_Date) has past the (current date)  * * 01 * * *  '* * * * * *'
 const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => {
   const Alerts = await Alert.find();
-  Alerts.forEach(alert => {
+  Alerts.forEach(async (alert) => {
     if (currentDate > (alert.alert_Expiry_Date)) {
       const updateAlert = Alert.findByIdAndUpdate(alert._id,
-        { $set: {activate_status: false} },
+        { $set: { activate_status: false } },
         { new: true })
-        .then((res) => {
-        })
-        .catch(e => e)
     }
   });
 });
-//(Schedule_Task_Alert_6am_to_10pm)                       '* * 06-22 * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
-    const Alerts = await Alert.find()
+//(Schedule_Task_Alert_6am_to_10pm)                  '* * 06-22 * * *'     '* * * * * *'
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async () => {
+    const Alerts = await Alert.find({activate_status:true})
     Alerts.forEach(async (alert) =>{
-        // const alertDoc = await Alert.findOne({ user_ID: alert.user_ID, _id: ObjectId(alert._id) });
         const {
           title,
           category,
@@ -66,17 +62,23 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () =>
           price,
           condition
         } = alert
-        const alertNotificationDoc = await Generic.find(
-          {
-            "category": category,
-            "sub_category": sub_category,
-            "title": { "$regex": title, "$options": "i" },
-            "ad_posted_address": { "$regex": location, "$options": "i" },
-            "$or": [
-              { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
-              { "description": { "$regex": keywords[0], "$options": "i" } },
-            ]
-          }
+      const alertNotificationDoc = await Generic.find(
+        {
+          "category": category,
+          "sub_category": sub_category,
+          "title": { "$regex": title, "$options": "i" },
+          "ad_posted_address": { "$regex": location, "$options": "i" },
+          "$or": [
+            { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
+            {
+              $or: [
+                { "description": { "$regex": keywords[0], "$options": "i" } },
+                { "description": { "$regex": keywords[1], "$options": "i" } },
+                { "description": { "$regex": keywords[2], "$options": "i" } }
+              ]
+            }
+          ]
+        }
         )
         const ad_Ids = []
         alertNotificationDoc.forEach(e => {

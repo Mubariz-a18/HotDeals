@@ -59,7 +59,7 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired" , "Reposted","Premium"],
+        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired" , "Reposted"],
         default: "Selling"
     },
     is_Reposted :{
@@ -68,7 +68,8 @@ const genericSchema = mongoose.Schema({
     },
     ad_type: {
         type: String,
-        default: "free",
+        enum: ["Free","Premium"],
+        default: "Free",
     },
     ad_expire_date: {
         type: String,

@@ -10,7 +10,6 @@ const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss'
 // dateof birth & age
 const DOB = moment().format('YYYY-MM-DD');
 
-
 module.exports = {
     currentDate, DateAfter30Days,
     Ad_Historic_Duration,

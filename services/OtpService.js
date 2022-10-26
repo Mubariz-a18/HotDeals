@@ -3,6 +3,8 @@ const OtpModel = require('../models/Otp');
 const EmailController = require('../controllers/CredentialController/email.controller');
 const Profile = require('../models/Profile/Profile');
 const { INVALID_OTP_ERR } = require('../error');
+const { track } = require('./mixpanel-service');
+
 
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
@@ -40,6 +42,10 @@ module.exports = class OtpService {
       return "approved";
     }
     else {
+      // mixpanel track - invalid otp 
+      track('Otp invalid !! ', {
+        phoneNumber: phoneNumber,
+      })
       return "unapproved";
     };
   };
@@ -68,6 +74,11 @@ module.exports = class OtpService {
               email,
             });
           })
+      // mixpanel track - email sent 
+      await track('Otp Sent to Email Success !! ', {
+        email: email,
+        message: `sent email to user : ${userId}  `
+      })
         return "OTP_SENT_TO_EMAIL_SUCCESS"
       };
     }
@@ -96,6 +107,11 @@ module.exports = class OtpService {
         })
         //delete doc
         await OtpModel.deleteOne({ email, otp })
+        // mixpanel track - email sent 
+        await track('Otp verfication Success !! ', {
+          email: email,
+          message: `sent email to user : ${userId}  `
+        })
         return "EMAIL_VERIFICATION_SUCCESSFULL"
       } else {
         throw ({ status: 401, message: INVALID_OTP_ERR });

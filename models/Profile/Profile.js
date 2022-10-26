@@ -142,7 +142,7 @@ const profileSchema = mongoose.Schema({
     type: Number,
     default: 0
   },
-  isVerified:{
+  is_recommended:{
     type:Boolean,
     default:false
   },

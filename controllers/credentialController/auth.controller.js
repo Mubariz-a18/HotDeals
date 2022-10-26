@@ -31,6 +31,11 @@ module.exports = class AuthController {
         mixpanel.people.increment(phoneNumber.text, 'failed login attempt');
       }
     } catch (e) {
+      // mixpanel track - email sent 
+      await track('Otp Sent to Phone number failed  !! ', {
+        phoneNumber: phoneNumber,
+        message: `failed to sent otp`
+      })
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -68,11 +73,8 @@ module.exports = class AuthController {
           await track("login successfull", {
             distinct_id: userID,
           })
-          mixpanel.people.increment(userID, 'login successfull');
-
           return res.status(200).json({
             message: "success",
-            statusCode: 200,
             token,
             existingUser: true,
           });
@@ -90,19 +92,21 @@ module.exports = class AuthController {
 
         return res.status(200).json({
           message: "success",
-          statusCode: 200,
           token,
           existingUser: false,
         });
+      }else{
+        await track("login unsuccessfull", {
+          distinct_id: phoneNumber,
+        })
+        return res.status(401).json({
+          message: INVALID_OTP_ERR,
+        });
       }
-      return res.status(401).json({
-        message: INVALID_OTP_ERR,
-      });
     } catch (error) {
       await track("login unsuccessfull", {
         distinct_id: phoneNumber,
       })
-      mixpanel.people.increment(phoneNumber, 'login unsuccessfull');
       return res.status(500).send({
         error: {
           message: ` something went wrong try again : ${e.message} `
