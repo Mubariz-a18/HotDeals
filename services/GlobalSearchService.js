@@ -10,7 +10,9 @@ module.exports = class GlobalSearchService {
     // api get global search 
     static async getGlobalSearch(queries, user_ID) {
         const { keyword } = queries;
+        // check if user exist 
         const userExist = await Profile.findOne({ _id: user_ID })
+        // if not exist throw error
         if (!userExist) {
             // mixpanel - track blobal search failed 
             await track('failed -- Global search  ', {
@@ -19,9 +21,11 @@ module.exports = class GlobalSearchService {
             });
             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         } else {
+            //if user exist find ads using $search and $text
             const result = await Generic.find({
                 $text: { $search: `${keyword}` },
             })
+            // mix panel track for Global search api
             await track('Global search  success !! ', {
                 distinct_id: user_ID,
                 keywords: keyword
@@ -29,12 +33,14 @@ module.exports = class GlobalSearchService {
             return result
         }
     };
-
+    // Api create Analytics keywords
     static async createAnalyticsKeyword(result, queries, user_ID) {
         const { keyword } = queries;
+        //check if any analytics already exist with input keywords 
         const alreadyExist = await Analytics.findOne({
             user_id: (user_ID),
         });
+        //if global search doesnot show ads keywords are saved in analytics
         if (result.length == 0) {
             // mixpanel track keyword saved !!
             await track('Global search keywords saved  ', {
@@ -42,6 +48,7 @@ module.exports = class GlobalSearchService {
                 keywords: keyword
             });
             if (alreadyExist) {
+                //if analytics doc already exist for a certian user , save other analytics in the same array 
                 const updateAnalytics = await Analytics.findOneAndUpdate({ user_id: user_ID }, {
                     $push: {
                         keywords: {
@@ -54,6 +61,7 @@ module.exports = class GlobalSearchService {
                 return updateAnalytics
             }
             else {
+                //else create another analytic doc
                 const createAnalytics = await Analytics.create({
                     user_id: ObjectId(user_ID),
                     keywords: {
@@ -66,12 +74,14 @@ module.exports = class GlobalSearchService {
             }
         }
         else {
+            //if global search shows ads , still save the keywords in analytcs
             if (alreadyExist) {
                 // mixpanel track keyword saved !!
                 await track('Global search keywords saved  ', {
                     distinct_id: user_ID,
                     keywords: keyword
                 });
+                // updating analytics for the particular user -- if exist
                 const updateAnalytics = await Analytics.findOneAndUpdate({ user_id: ObjectId(user_ID) }, {
                     $push: {
                         keywords: {
@@ -84,6 +94,7 @@ module.exports = class GlobalSearchService {
                 return updateAnalytics
             }
             else {
+                // else create another analytics doc
                 const createAnalytics = await Analytics.create({
                     user_id: user_ID,
                     keywords: {

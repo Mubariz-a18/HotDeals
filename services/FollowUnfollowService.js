@@ -6,18 +6,18 @@ const { track } = require("./mixpanel-service");
 
 module.exports = class FollowUnfollowService {
     // follow user
-    static async followUser(res, bodyData, userId) {
+    static async followUser(bodyData, userId) {
         // finding user if exist
         const dbUser = await Profile.findById({ _id: userId })
         if (dbUser) {
             // if user exist find user_to_follow 
             const user_to_follow = await Profile.findById({ _id: bodyData.following_id })
             if (user_to_follow) {
-                //if user_to_follow exist -- check if both contains each`s id in following and follow feild
+                //if user_to_follow exist -- check if user is  already following
                 const alreadyExistInFollowers = user_to_follow.followers.includes(dbUser._id)
                 const alreadyExistInfollowing = dbUser.followings.includes(bodyData.following_id)
 
-                // if false user_id is pushed inside user_to_follow followers feild
+                // if not user_id is saved in users profile -- increase follower count
                 if (alreadyExistInFollowers == false && alreadyExistInfollowing == false) {
                     const user_followed = await Profile.findByIdAndUpdate(bodyData.following_id,
                         {
@@ -29,7 +29,7 @@ module.exports = class FollowUnfollowService {
                             }
                         }
                     )
-                    // also user`s following is also updated
+                    // update user`s prfile  - increase following count
                     const user_update = await Profile.findByIdAndUpdate(dbUser._id,
                         {
                             $push: {
@@ -51,7 +51,8 @@ module.exports = class FollowUnfollowService {
 
                     return (followInfo)
                 } else {
-                    await track("user failed to  followed", {
+                    // mixpanel track -user already following
+                    await track("user already following", {
                         distinct_id: userId,
                         message: `${dbUser.name} already follows ${user_to_follow.name} `,
                         userfollowed: bodyData.following_id
@@ -84,14 +85,13 @@ module.exports = class FollowUnfollowService {
         // finding user if exist
         if (dbUser) {
             // if user exist find user_to_unfollow 
-
             const user_to_unfollow = await Profile.findById({ _id: bodyData.unfollowing_id })
             if (user_to_unfollow) {
-                //if user_to_unfollow exist -- check if both contains each`s id in following and follow feild
+                //if user_to_unfollow exist -- check users exist in following
                 const alreadyExistInFollowers = user_to_unfollow.followers.includes(dbUser._id)
                 const alreadyExistInfollowing = dbUser.followings.includes(bodyData.unfollowing_id)
 
-                // if true user_id is removed from  user_to_unfollow -  followers feild
+                // if exist user_id is removed from  users profile -  followers feild -  decrease he follower count
                 if (alreadyExistInFollowers == true && alreadyExistInfollowing == true) {
                     const user_unfollowed = await Profile.findByIdAndUpdate(bodyData.unfollowing_id,
                         {
@@ -103,7 +103,7 @@ module.exports = class FollowUnfollowService {
                             }
                         }
                     )
-                    // also user`s following is also updated
+                    // and users following is also updated -- decrease he following count
                     const user_update = await Profile.findByIdAndUpdate(dbUser._id,
                         {
                             $pull: {
@@ -126,6 +126,7 @@ module.exports = class FollowUnfollowService {
                     });
                     return (followInfo)
                 } else {
+                    //if user is already unfollowed throw error
                     throw ({ status: 404, message: 'USER_ALREADY_REMOVED' });
                 }
             } else {
@@ -134,6 +135,7 @@ module.exports = class FollowUnfollowService {
                     userUnfollowed: bodyData.Unfollowing_id,
                     message: `${bodyData.unfollowing_id} doesnot exist`
                 });
+                // if user_to_unfollow doesnot exists throw error
                 throw ({ status: 404, message: 'USER_INFO_NOT_EXISTS' });
             }
         } else {
@@ -143,6 +145,7 @@ module.exports = class FollowUnfollowService {
                 userUnfollowed: bodyData.Unfollowing_id,
                 message: `${userId} doesnt exist`
             });
+            // if user doesnot exist throw error
             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         }
 
