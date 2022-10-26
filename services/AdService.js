@@ -4,6 +4,7 @@ const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
+const moment = require('moment');
 const { currentDate, DateAfter30Days, Ad_Historic_Duration } = require("../utils/moment");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -373,7 +374,7 @@ module.exports = class AdService {
           // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
             { _id: ad_id },
-            { $set: { ad_status: "Premium", ad_Premium_Date: currentDate, isPrime: true } },
+            { $set: { ad_status: "Selling", ad_Premium_Date: currentDate, isPrime: true } },
             { returnOriginal: false, new: true }
           )
           return adDoc;
@@ -542,7 +543,6 @@ module.exports = class AdService {
     const userExist = await Profile.findOne({
       _id: userId
     });
-    console.log(query)
     //-- $match is used to create a relation between User_id and Ads 
     // favourite ads are Fetched
     if (!userExist) {
@@ -592,8 +592,8 @@ module.exports = class AdService {
           }
         },
         {
-            $match:
-              { "category": query.category },
+          $match:
+            { "category": query.category },
         },
         {
           '$project': {
@@ -605,11 +605,13 @@ module.exports = class AdService {
             'image_url': 1, 
             'description': 1, 
             'ad_status': 1, 
-            'favourite_ads.ad_Favourite_Date': 1, 
+            'favourite_ads.ad_Favourite_Date': 1,
           }
         }
       ]
-      );
+      )
+      getMyFavAds.sort((a, b) => moment(b.favourite_ads.ad_Favourite_Date, 'YYYY-MM-DD HH:mm:ss').diff(moment(a.favourite_ads.ad_Favourite_Date, 'YYYY-MM-DD HH:mm:ss')))
+
       // mixpanel - when get favourite ads
       await track('get favourite Ads !! ', {
         distinct_id: userId
@@ -751,7 +753,7 @@ module.exports = class AdService {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    let pageVal = +query.page || 1;
+    let pageVal = +query.page ;
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -764,13 +766,11 @@ module.exports = class AdService {
     }
     //else find Premium ads byfiltering isPrime true
     else {
-      // .limit  &  .skip for pagination
-      console.log(lat ,lng)
       const premiumAdsData = await Generic.aggregate([
         [
           {
             '$geoNear': {
-              'near': { type: 'Point', coordinates: [lng, lat] },
+              'near': { type: 'Point', coordinates: [lng,lat] },
               "distanceField": "dist.calculated",
               'maxDistance': maxDistance,
               "includeLocs": "dist.location",
@@ -796,6 +796,8 @@ module.exports = class AdService {
               'Seller_Id': '$sample_result._id',
               'Seller_Joined': '$sample_result.created_date',
               'Seller_Image': '$sample_result.profile_url',
+              'Seller_verified': '$sample_result.is_email_verified',
+              'Seller_recommended': '$sample_result.is_recommended',
             }
           },
           {
@@ -805,6 +807,8 @@ module.exports = class AdService {
               'Seller_Name': 1,
               'Seller_Joined': 1,
               'Seller_Image': 1,
+              "Seller_verified":1,
+              "Seller_recommended":1,
               'category': 1,
               'sub_category': 1,
               'title': 1,
@@ -816,6 +820,7 @@ module.exports = class AdService {
               'reported_by': 1,
               'ad_status': 1,
               'ad_type': 1,
+              "created_at":1,
               'ad_expire_date': 1,
               'ad_promoted': 1,
               'isPrime': 1,
@@ -823,15 +828,28 @@ module.exports = class AdService {
             }
           },
           {
-            '$match': {
-              'isPrime': true,
-              'ad_status': "Selling"
+            $match: {
+                isPrime: true
             }
           },
-
+          {
+            $sort:{
+              "dist.calculated":1,
+              "created_at":-1,
+              "Seller_verified":-1,
+              "Seller_recommended":-1
+            }
+          },
+          {
+            $skip: limitval * (pageVal -1)
+          },
+          {
+            $limit: limitval
+          },
         ]
       ])
-      .skip(pageVal * (limitval - 1)).limit(limitval)
+       // pagination skip and limit
+      // .skip(pageVal * (limitval - 1)).limit(limitval)
       await track('get Premium Ads Successfully', {
         distinct_id: userId
       })
@@ -844,7 +862,7 @@ module.exports = class AdService {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    let pageVal = +query.page || 1;
+    let pageVal = +query.page ;
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -857,7 +875,7 @@ module.exports = class AdService {
     }
     //else find recent ads by filtering isPrime false
     else {
-      // .limit  &  .skip for pagination
+      // geo near query for get recent ads by location
       const getRecentAds = await Generic.aggregate([
         [
           {
@@ -888,6 +906,9 @@ module.exports = class AdService {
               'Seller_Id': '$sample_result._id',
               'Seller_Joined': '$sample_result.created_date',
               'Seller_Image': '$sample_result.profile_url',
+              'Seller_verified': '$sample_result.is_email_verified',
+              'Seller_recommended': '$sample_result.is_recommended',
+            
             }
           },
           {
@@ -897,6 +918,8 @@ module.exports = class AdService {
               'Seller_Name': 1,
               'Seller_Joined': 1,
               'Seller_Image': 1,
+              "Seller_verified":1,
+              "Seller_recommended":1,
               'category': 1,
               'sub_category': 1,
               'title': 1,
@@ -908,6 +931,7 @@ module.exports = class AdService {
               'reported_by': 1,
               'ad_status': 1,
               'ad_type': 1,
+              "created_at":1,
               'ad_expire_date': 1,
               'ad_promoted': 1,
               'isPrime': 1,
@@ -915,14 +939,31 @@ module.exports = class AdService {
             }
           },
           {
-            '$match': {
-              'isPrime': false,
-              'ad_status': "Selling"
+            $match: {
+                isPrime: false
             }
           },
-
-        ]
-      ]).skip(pageVal * (limitval - 1)).limit(limitval)
+          {
+            $sort:{
+              "dist.calculated":1,
+              "created_at":-1,
+              "Seller_verified":-1,
+              "Seller_recommended":-1,
+            }
+          },
+          {
+            $skip: limitval * (pageVal -1)
+          },
+          {
+            $limit: limitval
+          },
+        ] 
+      ])
+      // .skip(pageVal * (limitval - 1)).limit(limitval)  // pagination skip and limit 
+      // sort by created date
+      // getRecentAds.sort((a, b) => moment(b.created_at, 'YYYY-MM-DD HH:mm:ss').diff(moment(a.created_at, 'YYYY-MM-DD HH:mm:ss')))
+      // getRecentAds.sort((a,b)=> a.dist.calculated - b.dist.calculated )  
+      //mix panel track get recent ads 
       await track('get recent Ads Successfully', {
         distinct_id: userId
       })
