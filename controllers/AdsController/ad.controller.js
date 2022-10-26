@@ -166,7 +166,7 @@ module.exports = class AdController {
       const ad_id = req.body.ad_id;
       const deletedAd = await AdService.deleteAds(req.body, req.user_ID, ad_id);
       // Reponse code is sent 
-      res.status(200).send({ message: "Ad deleted successfully !" , deletedAd })
+      res.status(200).send({ message:deletedAd })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -212,6 +212,7 @@ module.exports = class AdController {
         })
       }
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
