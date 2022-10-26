@@ -8,14 +8,15 @@ module.exports = class ComplainService {
 
   // Create Complaint
   static async createComplaint(bodyData, userId) {
+    const { reason, description, attachment, status } = bodyData.complaint
     const user = await User.findOne({ _id: userId });
     // if user is verified new complain doc is created 
     if (!user) {
-      // mixpanel failed to create complain
+      // mixpanel failed to create complain  & throw error
       await track('failed !! create complaint  ', {
         distinct_id: userId,
-        complaint: bodyData.complaint.reason,
-        description: bodyData.complaint.description,
+        complaint: reason,
+        description: description,
         message: ` user_id : ${userId} does not exist`
       });
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
@@ -23,16 +24,17 @@ module.exports = class ComplainService {
     else {
       const complaint = {
         complaint_id: ObjectId(),
-        reason: bodyData.complaint.reason,
+        reason,
         complaint_date: currentDate,
-        description: bodyData.complaint.description,
-        attachment: bodyData.complaint.attachment,
-        status: bodyData.complaint.status
+        description,
+        attachment,
+        status
       }
       const findComplaint = await Complaint.findOne({
         user_id: userId
       })
       if (!findComplaint) {
+        //create complaint
         const createcomplaint = await Complaint.create({
           user_id: userId,
           complaint: complaint,
@@ -40,23 +42,23 @@ module.exports = class ComplainService {
         // mixpanel create complain 
         await track('create complaint', {
           distinct_id: createcomplaint._id,
-          reason: bodyData.complaint.reason,
+          reason: reason,
         })
         return createcomplaint
       }
       else {
-        // if complain doc is already created push another complain in the complaint array 
+        // if complain doc is already exist  push another complaint in the complaint array 
         const pushCmpln = await Complaint.findOneAndUpdate(
           { user_id: userId },
           {
             $push: {
               complaint: {
                 complaint_id: ObjectId(),
-                reason: bodyData.complaint.reason,
+                reason,
                 complaint_date: currentDate,
-                description: bodyData.complaint.description,
-                attachment: bodyData.complaint.attachment,
-                status: bodyData.complaint.status
+                description,
+                attachment,
+                status
               },
             },
           },
@@ -65,8 +67,8 @@ module.exports = class ComplainService {
         // mixpanel create complain  
         await track(' create complaint successfully ', {
           distinct_id: pushCmpln._id,
-          reason: bodyData.complaint.reason,
-          description: bodyData.complaint.description,
+          reason: reason,
+          description: description,
         })
         return pushCmpln;
       }
@@ -74,8 +76,8 @@ module.exports = class ComplainService {
   }
   // update complaint
   static async updateComplain(bodyData, userId) {
+    const {reason , description , attachment , status} = bodyData
     const user = await User.findOne({ _id: userId });
-    const complain = await Complaint.findOne({ user_id: ObjectId(userId) })
     // check if user exists -if not throw error
     if (!user) {
       await track('failed !! to update complaint', {
@@ -85,7 +87,10 @@ module.exports = class ComplainService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      // if user is verified - check if complaint exist  
+      // if user is verified - check if complaint exist
+      // check if complaint exist in Complaint array of Complaint Collection 
+      const complain = await Complaint.findOne({ user_id: ObjectId(userId)  , "complaint.complaint_id" : ObjectId(bodyData.complaint_id)})  
+      //if not exist throw error 
       if (!complain) {
         await track('failed !! to update complaint', {
           distinct_id: userId,
@@ -103,10 +108,10 @@ module.exports = class ComplainService {
           },
           {
             $set: {
-              "complaint.$.reason": bodyData.reason,
-              "complaint.$.description": bodyData.description,
-              "complaint.$.attachment": bodyData.attachment,
-              "complaint.$.status": bodyData.status,
+              "complaint.$.reason": reason,
+              "complaint.$.description": description,
+              "complaint.$.attachment": attachment,
+              "complaint.$.status":status,
               "complaint.$.complaint_updated_date": currentDate
             }
           },

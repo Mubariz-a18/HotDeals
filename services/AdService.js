@@ -823,10 +823,10 @@ module.exports = class AdService {
       { new: true }
     )
     // mix panel tack - when Particular ad is viewed 
-    await track('viewed ad', {
+    await track('viewed ad successfully', {
       distinct_id: userId,
       ad_id: ad_id
-    })
+    });
     //Mixpanel increment of user views count on ad view count
     mixpanel.people.increment(userId, 'views particular ad');
     if (updateAd) {
@@ -840,6 +840,11 @@ module.exports = class AdService {
       );
       return { updateAd, owner };
     } else {
+      await track('viewed ad failed', {
+        distinct_id: userId,
+        ad_id: ad_id,
+        message:`Ad_id : ${ad_id}  does not exist`
+      })
       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
     }
 

@@ -8,30 +8,35 @@ module.exports = class AlertService {
 
   // Create Alert 
   static async createAlert(bodyData, userId) {
+    const {
+      name,
+      title,
+      category,
+      sub_category,
+      keywords,
+      condition,
+      location,
+      price,
+      activate_status,
+    } = bodyData;
     const userExist = await Profile.findOne({ _id: userId });
     // if user is authorized create a new alert
     if (!userExist) {
+      //mixpanel rack fro failed to create alert
       await track('failed to create alert ', {
         distinct_id: userId,
-        category: bodyData.category,
-        sub_category: bodyData.sub_category,
-        keyword: bodyData.keyword,
+        category: category,
+        sub_category: sub_category,
+        keywords: keywords,
+        condition: condition,
+        activate_status: activate_status,
+        location: location,
         message: `user_id : ${userId}  does not exist`
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      const {
-        name,
-        title,
-        category,
-        sub_category,
-        keywords,
-        condition,
-        location,
-        price,
-        activate_status,
-            } = bodyData
+      // create an alert in Alerts collection with the input feilds 
       let alertDoc = await Alert.create({
         user_ID: userId,
         name,
@@ -55,6 +60,17 @@ module.exports = class AlertService {
           },
         },
       });
+      // mixpanel track for create alert succesfully
+      await track('create alert Successfully', {
+        distinct_id: userId,
+        category: category,
+        sub_category: sub_category,
+        keywords: keywords,
+        condition: condition,
+        activate_status: activate_status,
+        location: location,
+        message: `user_id : ${userId}  does not exist`
+      })
       return alertDoc;
     }
   }
@@ -71,8 +87,7 @@ module.exports = class AlertService {
       location,
       price,
       activate_status,
-          } = bodyData
-          
+    } = bodyData
     const user = await Profile.findOne({ _id: userId });
     // if user is verified alert i updated in alert collection
     if (!user) {
@@ -81,16 +96,17 @@ module.exports = class AlertService {
         sub_category: sub_category,
         category: category,
         keyword: keywords,
-        condition:condition,
-        location:location,
+        condition: condition,
+        location: location,
         distinct_id: alert_id,
         message: `user : ${userId}  does not exist`
       })
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
+      // update alert with input 
       const updateAds = await Alert.findOneAndUpdate({
-        _id: alert_id , user_ID : userId
+        _id: alert_id, user_ID: userId
       }, {
         $set: {
           name,
@@ -102,7 +118,7 @@ module.exports = class AlertService {
           location,
           price,
           activate_status,
-          updated_Date:currentDate
+          updated_Date: currentDate
         },
       }, { new: true })
 
@@ -111,8 +127,8 @@ module.exports = class AlertService {
         sub_category: sub_category,
         category: category,
         keyword: keywords,
-        condition:condition,
-        location:location,
+        condition: condition,
+        location: location,
         distinct_id: alert_id,
       })
       return updateAds;
@@ -121,9 +137,10 @@ module.exports = class AlertService {
 
   // Delete Alert
   static async deleteAlert(alert_id, userId) {
-    const user = await Profile.findOne({ _id: userId });
     //if user is authorized alert is removed from profile.alert[]
+    const user = await Profile.findOne({ _id: userId });
     if (!user) {
+      // mixpanel track for failed to delete alert
       await track('failed to delete alert ', {
         distinct_id: alert_id,
         message: `user : ${userId}  does not exist`
@@ -131,11 +148,16 @@ module.exports = class AlertService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
+      // remove alert id from user profile
       await Profile.findOneAndUpdate(
         { _id: userId },
-        { $pull: { "alert":{
-          alert_id: ObjectId(alert_id)
-        } } },
+        {
+          $pull: {
+            "alert": {
+              alert_id: ObjectId(alert_id)
+            }
+          }
+        },
         { new: true }
       );
       // mixpanel - delete alert from user alert feild
