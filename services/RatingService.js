@@ -6,29 +6,35 @@ const { track } = require("./mixpanel-service");
 module.exports = class RatingService {
   // creating a new Rating document for a particular user
   static async createRating(bodyData, userId) {
-    
+    // check if user exist 
       const user = await User.findOne({
         _id: userId,
       });
-      const user_to_rate_exist = await User.findOne({
-        _id: bodyData.user_id
-      });
+      // if user doesnot exist throw error
       if(!user){
+        //mixpanel track for failed to create rating 
         await track('failed to create Rating !! ', { 
           distinct_id: userId,
           message:`user : ${userId}  does not exist`
         })
         throw ({ status: 404, message: 'USER_NOT_EXISTS' });
       }
+      // else find the user_to_rate  
       else {
+        const user_to_rate_exist = await User.findOne({
+          _id: bodyData.user_id
+        });
+        // if user_to_rate doesnot exist throw error
         if(!user_to_rate_exist){
+          //mixpanel track for failed to create rating
           await track('failed to create Rating !! ', { 
             distinct_id: userId,
             message:`user_id : ${userId} to rate does not exist`
           })
           throw ({ status: 404, message: 'USER_TO_RATE_NOT_EXISTS' });
+          //else find if the rating exist
         }else{
-        // If the array of Rating Info Dosn not contain any ratings create a new object
+        // If RatingInfo doesnot exist for a user create new one
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
         if (!alreadyexist) {
           const ratDoc = await Rating.create({
@@ -55,7 +61,7 @@ module.exports = class RatingService {
           })
           return ratDoc;
         } else {
-          // else if the array consists of any object push other objects in the array 
+          // else if the ratingInfo Exist push other rating inside thr array
           const Rating_Already_exist_By_User = await Rating.findOne({ RatingInfo: { $elemMatch: { "rating_given_by": userId } } })
           if (!Rating_Already_exist_By_User) {
             const findRatedUserAndUpdate = await Rating.findOneAndUpdate({
@@ -74,14 +80,16 @@ module.exports = class RatingService {
               },
               { new: true }
             )
-            // UpdatingThe average Rating Feild in Rating Document As well as rate average Users profile
+            // UpdatingThe average Rating Feild in Rating Document As well as rate average count in  Users profile
             const Rating_doc = await Rating.find({ user_id: bodyData.user_id })
             let average = 0;
+            // finding the average rating for a user
             Rating_doc[0].RatingInfo.forEach(rat => {
               average += rat.rating;
             });
             Rating_doc[0].average_rating = average / Rating_doc[0].RatingInfo.length;
             await Rating_doc[0].save();
+            //saving the average rating in user profile
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
               rate_average: Rating_doc[0].average_rating,
               rate_count: Rating_doc[0].RatingInfo.length
@@ -114,10 +122,10 @@ module.exports = class RatingService {
                 rate_average: Rating_doc[0].average_rating,
                 rate_count: Rating_doc[0].RatingInfo.length
               })
-            return  Rating_doc[0] ;
+            return Rating_doc[0];
           }
         }
-        }
       }
+    }
   }
 };
