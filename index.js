@@ -54,7 +54,7 @@ app.use(HelpRouter);
 app.use(CreditRouter);
 app.use(RatingRouter);
 app.use(followUnfollowRouter);
-app.use(DashBoardRouter);
+// app.use(DashBoardRouter);
 app.use(GlobalSearchRouter);
 app.use(cat_subCat_SearchRouter);
 
