@@ -117,14 +117,21 @@ module.exports = class HelpService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      const helpDocs = await Help.find({
-        user_id: userId
-      },
-      {
-        title:1,
-        description:1,
-        attachment :{ $arrayElemAt: ["$attachment", 0] }
-      })
+      const helpDocs = await Help.aggregate([
+        {
+          $match: {
+            _id: {
+              $in: findUser.help_center
+            }
+          }
+        },{
+          $project:{
+            title:1,
+            description:1,
+            attachment :{ $arrayElemAt: ["$attachment", 0] }
+          }
+        }
+      ])
       if(helpDocs.length == 0){
       //mixpanel track for failed to delete help
       await track('failed to get help !!', {
