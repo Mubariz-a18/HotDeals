@@ -100,4 +100,53 @@ module.exports = class HelpService {
       }
     }
   }
+
+  static async getHelp(userId) {
+    // create Help doc
+    const findUser = await Profile.findOne({
+      _id: userId
+    } );
+    // verify if the user is authorized -- if authorized find help doc with users id
+    if (!findUser) {
+      //mixpanel track for failed to delete help
+      await track('failed to get help !!', {
+        distinct_id: userId,
+        message: `user_id : ${userId} doesnot exists `,
+      });
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else {
+      const helpDocs = await Help.aggregate([
+        {
+          $match: {
+            _id: {
+              $in: findUser.help_center
+            }
+          }
+        },{
+          $project:{
+            title:1,
+            description:1,
+            attachment :{ $arrayElemAt: ["$attachment", 0] },
+            created_Date:1
+          }
+        }
+      ])
+      if(helpDocs.length == 0){
+      //mixpanel track for failed to delete help
+      await track('failed to get help !!', {
+        distinct_id: userId,
+        message: `user_id : ${userId} doesnot have any Help Docs `,
+      });
+        throw ({ status: 404, message: 'HELPS_NOT_EXISTS' });
+      }else{
+      //mixpanel track for failed to delete help
+      await track('get help success !!', {
+        distinct_id: userId,
+        message: `user_id : ${userId}  fetched help documents `,
+      });
+        return helpDocs
+      }
+    }
+  }
 };

@@ -15,41 +15,33 @@ module.exports = class AuthController {
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
       let msgResponse = {};
+
       msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
       if (msgResponse.status === "success") {
-        res.status(200).json({
+        // mixpanel track - email sent 
+        await track('Otp Sent to Phone number successfully !! ', {
+          phoneNumber: phoneNumber,
+          message: `otp sent to  ${phoneNumber}`
+        })
+        res.json({
           message: "OTP Sent Successfully",
         });
-        await track("otp sent successfull", {
-          distinct_id: phoneNumber.text,
-        })
-        mixpanel.people.increment(phoneNumber.text, 'logins');
+        mixpanel.people.increment(phoneNumber, 'Login Attempts');
       } else {
-        await track("otp sent failed !!", {
-          distinct_id: phoneNumber.text,
-        })
-        mixpanel.people.increment(phoneNumber.text, 'failed login attempt');
+        res.status(400).json({
+          message: msgResponse.data,
+        });
       }
-    } catch (e) {
+    } catch (error) {
       // mixpanel track - email sent 
       await track('Otp Sent to Phone number failed  !! ', {
         phoneNumber: phoneNumber,
         message: `failed to sent otp`
       })
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
-    };
+      res.status(400).json({
+        message: error.message,
+      });
+    }
   }
 
   // Verify OTP
@@ -95,7 +87,7 @@ module.exports = class AuthController {
           token,
           existingUser: false,
         });
-      }else{
+      } else {
         await track("login unsuccessfull", {
           distinct_id: phoneNumber,
         })

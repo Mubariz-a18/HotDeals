@@ -35,7 +35,7 @@ const genericSchema = mongoose.Schema({
         type: String,
     },
     price: {
-        type: String
+        type: Number
     },
     image_url: {
         type: Array,

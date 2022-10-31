@@ -11,7 +11,7 @@ const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0  * * *', async () => 
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_expire_date)) {
       const updateAd = Generic.findByIdAndUpdate(ad._id,
-        { $set: { ad_status: "Expired", isPrime: false ,  ad_Historic_Duration_Date : Ad_Historic_Duration } },
+        { $set: { ad_status: "Expired", isPrime: false, ad_Historic_Duration_Date: Ad_Historic_Duration } },
         { new: true })
         .then((res) => {
           res
@@ -27,14 +27,14 @@ const ScheduleTask_Display_Historic_Ads = cron.schedule('0 0 0  * * *', async ()
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_Historic_Duration_Date)) {
       const updateAd = Generic.findByIdAndUpdate(
-      {
-        _id : ad._id ,
-        ad_status: "Expired" || "Sold" || "Delete"
-      },
-      { $set: { is_ad_Historic_Duration_Flag : true } },
-      { new: true })
-      .then((res) => res)
-      .catch(e => e)
+        {
+          _id: ad._id,
+          ad_status: "Expired" || "Sold" || "Delete"
+        },
+        { $set: { is_ad_Historic_Duration_Flag: true } },
+        { new: true })
+        .then((res) => res)
+        .catch(e => e)
     }
   });
 });
@@ -51,45 +51,49 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
 });
 //(Schedule_Task_Alert_6am_to_10pm)                  '* * 06-22 * * *'     '* * * * * *'
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async () => {
-    const Alerts = await Alert.find({activate_status:true})
-    Alerts.forEach(async (alert) =>{
-        const {
-          title,
-          category,
-          sub_category,
-          keywords,
-          location,
-          price,
-          condition
-        } = alert
-      const alertNotificationDoc = await Generic.find(
-        {
-          "category": category,
-          "sub_category": sub_category,
-          "title": { "$regex": title, "$options": "i" },
-          "ad_posted_address": { "$regex": location, "$options": "i" },
-          "$or": [
-            { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
-            {
-              $or: [
-                { "description": { "$regex": keywords[0], "$options": "i" } },
-                { "description": { "$regex": keywords[1], "$options": "i" } },
-                { "description": { "$regex": keywords[2], "$options": "i" } }
-              ]
-            }
-          ]
-        }
-        )
-        const ad_Ids = []
-        alertNotificationDoc.forEach(e => {
-          ad_Ids.push(e._id)
-        })
-        await Profile.updateOne(
-          { _id: alert.user_ID, "alert.alert_id": ObjectId(alert["_id"]) },
+  const Alerts = await Alert.find({ activate_status: true })
+  Alerts.forEach(async (alert) => {
+    const {
+      title,
+      category,
+      sub_category,
+      keywords,
+      location,
+      price,
+      condition
+    } = alert
+    const alertNotificationDoc = await Generic.find(
+      {
+        "category": category,
+        "sub_category": sub_category,
+        "title": { "$regex": title, "$options": "i" },
+        "ad_posted_address": { "$regex": location, "$options": "i" },
+        "price": {
+          $gte: price, $lte: price
+        },
+        "$or": [
+          { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
           {
-            $addToSet: { "alert.$.alerted_Ads": ad_Ids }
-          })
+            $or: [
+              { "description": { "$regex": keywords[0], "$options": "i" } },
+              { "description": { "$regex": keywords[1], "$options": "i" } },
+              { "description": { "$regex": keywords[2], "$options": "i" } }
+            ]
+          }
+        ]
+      }
+    )
+
+    const ad_Ids = []
+    alertNotificationDoc.forEach(e => {
+      ad_Ids.push(e._id)
     })
+    await Profile.updateOne(
+      { _id: alert.user_ID, "alert.alert_id": ObjectId(alert["_id"]) },
+      {
+        $addToSet: { "alert.$.alerted_Ads": ad_Ids }
+      })
+  })
 });
 
 //Starting the schedular
