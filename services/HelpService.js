@@ -112,7 +112,6 @@ module.exports = class HelpService {
       await track('failed to get help !!', {
         distinct_id: userId,
         message: `user_id : ${userId} doesnot exists `,
-        helpID: helpID
       });
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
@@ -128,7 +127,8 @@ module.exports = class HelpService {
           $project:{
             title:1,
             description:1,
-            attachment :{ $arrayElemAt: ["$attachment", 0] }
+            attachment :{ $arrayElemAt: ["$attachment", 0] },
+            created_Date:1
           }
         }
       ])
