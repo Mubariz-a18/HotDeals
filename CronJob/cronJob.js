@@ -68,6 +68,9 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
           "sub_category": sub_category,
           "title": { "$regex": title, "$options": "i" },
           "ad_posted_address": { "$regex": location, "$options": "i" },
+          "price":{
+            $gte: price, $lte: price 
+          },
           "$or": [
             { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
             {
@@ -80,6 +83,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
           ]
         }
         )
+       
         const ad_Ids = []
         alertNotificationDoc.forEach(e => {
           ad_Ids.push(e._id)

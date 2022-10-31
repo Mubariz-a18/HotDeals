@@ -29,7 +29,7 @@ const alertSchema = mongoose.Schema(
       type:String
     },
     price:{
-      type:String
+      type:Number
     },
     activate_status: {
       type: Boolean,

@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 //Router Imports
 const authRouter = require("./routes/auth.routes");
-const DashBoardRouter = require('./routes/home.routes')
+// const DashBoardRouter = require('./routes/home.routes')
 const profileRouter = require("./routes/profile.routes");
 const AdRouter = require("./routes/ad.routes");
 const AlertRouter = require("./routes/alert.routes");
@@ -36,6 +36,25 @@ const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
 connectDB();
+
+/*  
+      express-rate limiter for limiting the user to hit an end point to certain number of times before giving error 
+*/
+
+
+// const rateLimit = require('express-rate-limit')
+
+// const limiter = rateLimit({
+// 	windowMs: 1 * 60 * 1000, // 15 minutes
+// 	max: 5, // Limit each IP to 100 requests per `window` (here, per 1 minutes)
+//   message:
+// 		'Too many  please try again after an 15 min',
+// 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+// 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+// })
+
+// // Apply the rate limiting middleware to all requests
+// app.use(limiter)
 
 //Middlewares
 app.use(express.static(__dirname));

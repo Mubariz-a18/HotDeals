@@ -161,10 +161,6 @@ module.exports = class ProfileService {
         {
           $set: {
                 name: bodyData.name,
-                // userNumber: {
-                //     text: userProfile.userNumber.text,
-                //     private: bodyData.userNumber.private
-                //   },
                 email: {
                     text: bodyData.email.text,
                     private: bodyData.email.private
