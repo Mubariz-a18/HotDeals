@@ -37,6 +37,9 @@ const genericSchema = mongoose.Schema({
     price: {
         type: Number
     },
+    product_age:{
+        type:String
+    },
     image_url: {
         type: Array,
         default: [],

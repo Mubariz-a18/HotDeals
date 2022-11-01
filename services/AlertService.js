@@ -17,6 +17,7 @@ module.exports = class AlertService {
       condition,
       location,
       price,
+      age,
       activate_status,
     } = bodyData;
     const userExist = await Profile.findOne({ _id: userId });
@@ -47,6 +48,7 @@ module.exports = class AlertService {
         condition,
         location,
         price,
+        age,
         activate_status,
         created_Date: currentDate,
         alert_Expiry_Date: DateAfter15Days

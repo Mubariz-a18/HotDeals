@@ -31,6 +31,9 @@ const alertSchema = mongoose.Schema(
     price:{
       type:Number
     },
+    age:{
+      type:String
+    },
     activate_status: {
       type: Boolean,
       default:true

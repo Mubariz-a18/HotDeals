@@ -5,7 +5,7 @@ const { track } = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
 const moment = require('moment');
-const { currentDate, DateAfter30Days, Ad_Historic_Duration } = require("../utils/moment");
+const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -56,6 +56,7 @@ module.exports = class AdService {
           is_negotiable,
           is_ad_posted,
         } = bodyData
+        let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
         // create an Ad document in generics collection with body 
         let adDoc = await Generic.create({
           user_id: findUsr._id,
@@ -67,6 +68,7 @@ module.exports = class AdService {
           special_mention,
           title,
           price,
+          product_age: age,
           isPrime,
           image_url,
           video_url,
@@ -78,7 +80,7 @@ module.exports = class AdService {
           is_ad_posted,
           created_at: currentDate,
           ad_expire_date: DateAfter30Days,
-          updated_at: currentDate
+          updated_at: currentDate,
         });
         // mixpanel track -- Ad create 
         await track('Ad creation succeed', {

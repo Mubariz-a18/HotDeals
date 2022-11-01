@@ -6,7 +6,7 @@ const ObjectId = require('mongodb').ObjectId;
 const { currentDate, Ad_Historic_Duration } = require('../utils/moment');
 
 // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
-const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0  * * *', async () => {
+const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
   const Ads = await Generic.find();
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_expire_date)) {
@@ -60,7 +60,8 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
       keywords,
       location,
       price,
-      condition
+      condition,
+      age
     } = alert
     const alertNotificationDoc = await Generic.find(
       {
@@ -68,9 +69,18 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
         "sub_category": sub_category,
         "title": { "$regex": title, "$options": "i" },
         "ad_posted_address": { "$regex": location, "$options": "i" },
-        "price": {
-          $gte: price, $lte: price
-        },
+        $and: [
+          {
+            "product_age": {
+              $lte: age
+            }
+          },
+          {
+            "price": {
+              $gte: price
+            }
+          },
+        ],
         "$or": [
           { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
           {
