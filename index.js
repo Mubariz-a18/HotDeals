@@ -80,7 +80,7 @@ app.use(cat_subCat_SearchRouter);
 //server listener
 server.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
-  ScheduleTask_Ad_Status_Expire
+  // ScheduleTask_Ad_Status_Expire
   ScheduleTask_Display_Historic_Ads
   ScheduleTask_Alert_activation
   Schedule_Task_Alert_6am_to_10pm
