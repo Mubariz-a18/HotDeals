@@ -10,6 +10,9 @@ const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss'
 // dateof birth & age
 const DOB = moment().format('YYYY-MM-DD');
 
+const Free_credit_Expiry = moment().add(180, 'd').format('YYYY-MM-DD HH:mm:ss');
+
+
 const age_func = (date_of_purchase)=>{
     var year_of_purchase = moment(date_of_purchase, 'MM/YYYY');
     var total_months =  moment().diff(year_of_purchase , 'month',false);
@@ -19,6 +22,25 @@ const age_func = (date_of_purchase)=>{
     return age  
 }
 
+const nearestExpiryDateFunction = (arrayOfExpiryDates)=>{
+  console.log(arrayOfExpiryDates)
+    const dateToCheckFor = currentDate;
+    let nearestExpiryDate;
+    arrayOfExpiryDates.forEach(date => {
+        let diff = moment(date).diff(moment(dateToCheckFor), 'days');
+        if (diff > 0) {
+          if (nearestExpiryDate) {
+            if (moment(date).diff(moment(nearestExpiryDate), 'days') < 0) {
+              nearestExpiryDate = date;
+            }
+          } else {
+            nearestExpiryDate = date;
+          }
+         
+        }
+      })
+     return (nearestExpiryDate)
+}
 
 
 module.exports = {
@@ -26,5 +48,7 @@ module.exports = {
     Ad_Historic_Duration,
     DOB,
     DateAfter15Days,
-    age_func
+    age_func,
+    nearestExpiryDateFunction,
+    Free_credit_Expiry
     };

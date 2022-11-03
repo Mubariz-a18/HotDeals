@@ -5,7 +5,8 @@ const { track } = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
 const moment = require('moment');
-const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
+const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func ,nearestExpiryDateFunction} = require("../utils/moment");
+const Credit = require("../models/creditSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -82,6 +83,34 @@ module.exports = class AdService {
           ad_expire_date: DateAfter30Days,
           updated_at: currentDate,
         });
+        const docs = await Credit.findOne({user_id:userId})
+        let free = docs.free_credits_info
+        const datesToBeChecked = []
+        free.forEach(freeCrd => {
+          datesToBeChecked.push(freeCrd.credits_expires_on)
+        })
+        const date = nearestExpiryDateFunction(datesToBeChecked)
+        const creditDeduct = await Credit.findOneAndUpdate({ user_id: userId, "free_credits_info.credits_expires_on": date }
+          , {
+            $inc: { available_free_credits: - 20 },
+            $set: {
+              $inc: {
+                "free_credits_info.$.count": -20
+              },
+              "free_credits_info.$.status": "Active",
+              "free_credits_info.$.activationDate": currentDate
+            },
+            $push: {
+              credit_usage: {
+                type_of_credit: "Free",
+                ad_id: adDoc._id,
+                category:category,
+                count: 20
+              }
+            }
+          }
+        )
+        console.log(creditDeduct)
         // mixpanel track -- Ad create 
         await track('Ad creation succeed', {
           category: bodyData.category,

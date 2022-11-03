@@ -1,9 +1,11 @@
 const cron = require('node-cron')
+const moment = require("moment")
 const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
-const Profile = require('../models/Profile/Profile');
-const ObjectId = require('mongodb').ObjectId;
-const { currentDate, Ad_Historic_Duration } = require('../utils/moment');
+const Credit = require('../models/creditSchema');
+// const Profile = require('../models/Profile/Profile');
+// const ObjectId = require('mongodb').ObjectId;
+const { currentDate, Ad_Historic_Duration, Free_credit_Expiry, DateAfter30Days } = require('../utils/moment');
 
 // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
@@ -22,7 +24,7 @@ const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
 });
 
 // (ScheduleTask_Display_Historic_Ads) will update the (is_ad_Historic_Duration_Flag) to "true" if the (ad_Historic_Duration_Date) has past the (current date)
-const ScheduleTask_Display_Historic_Ads = cron.schedule('0 0 0  * * *', async () => {
+const ScheduleTask_Display_Historic_Ads = cron.schedule('0 0 0 * * *', async () => {
   const Ads = await Generic.find();
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_Historic_Duration_Date)) {
@@ -98,23 +100,54 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
     alertNotificationDoc.forEach(e => {
       ad_Ids.push(e._id)
     })
-    await Profile.updateOne(
-      { _id: alert.user_ID, "alert.alert_id": ObjectId(alert["_id"]) },
-      {
-        $addToSet: { "alert.$.alerted_Ads": ad_Ids }
-      })
+    // console.log(alertNotificationDoc)
+    // await Profile.updateOne(
+    //   { _id: alert.user_ID, "alert.alert_id": ObjectId(alert["_id"]) },
+    //   {
+    //     $addToSet: { "alert.$.alerted_Ads": ad_Ids }
+    //   })
   })
 });
+                                                   //"0 0 */30 1-12 *"
+const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
+  const Credits = await Credit.find()
+  Credits.forEach(async creditDoc => {
+    const give_montly_credit = await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
+      $inc: { available_free_credits: 100 },
+      $inc: {premium_credits_info: bodyData.count},
+      $push: {
+        free_credits_info: {
+          count: 100,
+          allocation: "Admin-Monthly",
+          allocated_on: currentDate,
+          duration: moment(DateAfter30Days).diff(currentDate, "days"),
+          credits_expires_on: DateAfter30Days
+        }
+      },
+      $push :{
+        premium_credits_info :{
+          count:10,
+          allocation:"Admin-Monthly",
+          allocated_on: currentDate,
+          duration:moment(DateAfter30Days).diff(currentDate,"days"),
+          credits_expires_on:DateAfter30Days
+        }
+      }
+    }, { new: true })
+  })
+})
 
 //Starting the schedular
 ScheduleTask_Ad_Status_Expire.start()
 ScheduleTask_Display_Historic_Ads.start()
 ScheduleTask_Alert_activation.start()
 Schedule_Task_Alert_6am_to_10pm.start()
+Schedule_Task_Monthly_credits.start()
 
 module.exports = {
   ScheduleTask_Ad_Status_Expire,
   ScheduleTask_Display_Historic_Ads,
   ScheduleTask_Alert_activation,
-  Schedule_Task_Alert_6am_to_10pm
+  Schedule_Task_Alert_6am_to_10pm,
+  // Schedule_Task_Monthly_credits
 };

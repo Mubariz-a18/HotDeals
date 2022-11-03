@@ -11,7 +11,6 @@ module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
     const { phoneNumber } = req.body;
-    try {
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
       let msgResponse = {};
@@ -26,31 +25,21 @@ module.exports = class AuthController {
         res.json({
           message: "OTP Sent Successfully",
         });
-        mixpanel.people.increment(phoneNumber, 'Login Attempts');
       } else {
         res.status(400).json({
           message: msgResponse.data,
         });
       }
-    } catch (error) {
-      // mixpanel track - email sent 
-      await track('Otp Sent to Phone number failed  !! ', {
-        phoneNumber: phoneNumber,
-        message: `failed to sent otp`
-      })
-      res.status(400).json({
-        message: error.message,
-      });
-    }
   }
 
-  // Verify OTP
   static async apiVerifyOTP(req, res, next) {
     const { phoneNumber, otp } = req.body;
 
     try {
       //Verfying again otp collection to check the otp is valid
       const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
+      console.log("verification_checkstatus: ", verficationStatus);
+
       if (verficationStatus === "approved") {
         //Get user from Database
         const oldUser = await User.findOne({
@@ -61,17 +50,17 @@ module.exports = class AuthController {
           // If user exists
           const userID = oldUser["_id"];
           const token = createJwtToken(userID, phoneNumber.text);
-
+          // save user token
           await track("login successfull", {
             distinct_id: userID,
           })
           return res.status(200).json({
             message: "success",
-            token,
+            token,          
             existingUser: true,
           });
-        }
-
+          //return res.send({ token });
+        }else{
         // If new user, create a user
 
         const user = await User.create({
@@ -84,28 +73,28 @@ module.exports = class AuthController {
 
         return res.status(200).json({
           message: "success",
+          statusCode:200,
           token,
           existingUser: false,
         });
-      } else {
-        await track("login unsuccessfull", {
-          distinct_id: phoneNumber,
-        })
-        return res.status(401).json({
-          message: INVALID_OTP_ERR,
-        });
       }
-    } catch (error) {
-      await track("login unsuccessfull", {
-        distinct_id: phoneNumber,
-      })
-      return res.status(500).send({
-        error: {
-          message: ` something went wrong try again : ${e.message} `
-        }
+      }
+      return res.status(400).json({
+        message: INVALID_OTP_ERR,
+        statusCode:401
       });
-    }
+    } catch (error) {
+          await track("login unsuccessfull", {
+            distinct_id: phoneNumber,
+          })
+          return res.status(500).send({
+            error: {
+              message: ` something went wrong try again : ${e.message} `
+            }
+          });
+        }
   }
+
 
   // Sent OTP by email
   static async apiSentOtpByEmail(req, res, next) {

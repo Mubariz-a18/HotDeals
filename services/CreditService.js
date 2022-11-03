@@ -1,33 +1,47 @@
 const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
-const { DateAfter30Days, currentDate } = require("../utils/moment");
+const moment = require("moment")
+const { DateAfter30Days, currentDate, Free_credit_Expiry } = require("../utils/moment");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class CreditService {
 
   // Create Credit
   static async createCredit(bodyData, userId) {
- 
+  
       const user = await User.findOne({ _id: userId });
       if (user) {
-        const newCredit = await  Credit.create({
-          user_id: userId,
-          free_credits_info : {
-            count : 200 , 
-            status : bodyData.status,
-            allocation : bodyData.allocation , 
-            referral_Id : bodyData.referral_Id,
-            expires_on : DateAfter30Days,
-            allocated_on :currentDate
-          } ,
-          premium_credits_info :{
-            count : 0 ,
-            transaction_Id: "1234567890",
-            parchaseDate :"12-12-2022",
-            expires_on:"22-9-2023"
+        if(bodyData.creditType == "Free"){
+          const newCredit = await  Credit.findOneAndUpdate({user_id:userId},{
+            $inc: {available_free_credits: bodyData.count},
+            $push :{
+             free_credits_info :{
+               count:bodyData.count,
+               allocation:bodyData.allocation,
+               allocated_on:currentDate,
+               duration:moment(Free_credit_Expiry).diff(currentDate,"days"),
+               credits_expires_on: Free_credit_Expiry
+             }
+            }
           },
-        });
-        return newCredit;
+            {
+              new: true
+            }
+          );
+           return newCredit;
+        }else if(bodyData.creditType == "Premium"){
+          const newCredit = await  Credit.findOneAndUpdate({user_id:userId },{
+            $inc: {premium_credits_info: bodyData.count},
+            $push :{
+              premium_credits_info :{
+                count:bodyData.count,
+                duration:moment(DateAfter30Days).diff(currentDate,"days"),
+                credits_expires_on:DateAfter30Days
+              }
+            }
+           },{ new: true });
+           return newCredit;
+        }
       } else {
         return res
           .status(400)
