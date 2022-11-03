@@ -10,6 +10,7 @@ static async get_Ads_category_subcategory(req, res, next) {
           cat_docs
         });
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {

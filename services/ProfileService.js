@@ -3,8 +3,9 @@ const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
-const { currentDate , DOB} = require("../utils/moment");
+const { currentDate , DOB, Free_credit_Expiry, DateAfter30Days} = require("../utils/moment");
 const moment = require('moment');
+const Credit = require("../models/creditSchema");
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -46,15 +47,37 @@ module.exports = class ProfileService {
           age: bodyData.age,
           gender: bodyData.gender,
           language_preference: bodyData.language_preference,
-          free_credit: bodyData.free_credit,
-          premium_credit: bodyData.premium_credit,
+          free_credit: 200,
+          premium_credit: 10,
           profile_url: bodyData.profile_url,
           created_date: currentDate,
           updated_date: currentDate,
         });
-        const createDefaultRating = await Rating.create({
+        // creating a default Rating for new user
+        await Rating.create({
           user_id: profileDoc1._id,
         });
+        // create a default credit for new user
+        await Credit.create({
+          user_id: profileDoc1._id,
+          available_free_credits:200,
+          available_premium_credits:10,
+          free_credits_info:{
+            count:200,
+            allocation:"Admin-atLogin",
+            allocated_on:currentDate,
+            duration:moment(Free_credit_Expiry).diff(currentDate,"days"),
+            credits_expires_on: Free_credit_Expiry
+          },
+          premium_credits_info:{
+            count:10,
+            allocation:"Admin-atLogin",
+            allocated_on:currentDate,
+            duration:moment(DateAfter30Days).diff(currentDate,"days"),
+            credits_expires_on:DateAfter30Days
+          }
+        });
+        //mixpanel track for new Profile Created
         await track('New Profile Created ', {
           distinct_id: profileDoc1._id,
           $email: profileDoc.email.text
@@ -97,13 +120,18 @@ module.exports = class ProfileService {
           }
         },
       ]);
-
+      //mixpanel trak search others profile
       await track('User searched  ', {
         distinct_id: user_ID,
       });
 
       return profileData;
     } else {
+      //mixpanel ttrack failed to fetch user profile
+      await track('User searched failed ', {
+        distinct_id: user_ID,
+      });
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
   }
 
@@ -111,6 +139,10 @@ module.exports = class ProfileService {
   static async getMyProfile(user_ID) {
     const userExist = await Profile.findById({ _id: user_ID })
     if (!userExist) {
+      // mixpanel track get my profile failed
+      await track('Get My Profile Failed ', {
+        distinct_id: user_ID,
+      });
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
@@ -133,10 +165,15 @@ module.exports = class ProfileService {
             profile_url: 1,
             followers: 1,
             followings: 1,
-            rate_average: 1
+            rate_average: 1,
+            alert:1
           }
         },
       ])
+      // mixpanel track get my profile 
+      await track('Get My Profile ', {
+        distinct_id: user_ID,
+      });
       return MyProfile
     }
 
