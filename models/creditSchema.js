@@ -17,7 +17,7 @@ const creditSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Active"],
+        enum: ['Available', "Expired/Empty", "Active"],
         default: "Available"
       },
       duration: {
@@ -44,9 +44,9 @@ const creditSchema = mongoose.Schema({
         // type: mongoose.Schema.Types.ObjectId,
         type: String,
       },
-      activationDate: {
-        type: String
-      },
+      // activationDate: {
+      //   type: String
+      // },
       // expires_on: {
       //   type:String
       // },
@@ -65,7 +65,7 @@ const creditSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Active"],
+        enum: ['Available', "Expired/Empty", "Active"],
         default: "Available"
       },
       allocation: {

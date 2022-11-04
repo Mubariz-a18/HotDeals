@@ -108,7 +108,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
     //   })
   })
 });
-                                                   //"0 0 */30 1-12 *"
+
 const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
   const Credits = await Credit.find()
   Credits.forEach(async creditDoc => {

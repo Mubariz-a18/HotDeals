@@ -7,6 +7,7 @@ const Generic = require("../models/Ads/genericSchema");
 const moment = require('moment');
 const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func ,nearestExpiryDateFunction} = require("../utils/moment");
 const Credit = require("../models/creditSchema");
+const { creditDeductFuntion } = require("./CreditService");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -59,87 +60,68 @@ module.exports = class AdService {
         } = bodyData
         let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
         // create an Ad document in generics collection with body 
-        let adDoc = await Generic.create({
-          user_id: findUsr._id,
-          category,
-          sub_category,
-          field,
-          description,
-          SelectFields,
-          special_mention,
-          title,
-          price,
-          product_age: age,
-          isPrime,
-          image_url,
-          video_url,
-          ad_present_location,
-          ad_posted_location,
-          ad_posted_address,
-          ad_status,
-          is_negotiable,
-          is_ad_posted,
-          created_at: currentDate,
-          ad_expire_date: DateAfter30Days,
-          updated_at: currentDate,
-        });
-        const docs = await Credit.findOne({user_id:userId})
-        let free = docs.free_credits_info
-        const datesToBeChecked = []
-        free.forEach(freeCrd => {
-          datesToBeChecked.push(freeCrd.credits_expires_on)
-        })
-        const date = nearestExpiryDateFunction(datesToBeChecked)
-        const creditDeduct = await Credit.findOneAndUpdate({ user_id: userId, "free_credits_info.credits_expires_on": date }
-          , {
-            $inc: { available_free_credits: - 20 },
-            $set: {
-              $inc: {
-                "free_credits_info.$.count": -20
-              },
-              "free_credits_info.$.status": "Active",
-              "free_credits_info.$.activationDate": currentDate
-            },
+        const _id = ObjectId()
+        const balance = await creditDeductFuntion(isPrime, _id, userId, category)
+        console.log(balance)
+        if (balance.message == "Empty_Credits") {
+          throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' })
+        }
+        else if (balance.message == "Deducted_Successfully"){
+          let adDoc = await Generic.create({
+            _id: _id,
+            user_id: findUsr._id,
+            category,
+            sub_category,
+            field,
+            description,
+            SelectFields,
+            special_mention,
+            title,
+            price,
+            product_age: age,
+            isPrime,
+            image_url,
+            video_url,
+            ad_present_location,
+            ad_posted_location,
+            ad_posted_address,
+            ad_status,
+            is_negotiable,
+            is_ad_posted,
+            created_at: currentDate,
+            ad_expire_date: DateAfter30Days,
+            updated_at: currentDate,
+          });
+          // mixpanel track -- Ad create 
+          await track('Ad creation succeed', {
+            category: bodyData.category,
+            distinct_id: adDoc._id,
+            $latitude: bodyData.ad_posted_location.coordinates[1],
+            $longitude: bodyData.ad_posted_location.coordinates[0],
+          })
+          //save the ad_id in users profile in myads
+          await Profile.findByIdAndUpdate({ _id: userId }, {
             $push: {
-              credit_usage: {
-                type_of_credit: "Free",
-                ad_id: adDoc._id,
-                category:category,
-                count: 20
-              }
+              my_ads: ObjectId(adDoc._id)
             }
-          }
-        )
-        console.log(creditDeduct)
-        // mixpanel track -- Ad create 
-        await track('Ad creation succeed', {
-          category: bodyData.category,
-          distinct_id: adDoc._id,
-          $latitude: bodyData.ad_posted_location.coordinates[1],
-          $longitude: bodyData.ad_posted_location.coordinates[0],
-        })
-        //save the ad_id in users profile in myads
-        await Profile.findByIdAndUpdate({ _id: userId }, {
-          $push: {
-            my_ads: ObjectId(adDoc._id)
-          }
-        })
-        //Create new Ad in GlobalSearch Model 
-        const createGlobalSearch = await GlobalSearch.create({
-          ad_id: adDoc._id,
-          category: bodyData.category,
-          sub_category: bodyData.sub_category,
-          title: bodyData.title,
-          description: bodyData.description,
-        });
+          })
+          //Create new Ad in GlobalSearch Model 
+          const createGlobalSearch = await GlobalSearch.create({
+            ad_id: adDoc._id,
+            category: bodyData.category,
+            sub_category: bodyData.sub_category,
+            title: bodyData.title,
+            description: bodyData.description,
+          });
 
-        // Mixpanel track for global Search Keywords
-        await track('global search keywords', {
-          category: bodyData.category,
-          distinct_id: createGlobalSearch._id,
-          keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
-        })
-        return adDoc["_doc"];
+          // Mixpanel track for global Search Keywords
+          await track('global search keywords', {
+            category: bodyData.category,
+            distinct_id: createGlobalSearch._id,
+            keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
+          })
+          return adDoc["_doc"];
+        }
       }
     }
   };
