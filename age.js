@@ -28,5 +28,3 @@ datesToBeChecked.forEach(date => {
   }
 });
 
-
-
