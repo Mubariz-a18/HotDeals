@@ -6,6 +6,7 @@ const Credit = require('../models/creditSchema');
 // const Profile = require('../models/Profile/Profile');
 // const ObjectId = require('mongodb').ObjectId;
 const { currentDate, Ad_Historic_Duration, Free_credit_Expiry, DateAfter30Days } = require('../utils/moment');
+const Profile = require('../models/Profile/Profile');
 
 // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
@@ -69,9 +70,9 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
       {
         "category": category,
         "sub_category": sub_category,
-        "title": { "$regex": title, "$options": "i" },
-        "ad_posted_address": { "$regex": location, "$options": "i" },
-        $and: [
+        // "title": { "$regex": title, "$options": "i" },
+      //  "ad_posted_address": { "$regex": location, "$options": "i" },
+        $or: [
           {
             "product_age": {
               $lte: age
@@ -79,11 +80,12 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
           },
           {
             "price": {
-              $gte: price
+              $gte: price 
             }
           },
-        ],
-        "$or": [
+          {
+            "ad_posted_address": { "$regex": location, "$options": "i" }
+          },
           { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
           {
             $or: [
@@ -92,7 +94,17 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
               { "description": { "$regex": keywords[2], "$options": "i" } }
             ]
           }
-        ]
+        ],
+        // "$or": [
+          // { "SelectFields.Condition": { "$regex": condition, "$options": "i" } },
+          // {
+          //   $or: [
+          //     { "description": { "$regex": keywords[0], "$options": "i" } },
+          //     { "description": { "$regex": keywords[1], "$options": "i" } },
+          //     { "description": { "$regex": keywords[2], "$options": "i" } }
+          //   ]
+          // }
+        // ]
       }
     )
 
@@ -101,11 +113,11 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
       ad_Ids.push(e._id)
     })
     // console.log(alertNotificationDoc)
-    // await Profile.updateOne(
-    //   { _id: alert.user_ID, "alert.alert_id": ObjectId(alert["_id"]) },
-    //   {
-    //     $addToSet: { "alert.$.alerted_Ads": ad_Ids }
-    //   })
+    await Profile.updateOne(
+      { _id: alert.user_ID, "alert.alert_id": alert["_id"] },
+      {
+        $addToSet: { "alert.$.alerted_Ads": ad_Ids }
+      })
   })
 });
 
@@ -137,17 +149,54 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
   })
 })
 
+const Schedule_Task_Credit_Status_Update = cron.schedule("* * * * * *", async () => {
+  const credits = await Credit.find();
+  credits.forEach(async credit => {
+    credit.free_credits_info.forEach(async info => {
+      if (currentDate > info.credits_expires_on) {
+        const updateCredit = await Credit.findOneAndUpdate({
+          user_id: credit.user_id,
+          "free_credits_info.credits_expires_on": info.credits_expires_on,
+          "free_credits_info.status": "Available"
+        }, {
+          $set: {
+            "free_credits_info.$.status": "Expired/Empty"
+          }
+        }, { new: true })
+      }
+    })
+
+    credit.premium_credits_info.forEach(async info => {
+      if (currentDate > info.credits_expires_on) {
+        await Credit.findOneAndUpdate({
+          user_id: credit.user_id,
+          "premium_credits_info.credits_expires_on": info.credits_expires_on
+        }, {
+          $set: {
+            "premium_credits_info.$.status": "Expired/Empty"
+          }
+        }, { new: true })
+      }
+    })
+
+  })
+  
+})
+
 //Starting the schedular
 ScheduleTask_Ad_Status_Expire.start()
 ScheduleTask_Display_Historic_Ads.start()
 ScheduleTask_Alert_activation.start()
 Schedule_Task_Alert_6am_to_10pm.start()
 Schedule_Task_Monthly_credits.start()
-
+Schedule_Task_Credit_Status_Update.start()
 module.exports = {
   ScheduleTask_Ad_Status_Expire,
   ScheduleTask_Display_Historic_Ads,
   ScheduleTask_Alert_activation,
-  Schedule_Task_Alert_6am_to_10pm,
-  // Schedule_Task_Monthly_credits
+  // Schedule_Task_Alert_6am_to_10pm,
+  // Schedule_Task_Monthly_credits,
+  Schedule_Task_Credit_Status_Update
 };
+
+

@@ -8,7 +8,7 @@ module.exports = class ComplainService {
 
   // Create Complaint
   static async createComplaint(bodyData, userId) {
-    const { reason, description, attachment, status } = bodyData.complaint
+    const { reason, description, attachment, status , ad_id } = bodyData.complaint
     const user = await User.findOne({ _id: userId });
     // if user is verified new complain doc is created 
     if (!user) {
@@ -27,6 +27,7 @@ module.exports = class ComplainService {
         reason,
         complaint_date: currentDate,
         description,
+        ad_id,
         attachment,
         status
       }

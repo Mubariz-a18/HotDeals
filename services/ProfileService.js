@@ -6,6 +6,7 @@ const { track } = require("./mixpanel-service");
 const { currentDate , DOB, Free_credit_Expiry, DateAfter30Days} = require("../utils/moment");
 const moment = require('moment');
 const Credit = require("../models/creditSchema");
+const { createCreditForNewUser } = require("./CreditService");
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -57,26 +58,8 @@ module.exports = class ProfileService {
         await Rating.create({
           user_id: profileDoc1._id,
         });
-        // create a default credit for new user
-        await Credit.create({
-          user_id: profileDoc1._id,
-          available_free_credits:200,
-          available_premium_credits:10,
-          free_credits_info:{
-            count:200,
-            allocation:"Admin-atLogin",
-            allocated_on:currentDate,
-            duration:moment(Free_credit_Expiry).diff(currentDate,"days"),
-            credits_expires_on: Free_credit_Expiry
-          },
-          premium_credits_info:{
-            count:10,
-            allocation:"Admin-atLogin",
-            allocated_on:currentDate,
-            duration:moment(DateAfter30Days).diff(currentDate,"days"),
-            credits_expires_on:DateAfter30Days
-          }
-        });
+        //create a new credit doc for new user
+        await createCreditForNewUser(profileDoc1._id)
         //mixpanel track for new Profile Created
         await track('New Profile Created ', {
           distinct_id: profileDoc1._id,
