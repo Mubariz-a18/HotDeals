@@ -146,39 +146,73 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
         }
       }
     }, { new: true })
+    await Profile.findOneAndUpdate({_id:creditDoc.user_id},{
+      $inc: {
+        free_credit:100,
+        premium_credit: 10
+      }
+    })
   })
 })
 
-const Schedule_Task_Credit_Status_Update = cron.schedule("* * * * * *", async () => {
+const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () => {
   const credits = await Credit.find();
-  credits.forEach(async credit => {
-    credit.free_credits_info.forEach(async info => {
-      if (currentDate > info.credits_expires_on) {
+
+  credits.map(async credit => {
+    const {free_credits_info , premium_credits_info , user_id} = credit;
+    
+    //free
+    free_credits_info.map(async info => {
+      const {credits_expires_on ,status , count } = info
+
+      if (currentDate > credits_expires_on && status == "Available") {
+
         const updateCredit = await Credit.findOneAndUpdate({
-          user_id: credit.user_id,
-          "free_credits_info.credits_expires_on": info.credits_expires_on,
-          "free_credits_info.status": "Available"
+          user_id: user_id,
+          "free_credits_info.credits_expires_on": credits_expires_on,
         }, {
           $set: {
             "free_credits_info.$.status": "Expired/Empty"
           }
         }, { new: true })
-      }
+        .then(async res =>{
+          if(res !== null){
+            await Credit.findOneAndUpdate({user_id:user_id},{
+              $inc:{available_free_credits: - count}
+            })
+          }else{}
+        }).catch(e=>{
+          e
+        })
+      }else{}
     })
+    // premium
+    premium_credits_info.map(async info => {
+      const {credits_expires_on ,status , count } = info
 
-    credit.premium_credits_info.forEach(async info => {
-      if (currentDate > info.credits_expires_on) {
-        await Credit.findOneAndUpdate({
-          user_id: credit.user_id,
-          "premium_credits_info.credits_expires_on": info.credits_expires_on
+      if (currentDate > credits_expires_on && status == "Available" ) {
+
+        const updateCredit = await Credit.findOneAndUpdate({
+          user_id: user_id,
+          "premium_credits_info.credits_expires_on": credits_expires_on
         }, {
           $set: {
             "premium_credits_info.$.status": "Expired/Empty"
           }
         }, { new: true })
+        .then(async res =>{
+          if(res !== null){
+            await Credit.findOneAndUpdate({user_id:user_id},{
+              $inc:{available_premium_credits: - count}
+            })
+          }else{}
+        }).catch(e=>{
+          e
+        })
+      }else{
+
       }
     })
-
   })
   
 })

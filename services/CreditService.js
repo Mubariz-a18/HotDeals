@@ -2,6 +2,7 @@ const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
 const moment = require("moment")
 const { DateAfter30Days, currentDate, Free_credit_Expiry, nearestExpiryDateFunction } = require("../utils/moment");
+const Profile = require("../models/Profile/Profile");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class CreditService {
@@ -27,6 +28,12 @@ module.exports = class CreditService {
                 credits_expires_on:DateAfter30Days
               }
             });
+            await Profile.findOneAndUpdate({_id:user_id},{
+              $set:{
+                free_credit : 200,
+                premium_credit: 10
+              }
+            })
   }
   // Create Credit
   static async createCredit(bodyData, userId) {
@@ -49,10 +56,14 @@ module.exports = class CreditService {
           {
             new: true
           }
-        );
+        )
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            free_credit: bodyData.count
+          }
+        })
         return newCredit;
       } else if (bodyData.creditType == "Premium") {
-        console.log(bodyData.creditType, bodyData.count, bodyData.allocation)
         const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
           $inc: { available_premium_credits: bodyData.count },
           $push: {
@@ -66,94 +77,41 @@ module.exports = class CreditService {
             }
           }
         }, { new: true });
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            premium_credit: bodyData.count
+          }
+        })
         return newCredit;
       }
     }
     else {
-      return res
-        .status(400)
-        .send({ error: "something went wrong in credit service" });
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
   }
 
-  static async creditDeductFuntion(isPrime, ad_id, userId, category) {
+  static async creditDeductFuntion(creditParams) {
+
+    const {isPrime, ad_id, userId, category} = creditParams ;
+
     if (isPrime == false) {
       const docs = await Credit.findOne({ user_id: userId })
       if (docs.available_free_credits == 0) {
         return { message: "Empty_Credits" }
       }
       else {
-        let All_free = docs.free_credits_info
-
-        const datesToBeChecked = []
+        let All_free = docs.free_credits_info;
+        const datesToBeChecked = [];
 
         All_free.forEach(freeCrd => {
-
           if (freeCrd.count <= 0)
             freeCrd.status = "Expired/Empty"
 
-
-          if (freeCrd.status !== "Expired/Empty")
-            datesToBeChecked.push(freeCrd.credits_expires_on)
-
+          if (freeCrd.status !== "Expired/Empty" && freeCrd.count !== 0)
+            datesToBeChecked.push(freeCrd.credits_expires_on);
         })
-        docs.save()
-        const date = nearestExpiryDateFunction(datesToBeChecked)
-
-        // const creditDeduct = await Credit.aggregate([
-        //   {
-        //     '$match': {
-        //       'user_id': ObjectId(userId),
-        //       'free_credits_info.credits_expires_on': date
-        //     }
-        //   }, {
-        //     '$unwind': {
-        //       'path': '$free_credits_info'
-        //     }
-        //   }, {
-        //     '$set': {
-        //       'available_free_credits': {
-        //         '$let': {
-        //           'vars': {
-        //             'sample1': {
-        //               '$add': [
-        //                 '$available_free_credits', -20
-        //               ]
-        //             }
-        //           },
-        //           'in': '$$sample1'
-        //         }
-        //       },
-        //       'free_credits_info.count': {
-        //         '$let': {
-        //           'vars': {
-        //             'sample': {
-        //               '$add': [
-        //                 '$free_credits_info.count', -20
-        //               ]
-        //             }
-        //           },
-        //           'in': '$$sample'
-        //         }
-        //       }
-        //     }
-        //   }, {
-        //     '$set': {
-        //       'free_credits_info.status': {
-        //         '$cond': {
-        //           'if': {
-        //             '$eq': [
-        //               '$free_credits_info.count', 0
-        //             ]
-        //           },
-        //           'then': 'Expired/Empty',
-        //           'else': '$free_credits_info.status'
-        //         }
-        //       }
-        //     }
-        //   },
-        //   { $merge : { into : "credits" } }
-        // ])
+        docs.save();
+        const date = nearestExpiryDateFunction(datesToBeChecked);
 
         await Credit.findOneAndUpdate({ user_id: userId, 'free_credits_info.credits_expires_on': date }, {
           $inc: { "free_credits_info.$.count": -20 },
@@ -167,14 +125,19 @@ module.exports = class CreditService {
         }).then(async res => {
           await Credit.findOneAndUpdate({ user_id: userId }, {
             $inc: { available_free_credits: -20 }
-          })
-        })
+          });
+        });
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            free_credit: -20
+          }
+        });
         return { message: "Deducted_Successfully" }
-      }
+      };
     }
 
     else if (isPrime == true) {
-      const docs = await Credit.findOne({ user_id: userId })
+      const docs = await Credit.findOne({ user_id: userId });
       if (docs.available_premium_credits <= 0) {
         return { message: "Empty_Credits" }
       }
@@ -183,70 +146,14 @@ module.exports = class CreditService {
 
         const datesToBeChecked = [];
         premium.forEach(premiumCrd => {
-
           if (premiumCrd.count <= 0)
             premiumCrd.status = "Expired/Empty"
 
-          if (premiumCrd.status !== "Expired/Empty")
+          if (premiumCrd.status !== "Expired/Empty" && premiumCrd.count !== 0)
             datesToBeChecked.push(premiumCrd.credits_expires_on)
-        })
+        });
         await docs.save();
-        const date = nearestExpiryDateFunction(datesToBeChecked)
-
-        // const updateCredit = await Credit.aggregate([
-        //   {
-        //     '$match': {
-        //       'user_id': ObjectId(userId),
-        //       'premium_credits_info.credits_expires_on': date
-        //     }
-        //   }, {
-        //     '$unwind': {
-        //       'path': '$premium_credits_info'
-        //     }
-        //   }, {
-        //     '$set': {
-        //       'available_premium_credits': {
-        //         '$let': {
-        //           'vars': {
-        //             'sample1': {
-        //               '$add': [
-        //                 '$available_premium_credits', -5
-        //               ]
-        //             }
-        //           },
-        //           'in': '$$sample1'
-        //         }
-        //       },
-        //       'premium_credits_info.count': {
-        //         '$let': {
-        //           'vars': {
-        //             'sample': {
-        //               '$add': [
-        //                 '$premium_credits_info.count', -5
-        //               ]
-        //             }
-        //           },
-        //           'in': '$$sample'
-        //         }
-        //       }
-        //     }
-        //   }, {
-        //     '$set': {
-        //       'premium_credits_info.status': {
-        //         '$cond': {
-        //           'if': {
-        //             '$eq': [
-        //               '$premium_credits_info.count', 0
-        //             ]
-        //           },
-        //           'then': 'Expired/Empty',
-        //           'else': '$premium_credits_info.status'
-        //         }
-        //       }
-        //     }
-        //   },
-        //   { $merge : { into : "credits" } }
-        // ])
+        const date = nearestExpiryDateFunction(datesToBeChecked);
 
         await Credit.findOneAndUpdate({ user_id: userId, 'premium_credits_info.credits_expires_on': date }, {
           $inc: { "premium_credits_info.$.count": -5 },
@@ -260,11 +167,30 @@ module.exports = class CreditService {
         }).then(async res => {
           await Credit.findOneAndUpdate({ user_id: userId }, {
             $inc: { available_premium_credits: -5 }
-          })
+          });
         })
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            premium_credit: -5
+          }
+        });
         return { message: "Deducted_Successfully" }
-      }
-    }
+      };
+    };
+  };
 
+  static async getMyCreditsInfo(user_id){
+    const userExist = await Profile.findOne({_id:user_id})
+    if(!userExist){
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    else{
+      const CreditDocs = await Credit.findOne({user_id:user_id},{
+        _id:0,
+        available_free_credits:1,
+        available_premium_credits:1
+      })
+      return CreditDocs
+    }
   }
 };

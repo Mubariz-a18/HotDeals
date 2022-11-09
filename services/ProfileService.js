@@ -60,6 +60,7 @@ module.exports = class ProfileService {
         });
         //create a new credit doc for new user
         await createCreditForNewUser(profileDoc1._id)
+
         //mixpanel track for new Profile Created
         await track('New Profile Created ', {
           distinct_id: profileDoc1._id,
