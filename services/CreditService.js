@@ -136,7 +136,7 @@ module.exports = class CreditService {
         });
         return { message: "Deducted_Successfully" }
       };
-    }
+    } 
 
     else if (isPrime == true) {
       const docs = await Credit.findOne({ user_id: userId });
