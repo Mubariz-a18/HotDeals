@@ -5,13 +5,13 @@ module.exports = class CreditController {
   // Create Credit 
   static async apiCreateCredit(req, res, next) {
     try {
+      // create credit doc returned from service
       const creditDoc = await CreditService.createCredit(req.body,  req.user_ID);
-      if (creditDoc) {
+      // response is sent
         res.status(200).send({
           message: "Success",
           data: creditDoc,
-        });
-      }
+        })
     } catch  (e) {
       console.log(e)
       if (!e.status) {
@@ -28,16 +28,18 @@ module.exports = class CreditController {
         });
       };
     };
-  }
+  };
+  // Api getmyCreditsInfo 
   static async getMyCreditsInfo(req, res, next) {
     try {
-      const creditDocs = await CreditService.getMyCreditsInfo(req.user_ID);
+      // return the doc from service 
+      const creditDoc = await CreditService.getMyCreditsInfo(req.user_ID);
+      // response is sent
         res.status(200).send({
           message: "Success",
-          data: creditDocs,
+          data: creditDoc,
         });
     } catch  (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {

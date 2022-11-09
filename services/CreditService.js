@@ -33,13 +33,16 @@ module.exports = class CreditService {
                 premium_credit: 10
               }
             })
-  }
-  // Create Credit
+  };
+  // Create Credit for old users
   static async createCredit(bodyData, userId) {
-
+    // check if user exist
     const user = await User.findOne({ _id: userId });
+    // if exist
     if (user) {
+      // check if the credit type is free
       if (bodyData.creditType == "Free") {
+        // if credit type from body is free push credit into free_credit_info
         const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
           $inc: { available_free_credits: bodyData.count },
           $push: {
@@ -56,12 +59,14 @@ module.exports = class CreditService {
             new: true
           }
         )
+        //update user profile total credits
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             free_credit: bodyData.count
           }
         })
         return newCredit;
+        //else if credit type is Premium push the credit into premium_credit_info
       } else if (bodyData.creditType == "Premium") {
         const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
           $inc: { available_premium_credits: bodyData.count },
@@ -70,12 +75,13 @@ module.exports = class CreditService {
               count: bodyData.count,
               allocation: bodyData.allocation,
               allocated_on: currentDate,
-              duration:durationInDays(DateAfter30Days),
+              duration:durationInDays(DateAfter30Days),     // this function return duration in days
               credits_expires_on: DateAfter30Days,
               purchaseDate: currentDate
             }
           }
         }, { new: true });
+        // update the users profile total Premium Credit
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             premium_credit: bodyData.count
@@ -84,38 +90,39 @@ module.exports = class CreditService {
         return newCredit;
       }
     }
+    // if user not exists throw error
     else {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-  }
-
+  };
+  //creditDeduaction function calls when user uploads an Ad
   static async creditDeductFuntion(creditParams) {
-
     const {isPrime, _id, userId, category} = creditParams ;
-    console.log(isPrime, _id, userId, category)
-
+    // if isPrime is false ad type is free
     if (isPrime == false) {
+      // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId })
-      if (docs.available_free_credits == 0) {
+      if (docs.available_free_credits == 0) {   //if users available_free_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
-      else {
+      //if user available_free_credits < 0
+      else {    // find all the credits inside free_credits_info
         let All_free = docs.free_credits_info;
-        const datesToBeChecked = [];
-
+        const datesToBeChecked = [];      // array of dates to be checked
+        //loop through all the credits users have
         All_free.forEach(freeCrd => {
-          if (freeCrd.count <= 0)
+          if (freeCrd.count <= 0)     // if any credit count is == 0 update the credit status to "Expired/Empty"
             freeCrd.status = "Expired/Empty"
-
+                                      // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
           if (freeCrd.status !== "Expired/Empty" && freeCrd.count !== 0)
-            datesToBeChecked.push(freeCrd.credits_expires_on);
+            datesToBeChecked.push(freeCrd.credits_expires_on);    // if the check is true push the dates into datestobechecked array
         })
-        docs.save();
-        const date = nearestExpiryDateFunction(datesToBeChecked);
-
+        docs.save();      // SAVE the credit doc
+        const date = nearestExpiryDateFunction(datesToBeChecked);     // this function returns nearest expiry date
+        // update the credit doc (deduct the count from the  free_credits_info.count)
         await Credit.findOneAndUpdate({ user_id: userId, 'free_credits_info.credits_expires_on': date }, {
           $inc: { "free_credits_info.$.count": -20 },
-        }).then(async res => {
+        }).then(async res => {            //push the credit usage in the credit doc and update the available_free_credits
           await Credit.findOneAndUpdate({ user_id: userId }, {
             $inc: { available_free_credits: -20 },
             $push: {
@@ -129,38 +136,43 @@ module.exports = class CreditService {
             }
           });
         });
+        // users profile is updated (free_credit)
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             free_credit: -20
           }
         });
+        // success message is sent to AdService
         return { message: "Deducted_Successfully" }
       };
     } 
-
+    // else if isPrime is false the adType is Premium
     else if (isPrime == true) {
+      // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId });
-      if (docs.available_premium_credits <= 0) {
+      if (docs.available_premium_credits <= 0) {      //if users available_premium_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
+       //if user available_premium_credits < 0
       else {
+        // find all the credits inside premium_credits_info
         let premium = docs.premium_credits_info;
-
-        const datesToBeChecked = [];
+        const datesToBeChecked = [];    // array of dates to be checked
+         //loop through all the credits users have
         premium.forEach(premiumCrd => {
-          if (premiumCrd.count <= 0)
+          if (premiumCrd.count <= 0)       // if any credit count is == 0 update the credit status to "Expired/Empty"
             premiumCrd.status = "Expired/Empty"
-
+                                      // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
           if (premiumCrd.status !== "Expired/Empty" && premiumCrd.count !== 0)
-            datesToBeChecked.push(premiumCrd.credits_expires_on)
+            datesToBeChecked.push(premiumCrd.credits_expires_on)       // if the check is true push the dates into datestobechecked array
         });
         await docs.save();
-        const date = nearestExpiryDateFunction(datesToBeChecked);
-
+        const date = nearestExpiryDateFunction(datesToBeChecked);  // this function returns nearest expiry date
+        // update the credit doc (deduct the count from the  premium_credits_info.count)
         await Credit.findOneAndUpdate({ user_id: userId, 'premium_credits_info.credits_expires_on': date }, {
           $inc: { "premium_credits_info.$.count": -5 },
         })
-          .then(async res => {
+          .then(async res => {        //push the credit usage in the credit doc and update the available_premium_credits
             await Credit.findOneAndUpdate({ user_id: userId }, {
               $inc: { available_premium_credits: -5 },
               $push: {
@@ -174,21 +186,26 @@ module.exports = class CreditService {
               }
             });
           })
+        // users profile is updated (premium_credit)
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             premium_credit: -5
           }
         });
+        // success message is sent to AdService
         return { message: "Deducted_Successfully" }
       };
     };
   };
-
+  //Get My Credits function
   static async getMyCreditsInfo(user_id){
+    // check if user exist 
     const userExist = await Profile.findOne({_id:user_id})
+    // if not exist throw error 
     if(!userExist){
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
+    // else fnd the user`s credit doc and project the required feilds
     else{
       const CreditDocs = await Credit.findOne({user_id:user_id},{
         _id:0,
@@ -197,5 +214,5 @@ module.exports = class CreditService {
       })
       return CreditDocs
     }
-  }
+  };
 };
