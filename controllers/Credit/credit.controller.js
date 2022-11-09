@@ -13,7 +13,6 @@ module.exports = class CreditController {
           data: creditDoc,
         })
     } catch  (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {

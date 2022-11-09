@@ -13,7 +13,6 @@ module.exports = class AdController {
           Ad: adDocument,
       })
     } catch (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -215,7 +214,7 @@ module.exports = class AdController {
         })
       
     } catch (e) {
-      console.log(e)
+
       if (!e.status) {
         res.status(500).json({
           error: {

@@ -31,35 +31,7 @@ module.exports = class AlertController {
     };
   };
 
-  // //Get Alert --  Alert docs is Fetched and retured from adservice  in getAlert
-  // static async apiGetAlert(req, res, next) {
-  //   try {
-  //     const userId = req.user_ID
-  //     const body = req.body
-  //     await AlertService.getAlert(body,userId); 
-  //     // Response code is sent with getAlert
-  //     res.status(200).json({ 
-  //     })
-  //   } catch (e) {
-  //     console.log(e.message)
-  //     if (!e.status) {
-  //       res.status(500).json({
-  //         error: {
-  //           message: ` something went wrong try again : ${e.message} `
-  //         }
-  //       });
-  //     } else {
-  //       res.status(e.status).json({
-  //         error: {
-  //           message: e.message
-  //         }
-  //       });
-  //     };
-  //   };
-  // };
-
   //Update Alert -- Alert doc is Updated and retured from adservice  in updateAlert
-  
   static async apiUpdateAlert(req, res, next) {
     try {
       const body = req.body;
