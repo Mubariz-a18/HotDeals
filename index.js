@@ -85,7 +85,7 @@ server.listen(PORT, () => {
   // ScheduleTask_Ad_Status_Expire
   // ScheduleTask_Display_Historic_Ads
   // ScheduleTask_Alert_activation
-  Schedule_Task_Alert_6am_to_10pm
+  // Schedule_Task_Alert_6am_to_10pm
   // Schedule_Task_Monthly_credits
   Schedule_Task_Credit_Status_Update
 });

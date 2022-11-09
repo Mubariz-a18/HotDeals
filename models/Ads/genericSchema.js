@@ -60,6 +60,10 @@ const genericSchema = mongoose.Schema({
     {
         type: String,
     },
+    ad_present_address:
+    {
+        type: String,
+    },
     ad_status: {
         type: String,
         enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired" , "Reposted"],

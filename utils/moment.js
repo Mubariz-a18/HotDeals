@@ -23,22 +23,23 @@ const age_func = (date_of_purchase) => {
 }
 
 const nearestExpiryDateFunction = (arrayOfExpiryDates) => {
-  const dateToCheckFor = currentDate;
-  let nearestExpiryDate;
-  arrayOfExpiryDates.forEach(date => {
-    let diff = moment(date).diff(moment(dateToCheckFor), 'days');
-    if (diff > 0) {
-      if (nearestExpiryDate) {
-        if (moment(date).diff(moment(nearestExpiryDate), 'days') < 0) {
-          nearestExpiryDate = date;
-        }
-      } else {
-        nearestExpiryDate = date;
-      }
+  // const dateToCheckFor = currentDate;
+  // let nearestExpiryDate;
+  // arrayOfExpiryDates.forEach(date => {
+  //   let diff = moment(date).diff(moment(dateToCheckFor), 'days');
+  //   if (diff > 0) {
+  //     if (nearestExpiryDate) {
+  //       if (moment(date).diff(moment(nearestExpiryDate), 'days') < 0) {
+  //         nearestExpiryDate = date;
+  //       }
+  //     } else {
+  //       nearestExpiryDate = date;
+  //     }
 
-    }
-  })
-  return (nearestExpiryDate)
+  //   }
+  // })
+  const nearestExpiryDate = arrayOfExpiryDates.sort()[0];
+  return (nearestExpiryDate);
 }
 
 

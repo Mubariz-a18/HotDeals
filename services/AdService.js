@@ -54,15 +54,18 @@ module.exports = class AdService {
           ad_present_location,
           ad_posted_location,
           ad_posted_address,
+          ad_present_address,
           ad_status,
           is_negotiable,
           is_ad_posted,
         } = bodyData
         let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
+        
         // create an Ad document in generics collection with body 
         const _id = ObjectId()
-        const balance = await creditDeductFuntion(isPrime, _id, userId, category)
-        console.log(balance)
+        const creditParams = {isPrime, _id, userId, category}
+        const balance = await creditDeductFuntion(creditParams)
+
         if (balance.message == "Empty_Credits") {
           throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' })
         }
@@ -85,6 +88,7 @@ module.exports = class AdService {
             ad_present_location,
             ad_posted_location,
             ad_posted_address,
+            ad_present_address,
             ad_status,
             is_negotiable,
             is_ad_posted,
@@ -104,7 +108,7 @@ module.exports = class AdService {
             $push: {
               my_ads: ObjectId(adDoc._id)
             }
-          })
+          });
           //Create new Ad in GlobalSearch Model 
           const createGlobalSearch = await GlobalSearch.create({
             ad_id: adDoc._id,
@@ -119,7 +123,7 @@ module.exports = class AdService {
             category: bodyData.category,
             distinct_id: createGlobalSearch._id,
             keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
-          })
+          });
           return adDoc["_doc"];
         }
       }
@@ -689,10 +693,10 @@ module.exports = class AdService {
             'isPrime': '$firstResult.isPrime'
           }
         },
-        {
-          $match:
-            { "category": query.category },
-        },
+        // {
+        //   $match:
+        //     { "category": query.category },
+        // },
         {
           $sort:{
             "favourite_ads.ad_Favourite_Date":-1
