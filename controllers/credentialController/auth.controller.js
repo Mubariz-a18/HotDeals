@@ -38,8 +38,6 @@ module.exports = class AuthController {
     try {
       //Verfying again otp collection to check the otp is valid
       const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
-      console.log("verification_checkstatus: ", verficationStatus);
-
       if (verficationStatus === "approved") {
         //Get user from Database
         const oldUser = await User.findOne({
