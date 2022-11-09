@@ -42,6 +42,15 @@ const nearestExpiryDateFunction = (arrayOfExpiryDates) => {
   return (nearestExpiryDate);
 }
 
+const durationInDays = (expiryDate)=>{
+  const duration  = moment(expiryDate).diff(currentDate,"days")
+  return duration
+}
+
+const my_age = ( date_of_birth)=>{
+  var age = moment(DOB).diff(date_of_birth , "years");
+  return age
+}
 
 module.exports = {
   currentDate, DateAfter30Days,
@@ -50,6 +59,8 @@ module.exports = {
   DateAfter15Days,
   age_func,
   nearestExpiryDateFunction,
+  durationInDays,
+  my_age,
   Free_credit_Expiry
 };
 
