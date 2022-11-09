@@ -1,14 +1,12 @@
 const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
-const moment = require("moment")
-const { DateAfter30Days, currentDate, Free_credit_Expiry, nearestExpiryDateFunction } = require("../utils/moment");
+const { DateAfter30Days, currentDate, Free_credit_Expiry, nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
-const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class CreditService {
-
+  // create Default Credit for new user 
   static async createCreditForNewUser(user_id){
-            // create a default credit for new user
+            // creating a document
             await Credit.create({
               user_id: user_id,
               available_free_credits:200,
@@ -17,17 +15,18 @@ module.exports = class CreditService {
                 count:200,
                 allocation:"Admin-atLogin",
                 allocated_on:currentDate,
-                duration:moment(Free_credit_Expiry).diff(currentDate,"days"),
+                duration:durationInDays(Free_credit_Expiry),
                 credits_expires_on: Free_credit_Expiry
               },
               premium_credits_info:{
                 count:10,
                 allocation:"Admin-atLogin",
                 allocated_on:currentDate,
-                duration:moment(DateAfter30Days).diff(currentDate,"days"),
+                duration:durationInDays(DateAfter30Days),
                 credits_expires_on:DateAfter30Days
               }
             });
+            // updating the user profile with default values
             await Profile.findOneAndUpdate({_id:user_id},{
               $set:{
                 free_credit : 200,
@@ -48,7 +47,7 @@ module.exports = class CreditService {
               count: bodyData.count,
               allocation: bodyData.allocation,
               allocated_on: currentDate,
-              duration: moment(Free_credit_Expiry).diff(currentDate, "days"),
+              duration: durationInDays(Free_credit_Expiry),
               credits_expires_on: Free_credit_Expiry
             }
           }
@@ -71,7 +70,7 @@ module.exports = class CreditService {
               count: bodyData.count,
               allocation: bodyData.allocation,
               allocated_on: currentDate,
-              duration: moment(DateAfter30Days).diff(currentDate, "days"),
+              duration:durationInDays(DateAfter30Days),
               credits_expires_on: DateAfter30Days,
               purchaseDate: currentDate
             }
@@ -92,7 +91,8 @@ module.exports = class CreditService {
 
   static async creditDeductFuntion(creditParams) {
 
-    const {isPrime, ad_id, userId, category} = creditParams ;
+    const {isPrime, _id, userId, category} = creditParams ;
+    console.log(isPrime, _id, userId, category)
 
     if (isPrime == false) {
       const docs = await Credit.findOne({ user_id: userId })
@@ -115,16 +115,18 @@ module.exports = class CreditService {
 
         await Credit.findOneAndUpdate({ user_id: userId, 'free_credits_info.credits_expires_on': date }, {
           $inc: { "free_credits_info.$.count": -20 },
-          $push: {
-            type_of_credit: "Free",
-            ad_id: ad_id,
-            count: 20,
-            category: category,
-            credited_on: currentDate
-          }
         }).then(async res => {
           await Credit.findOneAndUpdate({ user_id: userId }, {
-            $inc: { available_free_credits: -20 }
+            $inc: { available_free_credits: -20 },
+            $push: {
+              credit_usage: {
+                type_of_credit: "Free",
+                ad_id: _id,
+                count: 20,
+                category: category,
+                credited_on: currentDate
+              }
+            }
           });
         });
         await Profile.findOneAndUpdate({ _id: userId }, {
@@ -134,7 +136,7 @@ module.exports = class CreditService {
         });
         return { message: "Deducted_Successfully" }
       };
-    }
+    } 
 
     else if (isPrime == true) {
       const docs = await Credit.findOne({ user_id: userId });
@@ -157,18 +159,21 @@ module.exports = class CreditService {
 
         await Credit.findOneAndUpdate({ user_id: userId, 'premium_credits_info.credits_expires_on': date }, {
           $inc: { "premium_credits_info.$.count": -5 },
-          $push: {
-            type_of_credit: "Premium",
-            ad_id: ad_id,
-            count: 5,
-            category: category,
-            credited_on: currentDate
-          }
-        }).then(async res => {
-          await Credit.findOneAndUpdate({ user_id: userId }, {
-            $inc: { available_premium_credits: -5 }
-          });
         })
+          .then(async res => {
+            await Credit.findOneAndUpdate({ user_id: userId }, {
+              $inc: { available_premium_credits: -5 },
+              $push: {
+                credit_usage: {
+                  type_of_credit: "Premium",
+                  ad_id: _id,
+                  count: 5,
+                  category: category,
+                  credited_on: currentDate
+                }
+              }
+            });
+          })
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             premium_credit: -5

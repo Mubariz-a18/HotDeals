@@ -3,7 +3,7 @@ const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
-const { currentDate , DOB, Free_credit_Expiry, DateAfter30Days} = require("../utils/moment");
+const { currentDate , DOB, Free_credit_Expiry, DateAfter30Days, my_age} = require("../utils/moment");
 const moment = require('moment');
 const Credit = require("../models/creditSchema");
 const { createCreditForNewUser } = require("./CreditService");
@@ -174,10 +174,6 @@ module.exports = class ProfileService {
       throw ({ status: 404, message : 'USER_NOT_EXISTS'})
     }
     else{
-      var date1 = moment(DOB);
-      var date2 = moment(bodyData.date_of_birth);
-      var age = date1.diff(date2 , "years");
-
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
@@ -200,7 +196,7 @@ module.exports = class ProfileService {
                   },
                 // country_code: bodyData.country_code,
                 date_of_birth: bodyData.date_of_birth,
-                age: age,
+                age: my_age(moment(bodyData.date_of_birth)),
                 gender: bodyData.gender,
                 language_preference: bodyData.language_preference,
                 profile_url: bodyData.profile_url,
