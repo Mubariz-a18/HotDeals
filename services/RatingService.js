@@ -33,7 +33,8 @@ module.exports = class RatingService {
           })
           throw ({ status: 404, message: 'USER_TO_RATE_NOT_EXISTS' });
           //else find if the rating exist
-        }else{
+        }
+        else{
         // If RatingInfo doesnot exist for a user create new one
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
         if (!alreadyexist) {
@@ -54,6 +55,7 @@ module.exports = class RatingService {
             rate_average: Rating_doc[0].average_rating,
             rate_count: Rating_doc[0].RatingInfo.length
           });
+          console.log(ratedUser)
           //mixpanel create rating track 
           await track('  create Rating successfully !! ', { 
             distinct_id: userId,
@@ -61,8 +63,9 @@ module.exports = class RatingService {
           })
           return ratDoc;
         } else {
-          // else if the ratingInfo Exist push other rating inside thr array
-          const Rating_Already_exist_By_User = await Rating.findOne({ RatingInfo: { $elemMatch: { "rating_given_by": userId } } })
+          // else if the ratingInfo Exist push other rating inside the array
+          const Rating_Already_exist_By_User = await Rating.findOne({ user_id :bodyData.user_id ,"RatingInfo.rating_given_by": userId})
+
           if (!Rating_Already_exist_By_User) {
             const findRatedUserAndUpdate = await Rating.findOneAndUpdate({
               user_id: bodyData.user_id
@@ -70,7 +73,7 @@ module.exports = class RatingService {
               {
                 $push: {
                   RatingInfo: {
-                    average_rating: bodyData.RatingInfo.rating,
+                    // average_rating: bodyData.RatingInfo.rating,
                     rating: bodyData.RatingInfo.rating,
                     rating_given_by: userId,
                     rating_given_date: currentDate,
@@ -93,11 +96,11 @@ module.exports = class RatingService {
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
               rate_average: Rating_doc[0].average_rating,
               rate_count: Rating_doc[0].RatingInfo.length
-            })
+            },  { new: true })
             await findRatedUserAndUpdate.save();
             await track('  create Rating successfully !! ', { 
               distinct_id: userId,
-              message:` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${ratedUser.name}`
+              message:` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${update_User_avg_rating.name}`
             })
             return Rating_doc[0]
           } else {
