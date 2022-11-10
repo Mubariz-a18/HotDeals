@@ -101,7 +101,8 @@ module.exports = class ProfileService {
             user_type:1,
             followers_count:1,
             followings_count:1,
-            rate_average:1
+            rate_average:1,
+            rate_count:1
           }
         },
       ]);
