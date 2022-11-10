@@ -21,6 +21,7 @@ module.exports = class RatingService {
       }
       // else find the user_to_rate  
       else {
+        
         const user_to_rate_exist = await User.findOne({
           _id: bodyData.user_id
         });
@@ -35,6 +36,9 @@ module.exports = class RatingService {
           //else find if the rating exist
         }
         else{
+          if(userId == bodyData.user_id){
+            throw ({ status: 401, message: 'ACCESS_DENIED' });
+          }
         // If RatingInfo doesnot exist for a user create new one
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
         if (!alreadyexist) {
@@ -139,6 +143,9 @@ module.exports = class RatingService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }else{
       //if exist find Rating doc for the user in bodyData 
+      if(userId == bodyData.user_id){
+        throw ({ status: 401, message: 'ACCESS_DENIED' });
+      }
       const RatingDoc = await Rating.find({user_id:bodyData.user_id},{_id:0,"RatingInfo": {$elemMatch: {"rating_given_by": userId}}})
       let ratingInfo = RatingDoc[0].RatingInfo[0]
       //if rating found return to controller

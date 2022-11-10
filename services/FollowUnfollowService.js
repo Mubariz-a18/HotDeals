@@ -10,6 +10,9 @@ module.exports = class FollowUnfollowService {
         // finding user if exist
         const dbUser = await Profile.findById({ _id: userId })
         if (dbUser) {
+            if(userId == bodyData.following_id){
+                throw ({ status: 401, message: 'ACCESS_DENIED' });
+              }
             // if user exist find user_to_follow 
             const user_to_follow = await Profile.findById({ _id: bodyData.following_id })
             if (user_to_follow) {
@@ -84,9 +87,13 @@ module.exports = class FollowUnfollowService {
         const dbUser = await Profile.findById({ _id: userId })
         // finding user if exist
         if (dbUser) {
+            if(userId == bodyData.unfollowing_id){
+                throw ({ status: 401, message: 'ACCESS_DENIED' });
+              }
             // if user exist find user_to_unfollow 
             const user_to_unfollow = await Profile.findById({ _id: bodyData.unfollowing_id })
             if (user_to_unfollow) {
+
                 //if user_to_unfollow exist -- check users exist in following
                 const alreadyExistInFollowers = user_to_unfollow.followers.includes(dbUser._id)
                 const alreadyExistInfollowing = dbUser.followings.includes(bodyData.unfollowing_id)
