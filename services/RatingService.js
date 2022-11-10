@@ -55,7 +55,6 @@ module.exports = class RatingService {
             rate_average: Rating_doc[0].average_rating,
             rate_count: Rating_doc[0].RatingInfo.length
           });
-          console.log(ratedUser)
           //mixpanel create rating track 
           await track('  create Rating successfully !! ', { 
             distinct_id: userId,
@@ -128,6 +127,26 @@ module.exports = class RatingService {
             return Rating_doc[0];
           }
         }
+      }
+    }
+  };
+  // Get Rating for a user
+  static async getRating(bodyData,userId) {
+    // check if user exist or not
+    const userExist = await User.findById({_id :userId});
+    //if not exist throw error
+    if(!userExist){
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }else{
+      //if exist find Rating doc for the user in bodyData 
+      const RatingDoc = await Rating.find({user_id:bodyData.user_id},{_id:0,"RatingInfo": {$elemMatch: {"rating_given_by": userId}}})
+      let ratingInfo = RatingDoc[0].RatingInfo[0]
+      //if rating found return to controller
+      if(ratingInfo){
+        return ratingInfo.rating
+        //else throw error
+      }else{
+        throw ({ status: 404, message: 'RATING_NOT_EXISTS' });
       }
     }
   }
