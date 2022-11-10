@@ -8,5 +8,6 @@ const RatingCotroller = require('../controllers/Rating/rating.controller');
 //Rating Route
 
 router.post('/api/createRating',verifyToken,RatingCotroller.apiCreateRating);
+router.post('/api/getRating',verifyToken,RatingCotroller.apiGetRating);
 
 module.exports = router;

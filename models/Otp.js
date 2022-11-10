@@ -16,7 +16,12 @@ const otpSchema = Schema({
   },
   countryCode: {
     type: String,
-  },
+  },    
+  expire_at: {
+    type: Date,
+    default:Date.now(),
+    expires: 60
+}
 });
 
 module.exports = mongoose.model("Otp", otpSchema);

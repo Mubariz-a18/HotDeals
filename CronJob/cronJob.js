@@ -120,7 +120,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * 06-22 * * *', async (
       })
   })
 });
-
+//(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
 const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
   const Credits = await Credit.find()
   Credits.forEach(async creditDoc => {
@@ -154,7 +154,7 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
     })
   })
 })
-
+// (Schedule_Task_Credit_Status_Update) will change the status to expire if the credit expiry date exceeds the curent date
 const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () => {
   const credits = await Credit.find();
 

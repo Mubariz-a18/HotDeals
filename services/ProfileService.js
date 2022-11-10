@@ -97,10 +97,12 @@ module.exports = class ProfileService {
             about: {
               $cond: { if: { $eq: ["$about.private", false] }, then: "$about.text", else: "" }
             },
+            profile_url:1,
             user_type:1,
             followers_count:1,
             followings_count:1,
-            rate_average:1
+            rate_average:1,
+            rate_count:1
           }
         },
       ]);

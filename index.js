@@ -3,9 +3,9 @@ const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
 
-const http = require("http");
+// const http = require("http");
 const app = express();
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
 //Router Imports
 const authRouter = require("./routes/auth.routes");
@@ -80,7 +80,7 @@ app.use(GlobalSearchRouter);
 app.use(cat_subCat_SearchRouter);
 
 //server listener
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
   // ScheduleTask_Ad_Status_Expire
   // ScheduleTask_Display_Historic_Ads
