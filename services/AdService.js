@@ -8,6 +8,7 @@ const moment = require('moment');
 const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func ,nearestExpiryDateFunction} = require("../utils/moment");
 const Credit = require("../models/creditSchema");
 const { creditDeductFuntion } = require("./CreditService");
+const { findOneAndUpdate } = require("../models/Profile/Profile");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -816,55 +817,67 @@ module.exports = class AdService {
       };
     };
   };
-
-  // Get Detail from Ad --  user is authenticated - Aggregation is created between Profile and Generic 
-  static async getAdDetails(bodyData, userId, ad_id) {
-    // check if user exist
-    const userExist = await Profile.findOne({
-      _id: userId
-    });
-    // if user Exist-- and _ids are matched Ads is returned 
-    if (!userExist) {
-      // Mixpanel track for failed to view particular ad detail
-      await track('failed viewed ad', {
-        distinct_id: userId,
-        ad_id: ad_id
-      });
-      // throw error
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    //Ad doc will be updated , veiw count is incremented
-    const updateAd = await Generic.findByIdAndUpdate(
-      { _id: ObjectId(ad_id) },
-      { $inc: { views: 1 } },
-      { new: true }
-    )
-    // mix panel tack - when Particular ad is viewed 
-    await track('viewed ad successfully', {
-      distinct_id: userId,
-      ad_id: ad_id
-    });
-    //Mixpanel increment of user views count on ad view count
-    mixpanel.people.increment(userId, 'views particular ad');
-    if (updateAd) {
-      // find the owner of the Ad and project the required fields
-      const owner = await Profile.findById(
-        { _id: updateAd.user_id }, {
-        _id: 1,
-        name: 1,
-        profile_url: 1
+  // Get particular Ad Detail with distance and user details
+  static async getParticularAd(ad_id , query) {
+    let lng = +query.lng;
+    let lat = +query.lat;
+    console.log(lng , lat)
+    let maxDistance = 100000;
+    const AdDetail = await Generic.aggregate([
+      {
+        '$geoNear': {
+          'near': {
+            'type': 'Point', 
+            'coordinates': [
+              lng , lat
+            ]
+          }, 
+          'distanceField': 'dist.calculated', 
+          'maxDistance': maxDistance, 
+          'includeLocs': 'dist.location', 
+          'spherical': true
+        }
+      },
+       {
+        '$match': {
+          '_id': ObjectId(ad_id), 
+          'ad_status': 'Selling'
+        }
+      },
+       {
+        '$project': {
+          '_id': 1, 
+          'category': 1, 
+          'sub_category': 1, 
+          'title': 1, 
+          'views': 1, 
+          'saved': 1, 
+          'price': 1, 
+          'image_url': 1, 
+          'SelectFields': 1, 
+          'special_mention': 1, 
+          'description': 1, 
+          'ad_status': 1, 
+          'ad_type': 1, 
+          'created_at': 1, 
+          'isPrime': 1, 
+          'dist': 1
+        }
       }
-      );
-      return { updateAd, owner };
-    } else {
-      await track('viewed ad failed', {
-        distinct_id: userId,
-        ad_id: ad_id,
-        message:`Ad_id : ${ad_id}  does not exist`
-      })
-      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+    ])
+    if(AdDetail.length == 0){
+      throw ({ status: 404, message: 'NOT_FOUND' });
     }
-
+    const  updateAdViews = await Generic.findOneAndUpdate({_id:ad_id}, {
+      $inc:{views:1}
+    },{new:true});
+    const ownerDetails = await Profile.findById({_id:updateAdViews.user_id},{
+      _id: 1,
+      name: 1,
+      profile_url: 1,
+      created_date:1
+    })
+    return {AdDetail,ownerDetails};
   };
 
   // Get Premium Ads -- User is authentcated and Ads Are filtered
@@ -944,15 +957,15 @@ module.exports = class AdService {
               'title': 1,
               'price': 1,
               'image_url': 1,
-              // 'special_mention': 1,
-              // 'description': 1,
-              // 'reported': 1,
-              // 'reported_by': 1,
+              'special_mention': 1,
+              'description': 1,
+              'reported': 1,
+              'reported_by': 1,
               'ad_status': 1,
               'ad_type': 1,
-              // "created_at":1,
-              // 'ad_expire_date': 1,
-              // 'ad_promoted': 1,
+              "created_at":1,
+              'ad_expire_date': 1,
+              'ad_promoted': 1,
               'isPrime': 1,
               "dist": 1
             }
