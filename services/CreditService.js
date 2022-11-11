@@ -2,6 +2,7 @@ const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
 const { DateAfter30Days, currentDate, Free_credit_Expiry, nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
+const credit_value = require("../utils/creditValues");
 
 module.exports = class CreditService {
   // create Default Credit for new user 
@@ -121,15 +122,15 @@ module.exports = class CreditService {
         const date = nearestExpiryDateFunction(datesToBeChecked);     // this function returns nearest expiry date
         // update the credit doc (deduct the count from the  free_credits_info.count)
         await Credit.findOneAndUpdate({ user_id: userId, 'free_credits_info.credits_expires_on': date }, {
-          $inc: { "free_credits_info.$.count": -20 },
+          $inc: { "free_credits_info.$.count": - credit_value(category) },
         }).then(async res => {            //push the credit usage in the credit doc and update the available_free_credits
           await Credit.findOneAndUpdate({ user_id: userId }, {
-            $inc: { available_free_credits: -20 },
+            $inc: { available_free_credits: -credit_value(category) },
             $push: {
               credit_usage: {
                 type_of_credit: "Free",
                 ad_id: _id,
-                count: 20,
+                count: credit_value(category),
                 category: category,
                 credited_on: currentDate
               }
@@ -139,7 +140,7 @@ module.exports = class CreditService {
         // users profile is updated (free_credit)
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
-            free_credit: -20
+            free_credit: -credit_value(category)
           }
         });
         // success message is sent to AdService
@@ -170,16 +171,16 @@ module.exports = class CreditService {
         const date = nearestExpiryDateFunction(datesToBeChecked);  // this function returns nearest expiry date
         // update the credit doc (deduct the count from the  premium_credits_info.count)
         await Credit.findOneAndUpdate({ user_id: userId, 'premium_credits_info.credits_expires_on': date }, {
-          $inc: { "premium_credits_info.$.count": -5 },
+          $inc: { "premium_credits_info.$.count": -credit_value(category) },
         })
           .then(async res => {        //push the credit usage in the credit doc and update the available_premium_credits
             await Credit.findOneAndUpdate({ user_id: userId }, {
-              $inc: { available_premium_credits: -5 },
+              $inc: { available_premium_credits: -credit_value(category) },
               $push: {
                 credit_usage: {
                   type_of_credit: "Premium",
                   ad_id: _id,
-                  count: 5,
+                  count: credit_value(category),
                   category: category,
                   credited_on: currentDate
                 }
@@ -189,7 +190,7 @@ module.exports = class CreditService {
         // users profile is updated (premium_credit)
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
-            premium_credit: -5
+            premium_credit: -credit_value(category)
           }
         });
         // success message is sent to AdService

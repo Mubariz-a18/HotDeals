@@ -201,16 +201,18 @@ module.exports = class AdController {
     try {
       const ad_id = req.body.ad_id;
       // AD detail is fetched from db and sent to response
-      const {updateAd , owner} = await AdService.getAdDetails(req.body, req.user_ID, ad_id);
+      // const {updateAd , owner} = await AdService.getAdDetails(ad_id,req.query);
+      const {AdDetail,ownerDetails} = await AdService.getParticularAd(ad_id,req.query)
       // Response is sent
         await track('viewed ad successfully', {
           distinct_id: req.user_ID,
           ad_id: ad_id, 
-          message:`user : ${req.user_ID} viewed Ad`
+          // message:`user : ${req.user_ID} viewed Ad`
         })
         res.status(200).json({
-          AdDetails: updateAd ,
-          owner: owner
+          AdDetails: AdDetail,
+          Owner:ownerDetails
+          // owner: owner
         })
       
     } catch (e) {

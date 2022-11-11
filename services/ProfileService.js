@@ -74,7 +74,11 @@ module.exports = class ProfileService {
   }
 
   //DB Service to Get Profile By Phone Number
-  static async getOthersProfile(user_ID) {
+  static async getOthersProfile(user_id,user_ID) {
+    const userExist = await Profile.findOne({_id:user_id})
+    if(!userExist){
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
     const profileDoc = await Profile.findOne({
       _id: user_ID,
     });
@@ -111,13 +115,13 @@ module.exports = class ProfileService {
         distinct_id: user_ID,
       });
 
-      return profileData;
+      return profileData[0];
     } else {
       //mixpanel ttrack failed to fetch user profile
       await track('User searched failed ', {
         distinct_id: user_ID,
       });
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+      throw ({ status: 404, message: 'USER_TO_FIND_NOT_EXISTS' });
     }
   }
 
