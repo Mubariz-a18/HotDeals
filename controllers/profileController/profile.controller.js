@@ -33,12 +33,8 @@ module.exports = class ProfileController {
   //API to Get Profile
   static async apiGetOthersProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.getOthersProfile(req.body.user_Id);
-      if (profileData) {
-        res.send(profileData);
-      } else {
-        res.status(400).json({ error: "Profile Not Found" });
-      }
+      const profileData = await ProfileService.getOthersProfile(  req.user_ID,req.body.user_Id);
+        res.status(200).send(profileData);
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

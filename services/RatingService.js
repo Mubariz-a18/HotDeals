@@ -41,7 +41,7 @@ module.exports = class RatingService {
           }
         // If RatingInfo doesnot exist for a user create new one
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
-        if (!alreadyexist) {
+        if (!alreadyexist) {     
           const ratDoc = await Rating.create({
             user_id: bodyData.user_id,
             average_rating: bodyData.RatingInfo.rating,
@@ -52,12 +52,11 @@ module.exports = class RatingService {
               rating_updated_date: currentDate
             }
           });
-          // find the document created and update the user profile accordingly
-          const Rating_doc = await Rating.find({ user_id: bodyData.user_id })
           //updating the rating feilds in ratedUser
+          
           const ratedUser = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-            rate_average: Rating_doc[0].average_rating,
-            rate_count: Rating_doc[0].RatingInfo.length
+            rate_average:bodyData.RatingInfo.rating,
+            rate_count:1
           });
           //mixpanel create rating track 
           await track('  create Rating successfully !! ', { 
@@ -70,7 +69,8 @@ module.exports = class RatingService {
           const Rating_Already_exist_By_User = await Rating.findOne({ user_id :bodyData.user_id ,"RatingInfo.rating_given_by": userId})
 
           if (!Rating_Already_exist_By_User) {
-            const findRatedUserAndUpdate = await Rating.findOneAndUpdate({
+            // Insert RatingInfo inside Document of Rating
+            await Rating.findOneAndUpdate({
               user_id: bodyData.user_id
             },
               {
@@ -87,27 +87,31 @@ module.exports = class RatingService {
               { new: true }
             )
             // UpdatingThe average Rating Feild in Rating Document As well as rate average count in  Users profile
-            const Rating_doc = await Rating.find({ user_id: bodyData.user_id })
+            const Rating_doc = await Rating.findOne({ user_id: bodyData.user_id })
+            //  Rating calculation
             let average = 0;
-            // finding the average rating for a user
-            Rating_doc[0].RatingInfo.forEach(rat => {
+            // sum of all the ratings
+            Rating_doc.RatingInfo.forEach(rat => {
               average += rat.rating;
             });
-            Rating_doc[0].average_rating = average / Rating_doc[0].RatingInfo.length;
-            await Rating_doc[0].save();
+            // dividing all ratings by length of array
+            Rating_doc.average_rating = (average / Rating_doc.RatingInfo.length).toFixed(2);
+            //saving doc
+            await Rating_doc.save();
             //saving the average rating in user profile
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-              rate_average: Rating_doc[0].average_rating,
-              rate_count: Rating_doc[0].RatingInfo.length
+              rate_average: Rating_doc.average_rating,
+              rate_count: Rating_doc.RatingInfo.length
             },  { new: true })
-            await findRatedUserAndUpdate.save();
+            // mixpanel track create rating success
             await track('  create Rating successfully !! ', { 
               distinct_id: userId,
               message:` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${update_User_avg_rating.name}`
             })
-            return Rating_doc[0]
+            return Rating_doc
           } else {
-            const update_User_Rating = await Rating.updateOne({
+            // updating the user Rating
+            await Rating.updateOne({
               user_id: bodyData.user_id,
               "RatingInfo.rating_given_by": userId
             },
@@ -117,18 +121,23 @@ module.exports = class RatingService {
                   "RatingInfo.$.rating_updated_date" : currentDate
                 }
               })
-              const Rating_doc = await Rating.find({ user_id: bodyData.user_id })
+              // Rating calculation
+              const Rating_doc = await Rating.findOne({ user_id: bodyData.user_id })
               let average = 0;
-              Rating_doc[0].RatingInfo.forEach(rat => {
+              // sum of all the ratings
+              Rating_doc.RatingInfo.forEach(rat => {
                 average += rat.rating;
               });
-              Rating_doc[0].average_rating = average / Rating_doc[0].RatingInfo.length;
-              await Rating_doc[0].save();
-              const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-                rate_average: Rating_doc[0].average_rating,
-                rate_count: Rating_doc[0].RatingInfo.length
+              // deviding all ratings by length of array
+              Rating_doc.average_rating = (average / Rating_doc.RatingInfo.length).toFixed(2);
+              //saving doc
+              await Rating_doc.save();
+              //updating user rating count
+              await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
+                rate_average: Rating_doc.average_rating,
+                rate_count: Rating_doc.RatingInfo.length
               })
-            return Rating_doc[0];
+            return Rating_doc;
           }
         }
       }
