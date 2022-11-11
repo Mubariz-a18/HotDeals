@@ -68,7 +68,7 @@ module.exports = class AdService {
         const balance = await creditDeductFuntion(creditParams)
 
         if (balance.message == "Empty_Credits") {
-          throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' })
+          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
         }
         else if (balance.message == "Deducted_Successfully"){
           let adDoc = await Generic.create({
