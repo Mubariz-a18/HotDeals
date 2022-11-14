@@ -2,10 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-
-// const http = require("http");
 const app = express();
-// const server = http.createServer(app);
 
 //Router Imports
 const authRouter = require("./routes/auth.routes");
@@ -20,18 +17,10 @@ const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
 const cat_subCat_SearchRouter = require('./routes/cat_subCat_search.routes')
-const {
-  ScheduleTask_Display_Historic_Ads,
-   ScheduleTask_Alert_activation,
-    Schedule_Task_Alert_6am_to_10pm,
-     ScheduleTask_Ad_Status_Expire,
-     Schedule_Task_Monthly_credits,
-     Schedule_Task_Credit_Status_Update
-    } = require("./CronJob/cronJob");
+const {} = require("./CronJob/cronJob");
 
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
-
 
 
 const PORT = process.env.PORT || 3000;
@@ -55,7 +44,7 @@ connectDB();
 // 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 // })
 
-// // Apply the rate limiting middleware to all requests
+// Apply the rate limiting middleware to all requests
 // app.use(limiter)
 
 //Middlewares
@@ -82,10 +71,4 @@ app.use(cat_subCat_SearchRouter);
 //server listener
 app.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
-  // ScheduleTask_Ad_Status_Expire
-  // ScheduleTask_Display_Historic_Ads
-  // ScheduleTask_Alert_activation
-  // Schedule_Task_Alert_6am_to_10pm
-  // Schedule_Task_Monthly_credits
-  Schedule_Task_Credit_Status_Update
 });

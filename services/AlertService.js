@@ -10,15 +10,15 @@ module.exports = class AlertService {
   static async createAlert(bodyData, userId) {
     const {
       name,
-      title,
+      // title,
       category,
       sub_category,
       keywords,
-      condition,
+      // condition,
       location,
-      price,
-      age,
-      activate_status,
+      // price,
+      // age,
+      // activate_status,
     } = bodyData;
     const userExist = await Profile.findOne({ _id: userId });
     // if user is authorized create a new alert
@@ -29,8 +29,8 @@ module.exports = class AlertService {
         category: category,
         sub_category: sub_category,
         keywords: keywords,
-        condition: condition,
-        activate_status: activate_status,
+        // condition: condition,
+        // activate_status: activate_status,
         location: location,
         message: `user_id : ${userId}  does not exist`
       })
@@ -41,15 +41,14 @@ module.exports = class AlertService {
       let alertDoc = await Alert.create({
         user_ID: userId,
         name,
-        title,
+        // title,
         category,
         sub_category,
         keywords,
-        condition,
+        // condition,
         location,
-        price,
-        age,
-        activate_status,
+        // price,
+        // age,
         created_Date: currentDate,
         alert_Expiry_Date: DateAfter15Days
       });
@@ -68,8 +67,6 @@ module.exports = class AlertService {
         category: category,
         sub_category: sub_category,
         keywords: keywords,
-        condition: condition,
-        activate_status: activate_status,
         location: location,
         message: `user_id : ${userId}  does not exist`
       })
@@ -81,14 +78,14 @@ module.exports = class AlertService {
   static async updateAlert(bodyData, alert_id, userId) {
     const {
       name,
-      title,
+      // title,
       category,
       sub_category,
       keywords,
-      condition,
+      // condition,
       location,
-      price,
-      activate_status,
+      // price,
+      // activate_status,
     } = bodyData
     const user = await Profile.findOne({ _id: userId });
     // if user is verified alert i updated in alert collection
@@ -98,7 +95,7 @@ module.exports = class AlertService {
         sub_category: sub_category,
         category: category,
         keyword: keywords,
-        condition: condition,
+        // condition: condition,
         location: location,
         distinct_id: alert_id,
         message: `user : ${userId}  does not exist`
@@ -112,14 +109,14 @@ module.exports = class AlertService {
       }, {
         $set: {
           name,
-          title,
+          // title,
           category,
           sub_category,
           keywords,
-          condition,
+          // condition,
           location,
-          price,
-          activate_status,
+          // price,
+          // activate_status,
           updated_Date: currentDate
         },
       }, { new: true })
@@ -129,7 +126,7 @@ module.exports = class AlertService {
         sub_category: sub_category,
         category: category,
         keyword: keywords,
-        condition: condition,
+        // condition: condition,
         location: location,
         distinct_id: alert_id,
       })
