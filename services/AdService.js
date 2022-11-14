@@ -2,13 +2,9 @@ const Profile = require("../models/Profile/Profile");
 const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
-const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
-const moment = require('moment');
-const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func, nearestExpiryDateFunction } = require("../utils/moment");
-const Credit = require("../models/creditSchema");
+const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
-const { findOneAndUpdate } = require("../models/Profile/Profile");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
