@@ -61,7 +61,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       location,
     } = alert
     const alertNotificationDoc = await Generic.find({
-      // ad_status:"Selling",
+      ad_status:"Selling",
       category: category,
       sub_category: sub_category,
       $text:{
