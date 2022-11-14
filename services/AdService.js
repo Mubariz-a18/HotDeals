@@ -5,7 +5,7 @@ const { track } = require('../services/mixpanel-service.js');
 const mixpanel = require('mixpanel').init('a2229b42988461d6b1f1ddfdcd9cc8c3');
 const Generic = require("../models/Ads/genericSchema");
 const moment = require('moment');
-const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func ,nearestExpiryDateFunction} = require("../utils/moment");
+const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func, nearestExpiryDateFunction } = require("../utils/moment");
 const Credit = require("../models/creditSchema");
 const { creditDeductFuntion } = require("./CreditService");
 const { findOneAndUpdate } = require("../models/Profile/Profile");
@@ -61,16 +61,16 @@ module.exports = class AdService {
           is_ad_posted,
         } = bodyData
         let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
-        
+
         // create an Ad document in generics collection with body 
         const _id = ObjectId()
-        const creditParams = {isPrime, _id, userId, category}
+        const creditParams = { isPrime, _id, userId, category }
         const balance = await creditDeductFuntion(creditParams)
 
         if (balance.message == "Empty_Credits") {
           throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
         }
-        else if (balance.message == "Deducted_Successfully"){
+        else if (balance.message == "Deducted_Successfully") {
           let adDoc = await Generic.create({
             _id: _id,
             user_id: findUsr._id,
@@ -170,7 +170,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   saved: 1,
                   views: 1,
                   isPrime: 1,
@@ -186,7 +186,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
@@ -200,7 +200,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   ad_Draft_Date: 1,
                 }
@@ -212,7 +212,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
@@ -226,7 +226,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   ad_Deleted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
@@ -238,7 +238,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   ad_Reposted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
@@ -250,7 +250,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description:1,
+                  description: 1,
                   ad_Sold_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
@@ -310,11 +310,11 @@ module.exports = class AdService {
       }, {
         _id: 1,
         title: 1,
-        description:1,
+        description: 1,
         image_url: { $arrayElemAt: ["$image_url", 0] },
         created_at: 1,
         ad_status: 1,
-        price:1,
+        price: 1,
         ad_expire_date: 1,
         ad_Deleted_Date: 1,
         ad_Sold_Date: 1,
@@ -383,8 +383,8 @@ module.exports = class AdService {
         })
         if (bodyData.status == "Archive") {
           const adDoc = await Generic.findByIdAndUpdate(
-            { 
-              _id: ad_id 
+            {
+              _id: ad_id
             },
             {
               $set: {
@@ -398,8 +398,8 @@ module.exports = class AdService {
         }
         else if (bodyData.status == "Sold") {
           const adDoc = await Generic.findByIdAndUpdate(
-            { 
-              _id: ad_id 
+            {
+              _id: ad_id
             },
             {
               $set: {
@@ -414,8 +414,8 @@ module.exports = class AdService {
         }
         else if (bodyData.status == "Delete") {
           const adDoc = await Generic.findByIdAndUpdate(
-            { 
-              _id: ad_id 
+            {
+              _id: ad_id
             },
             {
               $set: {
@@ -431,8 +431,8 @@ module.exports = class AdService {
         else if (bodyData.status == "Premium") {
           // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
-            { 
-              _id: ad_id 
+            {
+              _id: ad_id
             },
             {
               $set: {
@@ -448,8 +448,8 @@ module.exports = class AdService {
         else if (bodyData.status == "Draft") {
           // only after payment is done 
           const adDoc = await Generic.findByIdAndUpdate(
-            { 
-              _id: ad_id 
+            {
+              _id: ad_id
             },
             {
               $set: {
@@ -573,8 +573,8 @@ module.exports = class AdService {
                 }
               }
             })
-            // increase the saved count by 1  
-            await Generic.findByIdAndUpdate(
+          // increase the saved count by 1  
+          await Generic.findByIdAndUpdate(
             { _id: ad_id },
             { $inc: { saved: 1 } }
           )
@@ -605,11 +605,13 @@ module.exports = class AdService {
           // remove the ads from favourite_ads  list in user profile
           await Profile.findOneAndUpdate(
             { _id: userId },
-            { $pull: {
-              favourite_ads: {
-                ad_id: ad_id,
+            {
+              $pull: {
+                favourite_ads: {
+                  ad_id: ad_id,
+                }
               }
-            } },
+            },
             { new: true }
           );
           // decrease the saved count by 1  
@@ -617,7 +619,7 @@ module.exports = class AdService {
             { _id: ad_id },
             { $inc: { saved: -1 } }
           )
-            // mixpanel track remove Ad favourite
+          // mixpanel track remove Ad favourite
           await track('Removed Ad from Favourites successfully', {
             distinct_id: userId,
             ad_id: ad_id
@@ -631,7 +633,7 @@ module.exports = class AdService {
   };
 
   //Get Favourite Ads -- User is Authenticated and Aggregation is created with Profile Collection and Generics Colllections  
-  static async getFavouriteAds(query,userId) {
+  static async getFavouriteAds(query, userId) {
     //check if user exist or not 
     const userExist = await Profile.findOne({
       _id: userId
@@ -665,32 +667,32 @@ module.exports = class AdService {
           }
         }, {
           '$unwind': {
-            'path': '$favourite_ads', 
+            'path': '$favourite_ads',
             'preserveNullAndEmptyArrays': true
           }
         }, {
           '$lookup': {
-            'from': 'generics', 
-            'localField': 'favourite_ads.ad_id', 
-            'foreignField': '_id', 
+            'from': 'generics',
+            'localField': 'favourite_ads.ad_id',
+            'foreignField': '_id',
             'as': 'firstResult'
           }
         }, {
           '$unwind': {
-            'path': '$firstResult', 
+            'path': '$firstResult',
             'preserveNullAndEmptyArrays': true
           }
         }, {
           '$addFields': {
-            'saved': '$firstResult.saved', 
-            'ad_id': '$firstResult._id', 
-            'category': '$firstResult.category', 
-            'title': '$firstResult.title', 
-            'price': '$firstResult.price', 
-            'image_url': '$firstResult.image_url', 
-            'description': '$firstResult.description', 
-            'ad_status': '$firstResult.ad_status', 
-            'ad_promoted': '$firstResult.ad_promoted', 
+            'saved': '$firstResult.saved',
+            'ad_id': '$firstResult._id',
+            'category': '$firstResult.category',
+            'title': '$firstResult.title',
+            'price': '$firstResult.price',
+            'image_url': '$firstResult.image_url',
+            'description': '$firstResult.description',
+            'ad_status': '$firstResult.ad_status',
+            'ad_promoted': '$firstResult.ad_promoted',
             'isPrime': '$firstResult.isPrime'
           }
         },
@@ -699,20 +701,20 @@ module.exports = class AdService {
         //     { "category": query.category },
         // },
         {
-          $sort:{
-            "favourite_ads.ad_Favourite_Date":-1
+          $sort: {
+            "favourite_ads.ad_Favourite_Date": -1
           }
         },
         {
           '$project': {
-            'ad_id': 1, 
-            '_id': 0, 
-            'category': 1, 
-            'title': 1, 
-            'price': 1, 
-            'image_url': 1, 
-            'description': 1, 
-            'ad_status': 1, 
+            'ad_id': 1,
+            '_id': 0,
+            'category': 1,
+            'title': 1,
+            'price': 1,
+            'image_url': 1,
+            'description': 1,
+            'ad_status': 1,
             'favourite_ads.ad_Favourite_Date': 1,
           }
         }
@@ -818,66 +820,66 @@ module.exports = class AdService {
     };
   };
   // Get particular Ad Detail with distance and user details
-  static async getParticularAd(ad_id , query) {
+  static async getParticularAd(ad_id, query) {
     let lng = +query.lng;
     let lat = +query.lat;
-    console.log(lng , lat)
+    console.log(lng, lat)
     let maxDistance = 100000;
     const AdDetail = await Generic.aggregate([
       {
         '$geoNear': {
           'near': {
-            'type': 'Point', 
+            'type': 'Point',
             'coordinates': [
-              lng , lat
+              lng, lat
             ]
-          }, 
-          'distanceField': 'dist.calculated', 
-          'maxDistance': maxDistance, 
-          'includeLocs': 'dist.location', 
+          },
+          'distanceField': 'dist.calculated',
+          'maxDistance': maxDistance,
+          'includeLocs': 'dist.location',
           'spherical': true
         }
       },
-       {
+      {
         '$match': {
-          '_id': ObjectId(ad_id), 
+          '_id': ObjectId(ad_id),
           'ad_status': 'Selling'
         }
       },
-       {
+      {
         '$project': {
-          '_id': 1, 
-          'category': 1, 
-          'sub_category': 1, 
-          'title': 1, 
-          'views': 1, 
-          'saved': 1, 
-          'price': 1, 
-          'image_url': 1, 
-          'SelectFields': 1, 
-          'special_mention': 1, 
-          'description': 1, 
-          'ad_status': 1, 
-          'ad_type': 1, 
-          'created_at': 1, 
-          'isPrime': 1, 
+          '_id': 1,
+          'category': 1,
+          'sub_category': 1,
+          'title': 1,
+          'views': 1,
+          'saved': 1,
+          'price': 1,
+          'image_url': 1,
+          'SelectFields': 1,
+          'special_mention': 1,
+          'description': 1,
+          'ad_status': 1,
+          'ad_type': 1,
+          'created_at': 1,
+          'isPrime': 1,
           'dist': 1
         }
       }
     ])
-    if(AdDetail.length == 0){
+    if (AdDetail.length == 0) {
       throw ({ status: 404, message: 'NOT_FOUND' });
     }
-    const  updateAdViews = await Generic.findOneAndUpdate({_id:ad_id}, {
-      $inc:{views:1}
-    },{new:true});
-    const ownerDetails = await Profile.findById({_id:updateAdViews.user_id},{
+    const updateAdViews = await Generic.findOneAndUpdate({ _id: ad_id }, {
+      $inc: { views: 1 }
+    }, { new: true });
+    const ownerDetails = await Profile.findById({ _id: updateAdViews.user_id }, {
       _id: 1,
       name: 1,
       profile_url: 1,
-      created_date:1
+      created_date: 1
     })
-    return {AdDetail,ownerDetails};
+    return { AdDetail, ownerDetails };
   };
 
   // Get Premium Ads -- User is authentcated and Ads Are filtered
@@ -886,7 +888,7 @@ module.exports = class AdService {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    let pageVal = +query.page ;
+    let pageVal = +query.page;
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -913,7 +915,7 @@ module.exports = class AdService {
         [
           {
             '$geoNear': {
-              'near': { type: 'Point', coordinates: [lng,lat] },
+              'near': { type: 'Point', coordinates: [lng, lat] },
               "distanceField": "dist.calculated",
               'maxDistance': maxDistance,
               "includeLocs": "dist.location",
@@ -945,13 +947,13 @@ module.exports = class AdService {
           },
           {
             '$project': {
-              '_id':1,
-              'Seller_Id':1,
-              'Seller_Name':1,
-              'Seller_Joined':1,
+              '_id': 1,
+              'Seller_Id': 1,
+              'Seller_Name': 1,
+              'Seller_Joined': 1,
               'Seller_Image': 1,
-              "Seller_verified":1,
-              "Seller_recommended":1,
+              "Seller_verified": 1,
+              "Seller_recommended": 1,
               'category': 1,
               'sub_category': 1,
               'title': 1,
@@ -963,7 +965,7 @@ module.exports = class AdService {
               'reported_by': 1,
               'ad_status': 1,
               'ad_type': 1,
-              "created_at":1,
+              "created_at": 1,
               'ad_expire_date': 1,
               'ad_promoted': 1,
               'isPrime': 1,
@@ -972,20 +974,20 @@ module.exports = class AdService {
           },
           {
             $match: {
-                isPrime: true,
-                ad_status:"Selling"
+              isPrime: true,
+              ad_status: "Selling"
             }
           },
           {
-            $sort:{
-              "dist.calculated":1,
-              "created_at":-1,
-              "Seller_verified":-1,
-              "Seller_recommended":-1
+            $sort: {
+              "dist.calculated": 1,
+              "created_at": -1,
+              "Seller_verified": -1,
+              "Seller_recommended": -1
             }
           },
           {
-            $skip: limitval * (pageVal -1)
+            $skip: limitval * (pageVal - 1)
           },
           {
             $limit: limitval
@@ -1005,7 +1007,7 @@ module.exports = class AdService {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    let pageVal = +query.page ;
+    let pageVal = +query.page;
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -1018,16 +1020,16 @@ module.exports = class AdService {
     }
     //else find recent ads by filtering isPrime false
     else {
-          /* 
-      $geonear to find all the ads existing near the given coordinates
-      $lookup for the relation between the profiles and Generics
-      $unwind to extract the array from sample_result
-      $addfeilds to join profile fields with sample result
-      $project to show only the required fields
-      $match for filtering only recent ads
-      $sort to sort all the ads by order 
-      $skip and limit for pagination
-      */
+      /* 
+  $geonear to find all the ads existing near the given coordinates
+  $lookup for the relation between the profiles and Generics
+  $unwind to extract the array from sample_result
+  $addfeilds to join profile fields with sample result
+  $project to show only the required fields
+  $match for filtering only recent ads
+  $sort to sort all the ads by order 
+  $skip and limit for pagination
+  */
       const getRecentAds = await Generic.aggregate([
         [
           {
@@ -1060,7 +1062,7 @@ module.exports = class AdService {
               'Seller_Image': '$sample_result.profile_url',
               'Seller_verified': '$sample_result.is_email_verified',
               'Seller_recommended': '$sample_result.is_recommended',
-            
+
             }
           },
           {
@@ -1070,8 +1072,8 @@ module.exports = class AdService {
               'Seller_Name': 1,
               'Seller_Joined': 1,
               'Seller_Image': 1,
-              "Seller_verified":1,
-              "Seller_recommended":1,
+              "Seller_verified": 1,
+              "Seller_recommended": 1,
               'category': 1,
               'sub_category': 1,
               'title': 1,
@@ -1083,7 +1085,7 @@ module.exports = class AdService {
               'reported_by': 1,
               'ad_status': 1,
               'ad_type': 1,
-              "created_at":1,
+              "created_at": 1,
               'ad_expire_date': 1,
               'ad_promoted': 1,
               'isPrime': 1,
@@ -1092,26 +1094,26 @@ module.exports = class AdService {
           },
           {
             $match: {
-                isPrime: false,
-                ad_status:"Selling"
+              isPrime: false,
+              ad_status: "Selling"
             }
           },
           {
-            $sort:{
-              "dist.calculated":1,
-              "created_at":-1,
-              "Seller_verified":-1,
-              "Seller_recommended":-1,
+            $sort: {
+              "dist.calculated": 1,
+              "created_at": -1,
+              "Seller_verified": -1,
+              "Seller_recommended": -1,
             }
           },
           {
-            $skip: limitval * (pageVal -1)
+            $skip: limitval * (pageVal - 1)
           },
           {
             $limit: limitval
           },
-        ] 
-      ])  
+        ]
+      ])
       //mix panel track get recent ads 
       await track('get recent Ads Successfully', {
         distinct_id: userId
