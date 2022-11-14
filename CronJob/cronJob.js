@@ -4,7 +4,10 @@ const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
 const Credit = require('../models/creditSchema');
 const Profile = require('../models/Profile/Profile');
-const { currentDate, Ad_Historic_Duration,DateAfter30Days } = require('../utils/moment');
+const { 
+  currentDate, 
+  Ad_Historic_Duration, 
+  DateAfter30Days } = require('../utils/moment');
 
 // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
@@ -51,7 +54,7 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
 });
 //(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async () => {
-  const Alerts = await Alert.find({ activate_status: true})
+  const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
       name,
@@ -61,22 +64,22 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       location,
     } = alert
     const alertNotificationDoc = await Generic.find({
-      ad_status:"Selling",
+      ad_status: "Selling",
       category: category,
       sub_category: sub_category,
-      $text:{
-        $search:`${keywords[1]} ${keywords[2]}`
+      $text: {
+        $search: `${keywords[1]} ${keywords[2]}`
       },
-     $or:[
-      {
-        $in: {
-          "ad_posted_address": { "$regex": location, "$options": "i" },
-        },
-        $in: {
-          "title":{"$regex": name, "$options": "i"}
-        },
-      }
-     ],
+      $or: [
+        {
+          $in: {
+            "ad_posted_address": { "$regex": location, "$options": "i" },
+          },
+          $in: {
+            "title": { "$regex": name, "$options": "i" }
+          },
+        }
+      ],
       "price": {
         $lte: keywords[0]
       },
@@ -104,7 +107,7 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
   Credits.forEach(async creditDoc => {
     await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
       $inc: { available_free_credits: 100 },
-      $inc: {premium_credits_info: bodyData.count},
+      $inc: { premium_credits_info: bodyData.count },
       $push: {
         free_credits_info: {
           count: 100,
@@ -114,19 +117,19 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
           credits_expires_on: DateAfter30Days
         }
       },
-      $push :{
-        premium_credits_info :{
-          count:10,
-          allocation:"Admin-Monthly",
+      $push: {
+        premium_credits_info: {
+          count: 10,
+          allocation: "Admin-Monthly",
           allocated_on: currentDate,
-          duration:moment(DateAfter30Days).diff(currentDate,"days"),
-          credits_expires_on:DateAfter30Days
+          duration: moment(DateAfter30Days).diff(currentDate, "days"),
+          credits_expires_on: DateAfter30Days
         }
       }
     }, { new: true })
-    await Profile.findOneAndUpdate({_id:creditDoc.user_id},{
+    await Profile.findOneAndUpdate({ _id: creditDoc.user_id }, {
       $inc: {
-        free_credit:100,
+        free_credit: 100,
         premium_credit: 10
       }
     })
@@ -137,11 +140,11 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
   const credits = await Credit.find();
 
   credits.map(async credit => {
-    const {free_credits_info , premium_credits_info , user_id} = credit;
-    
+    const { free_credits_info, premium_credits_info, user_id } = credit;
+
     //free
     free_credits_info.map(async info => {
-      const {credits_expires_on ,status , count } = info
+      const { credits_expires_on, status, count } = info
 
       if (currentDate > credits_expires_on && status == "Available") {
 
@@ -153,22 +156,22 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
             "free_credits_info.$.status": "Expired/Empty"
           }
         }, { new: true })
-        .then(async res =>{
-          if(res !== null){
-            await Credit.findOneAndUpdate({user_id:user_id},{
-              $inc:{available_free_credits: - count}
-            })
-          }else{}
-        }).catch(e=>{
-          e
-        })
-      }else{}
+          .then(async res => {
+            if (res !== null) {
+              await Credit.findOneAndUpdate({ user_id: user_id }, {
+                $inc: { available_free_credits: - count }
+              })
+            } else { }
+          }).catch(e => {
+            e
+          })
+      } else { }
     })
     // premium
     premium_credits_info.map(async info => {
-      const {credits_expires_on ,status , count } = info
+      const { credits_expires_on, status, count } = info
 
-      if (currentDate > credits_expires_on && status == "Available" ) {
+      if (currentDate > credits_expires_on && status == "Available") {
 
         await Credit.findOneAndUpdate({
           user_id: user_id,
@@ -178,21 +181,21 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
             "premium_credits_info.$.status": "Expired/Empty"
           }
         }, { new: true })
-        .then(async res =>{
-          if(res !== null){
-            await Credit.findOneAndUpdate({user_id:user_id},{
-              $inc:{available_premium_credits: - count}
-            })
-          }else{}
-        }).catch(e=>{
-          e
-        })
-      }else{
+          .then(async res => {
+            if (res !== null) {
+              await Credit.findOneAndUpdate({ user_id: user_id }, {
+                $inc: { available_premium_credits: - count }
+              })
+            } else { }
+          }).catch(e => {
+            e
+          })
+      } else {
 
       }
     })
   })
-  
+
 });
 // (Schedule_Task_Is_user_Recommended) which change the is_recommended to true if user have more than or eqa; tp 5 rate count and rate average
 const Schedule_Task_Is_user_Recommended = cron.schedule('0 0 0 * * *', async () => {
