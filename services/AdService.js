@@ -24,7 +24,7 @@ module.exports = class AdService {
     }
     else {
       if (bodyData.ad_id) {
-        const findAd = Generic.findOneAndUpdate({ _id: bodyData.ad_id },
+        Generic.findOneAndUpdate({ _id: bodyData.ad_id },
           {
             $set: {
               ad_status: 'Selling',
@@ -1032,7 +1032,7 @@ module.exports = class AdService {
         [
           {
             '$geoNear': {
-              'near': { type: 'Point', coordinates: [+lng, +lat] },
+              'near': { type: 'Point', coordinates: [lng, lat] },
               "distanceField": "dist.calculated",
               'maxDistance': maxDistance,
               "includeLocs": "dist.location",
