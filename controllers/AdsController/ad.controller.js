@@ -245,14 +245,20 @@ module.exports = class AdController {
           distinct_id: req.user_ID,
         })
         res.status(404).json({
-          message: "Ad does not exist"
+          message:  "ADS_NOT_FOUND"
         })
       }
-      else {
+      if(getPremiumAds.length > 0){
         res.status(200).json({
           PremiumAds: getPremiumAds,
           TotalPremiumAds: getPremiumAds.length
         })
+      }
+      if(getPremiumAds.length == 0){
+        await track('viewed Premium ads failed', {
+          distinct_id: req.user_ID,
+        })
+        res.status(204).json({})
       }
     } catch (e) {
       if (!e.status) {
@@ -279,18 +285,22 @@ module.exports = class AdController {
       const getRecentAds = await AdService.getRecentAdsService(user_ID, req.query);
       // Response is sent
       if (getRecentAds == null) {
+         // mixpanel track for get Recent ads failed
         await track('viewed Recent ads failed', {
           distinct_id: req.user_ID,
         })
         res.status(404).json({
-          message: "Ad does not exist"
+          message: "ADS_NOT_FOUND"
         })
       }
-      else {
+      if(getRecentAds.length > 0) {
         res.status(200).json({
           getRecentAds: getRecentAds,
           TotalRecentAds: getRecentAds.length
         })
+      }
+      if(getRecentAds.length == 0){
+        res.status(204).json({})
       }
     } catch (e) {
       if (!e.status) {

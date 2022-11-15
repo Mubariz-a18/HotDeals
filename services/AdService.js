@@ -885,6 +885,7 @@ module.exports = class AdService {
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
+    if(pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -976,8 +977,8 @@ module.exports = class AdService {
           },
           {
             $sort: {
-              "dist.calculated": 1,
               "created_at": -1,
+              "dist.calculated": 1,
               "Seller_verified": -1,
               "Seller_recommended": -1
             }
@@ -1005,6 +1006,7 @@ module.exports = class AdService {
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
     let limitval = +query.limit || 20;
+    if(pageVal == 0) pageVal = pageVal + 1
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
     //if not exist throw error
@@ -1096,8 +1098,8 @@ module.exports = class AdService {
           },
           {
             $sort: {
-              "dist.calculated": 1,
               "created_at": -1,
+              "dist.calculated": 1,
               "Seller_verified": -1,
               "Seller_recommended": -1,
             }
