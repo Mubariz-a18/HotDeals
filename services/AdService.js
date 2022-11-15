@@ -46,7 +46,6 @@ module.exports = class AdService {
           title,
           price,
           isPrime,
-          ad_type,
           image_url,
           video_url,
           ad_present_location,
