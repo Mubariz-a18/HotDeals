@@ -46,6 +46,7 @@ module.exports = class AdService {
           title,
           price,
           isPrime,
+          ad_type,
           image_url,
           video_url,
           ad_present_location,
@@ -80,6 +81,7 @@ module.exports = class AdService {
             price,
             product_age: age,
             isPrime,
+            ad_type: isPrime == false ? "Free" : "Premium",
             image_url,
             video_url,
             ad_present_location,
@@ -815,6 +817,7 @@ module.exports = class AdService {
       };
     };
   };
+
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(ad_id, query) {
     let lng = +query.lng;
@@ -998,6 +1001,7 @@ module.exports = class AdService {
       return premiumAdsData;
     };
   };
+
   // Get Recent Ads  -- User is authentcated and Ads Are filtered
   static async getRecentAdsService(userId, query) {
 
@@ -1119,4 +1123,36 @@ module.exports = class AdService {
       return getRecentAds;
     };
   };
+
+  static async getMyAdDetails(ad_id,user_id){
+    const userExist = await Profile.findById({_id:user_id});
+    if(!userExist){
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    if(! userExist.my_ads.includes(ad_id)){
+      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+    }
+    const myAdDetail = await Generic.findOne({_id:ad_id},{
+      '_id': 1,
+      "user_id":1,
+      'category': 1,
+      'sub_category': 1,
+      'title': 1,
+      'views': 1,
+      'saved': 1,
+      'price': 1,
+      'image_url': 1,
+      "video_url":1,
+      'SelectFields': 1,
+      'special_mention': 1,
+      'description': 1,
+      'ad_status': 1,
+      'ad_type': 1,
+      "ad_posted_address":1,
+      "ad_present_address":1,
+      'created_at': 1,
+      'isPrime': 1,
+    });
+    return myAdDetail
+  }
 };

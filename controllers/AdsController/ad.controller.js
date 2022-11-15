@@ -318,4 +318,33 @@ module.exports = class AdController {
       };
     };
   };
+
+    // Get Ads -- Ads are Fetched and Returned from Adservice 
+    static async apiGetMyAdDetails(req, res, next) {
+      try {
+        const {ad_id} = req.body;
+        const user_ID = req.user_ID;
+        // My ads are fetched from db abd sent to response
+        const myAdDetail = await AdService.getMyAdDetails(ad_id,user_ID);
+        // Response code is send 
+          res.status(200).send({
+            message: "success!",
+            AdDetail : myAdDetail
+          });
+      } catch (e) {
+        if (!e.status) {
+          res.status(500).json({
+            error: {
+              message: ` something went wrong try again : ${e.message} `
+            }
+          });
+        } else {
+          res.status(e.status).json({
+            error: {
+              message: e.message
+            }
+          });
+        };
+      };
+    }
 };
