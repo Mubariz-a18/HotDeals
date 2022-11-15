@@ -878,6 +878,11 @@ module.exports = class AdService {
       profile_url: 1,
       created_date: 1
     })
+    // mixpanel -- track  get Particular ad ads
+    await track('get Particular ad ads', {
+      distinct_id: userId,
+      message: ` user_id : ${userId}  viewd ${ad_id}`
+    })
     return { AdDetail, ownerDetails };
   };
 
@@ -888,7 +893,7 @@ module.exports = class AdService {
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
-    if(pageVal == 0) pageVal = pageVal + 1
+    if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 20;
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
@@ -1010,7 +1015,7 @@ module.exports = class AdService {
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
     let limitval = +query.limit || 20;
-    if(pageVal == 0) pageVal = pageVal + 1
+    if (pageVal == 0) pageVal = pageVal + 1
     //  check if user exist 
     const userExist = await Profile.findOne({ _id: userId });
     //if not exist throw error
@@ -1124,17 +1129,17 @@ module.exports = class AdService {
     };
   };
 
-  static async getMyAdDetails(ad_id,user_id){
-    const userExist = await Profile.findById({_id:user_id});
-    if(!userExist){
+  static async getMyAdDetails(ad_id, user_id) {
+    const userExist = await Profile.findById({ _id: user_id });
+    if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    if(! userExist.my_ads.includes(ad_id)){
+    if (!userExist.my_ads.includes(ad_id)) {
       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
     }
-    const myAdDetail = await Generic.findOne({_id:ad_id},{
+    const myAdDetail = await Generic.findOne({ _id: ad_id }, {
       '_id': 1,
-      "user_id":1,
+      "user_id": 1,
       'category': 1,
       'sub_category': 1,
       'title': 1,
@@ -1142,17 +1147,22 @@ module.exports = class AdService {
       'saved': 1,
       'price': 1,
       'image_url': 1,
-      "video_url":1,
+      "video_url": 1,
       'SelectFields': 1,
       'special_mention': 1,
       'description': 1,
       'ad_status': 1,
       'ad_type': 1,
-      "ad_posted_address":1,
-      "ad_present_address":1,
+      "ad_posted_address": 1,
+      "ad_present_address": 1,
       'created_at': 1,
       'isPrime': 1,
     });
+    // mixpanel -- track  get Particular ad ads
+    await track('get Particular ad ads', {
+      distinct_id: user_id,
+      message: ` user_id : ${user_id}  viewd ${ad_id}`
+    })
     return myAdDetail
-  }
+  };
 };
