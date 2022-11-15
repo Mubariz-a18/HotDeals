@@ -6,34 +6,34 @@ const credit_value = require("../utils/creditValues");
 
 module.exports = class CreditService {
   // create Default Credit for new user 
-  static async createCreditForNewUser(user_id){
-            // creating a document
-            await Credit.create({
-              user_id: user_id,
-              available_free_credits:200,
-              available_premium_credits:10,
-              free_credits_info:{
-                count:200,
-                allocation:"Admin-atLogin",
-                allocated_on:currentDate,
-                duration:durationInDays(Free_credit_Expiry),
-                credits_expires_on: Free_credit_Expiry
-              },
-              premium_credits_info:{
-                count:10,
-                allocation:"Admin-atLogin",
-                allocated_on:currentDate,
-                duration:durationInDays(DateAfter30Days),
-                credits_expires_on:DateAfter30Days
-              }
-            });
-            // updating the user profile with default values
-            await Profile.findOneAndUpdate({_id:user_id},{
-              $set:{
-                free_credit : 200,
-                premium_credit: 10
-              }
-            })
+  static async createCreditForNewUser(user_id) {
+    // creating a document
+    await Credit.create({
+      user_id: user_id,
+      available_free_credits: 200,
+      available_premium_credits: 10,
+      free_credits_info: {
+        count: 200,
+        allocation: "Admin-atLogin",
+        allocated_on: currentDate,
+        duration: durationInDays(Free_credit_Expiry),
+        credits_expires_on: Free_credit_Expiry
+      },
+      premium_credits_info: {
+        count: 10,
+        allocation: "Admin-atLogin",
+        allocated_on: currentDate,
+        duration: durationInDays(DateAfter30Days),
+        credits_expires_on: DateAfter30Days
+      }
+    });
+    // updating the user profile with default values
+    await Profile.findOneAndUpdate({ _id: user_id }, {
+      $set: {
+        free_credit: 200,
+        premium_credit: 10
+      }
+    })
   };
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
@@ -76,7 +76,7 @@ module.exports = class CreditService {
               count: bodyData.count,
               allocation: bodyData.allocation,
               allocated_on: currentDate,
-              duration:durationInDays(DateAfter30Days),     // this function return duration in days
+              duration: durationInDays(DateAfter30Days),     // this function return duration in days
               credits_expires_on: DateAfter30Days,
               purchaseDate: currentDate
             }
@@ -98,12 +98,12 @@ module.exports = class CreditService {
   };
   //creditDeduaction function calls when user uploads an Ad
   static async creditDeductFuntion(creditParams) {
-    const {isPrime, _id, userId, category} = creditParams ;
+    const { isPrime, _id, userId, category } = creditParams;
     // if isPrime is false ad type is free
     if (isPrime == false) {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId })
-      if (docs.available_free_credits == 0) {   //if users available_free_credits == 0 return message "empty_ credits"
+      if (docs.available_free_credits == 0 || docs.available_free_credits <= credit_value(category)) {   //if users available_free_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
       //if user available_free_credits < 0
@@ -113,9 +113,9 @@ module.exports = class CreditService {
         //loop through all the credits users have
         All_free.forEach(freeCrd => {
           if (freeCrd.count <= 0)     // if any credit count is == 0 update the credit status to "Expired/Empty"
-            freeCrd.status = "Expired/Empty"
-                                      // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (freeCrd.status !== "Expired/Empty" && freeCrd.count !== 0)
+            freeCrd.status = "Empty"
+          // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
+          if (freeCrd.status !== "Empty" && freeCrd.status !== "Expired" && freeCrd.count !== 0)
             datesToBeChecked.push(freeCrd.credits_expires_on);    // if the check is true push the dates into datestobechecked array
         })
         docs.save();      // SAVE the credit doc
@@ -146,25 +146,25 @@ module.exports = class CreditService {
         // success message is sent to AdService
         return { message: "Deducted_Successfully" }
       };
-    } 
+    }
     // else if isPrime is false the adType is Premium
     else if (isPrime == true) {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId });
-      if (docs.available_premium_credits <= 0) {      //if users available_premium_credits == 0 return message "empty_ credits"
+      if (docs.available_premium_credits <= 0 || docs.available_premium_credits <= credit_value(category)) {      //if users available_premium_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
-       //if user available_premium_credits < 0
+      //if user available_premium_credits < 0
       else {
         // find all the credits inside premium_credits_info
         let premium = docs.premium_credits_info;
         const datesToBeChecked = [];    // array of dates to be checked
-         //loop through all the credits users have
+        //loop through all the credits users have
         premium.forEach(premiumCrd => {
           if (premiumCrd.count <= 0)       // if any credit count is == 0 update the credit status to "Expired/Empty"
-            premiumCrd.status = "Expired/Empty"
-                                      // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (premiumCrd.status !== "Expired/Empty" && premiumCrd.count !== 0)
+            premiumCrd.status = "Empty"
+          // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
+          if (premiumCrd.status !== "Empty" && premiumCrd.status !== "Expired" && premiumCrd.count !== 0)
             datesToBeChecked.push(premiumCrd.credits_expires_on)       // if the check is true push the dates into datestobechecked array
         });
         await docs.save();
@@ -199,19 +199,19 @@ module.exports = class CreditService {
     };
   };
   //Get My Credits function
-  static async getMyCreditsInfo(user_id){
+  static async getMyCreditsInfo(user_id) {
     // check if user exist 
-    const userExist = await Profile.findOne({_id:user_id})
+    const userExist = await Profile.findOne({ _id: user_id })
     // if not exist throw error 
-    if(!userExist){
+    if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     // else fnd the user`s credit doc and project the required feilds
-    else{
-      const CreditDocs = await Credit.findOne({user_id:user_id},{
-        _id:0,
-        available_free_credits:1,
-        available_premium_credits:1
+    else {
+      const CreditDocs = await Credit.findOne({ user_id: user_id }, {
+        _id: 0,
+        available_free_credits: 1,
+        available_premium_credits: 1
       })
       return CreditDocs
     }

@@ -8,9 +8,9 @@ module.exports = class AdController {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
       // response code is send 
-        res.status(200).send({
-          message: "Ad Successfully created!",
-          Ad: adDocument,
+      res.status(200).send({
+        message: "Ad Successfully created!",
+        Ad: adDocument,
       })
     } catch (e) {
       if (!e.status) {
@@ -35,16 +35,16 @@ module.exports = class AdController {
       // My ads are fetched from db abd sent to response
       const getDocument = await AdService.getMyAds(req.user_ID);
       // Response code is send 
-        res.status(200).send({
-          message: "success!",
-          Selling: getDocument[0].Selling,
-          Archived: getDocument[0].Archive,
-          Drafts: getDocument[0].Drafts,
-          Expired:getDocument[0].Expired,
-          Deleted:getDocument[0].Deleted,
-          Reposted:getDocument[0].Reposted,
-          Sold:getDocument[0].Sold,
-        });
+      res.status(200).send({
+        message: "success!",
+        Selling: getDocument[0].Selling,
+        Archived: getDocument[0].Archive,
+        Drafts: getDocument[0].Drafts,
+        Expired: getDocument[0].Expired,
+        Deleted: getDocument[0].Deleted,
+        Reposted: getDocument[0].Reposted,
+        Sold: getDocument[0].Sold,
+      });
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -63,14 +63,14 @@ module.exports = class AdController {
   }
 
   static async apiGetMyAdsHistory(req, res, next) {
-    try {      
+    try {
       // My ads History  are fetched from db and sent to response
       const getHistoryAds = await AdService.getMyAdsHistory(req.user_ID);
       // Response code is send 
-        res.status(200).send({
-          message: "success!",
-          getHistoryAds
-        });
+      res.status(200).send({
+        message: "success!",
+        getHistoryAds
+      });
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -122,11 +122,11 @@ module.exports = class AdController {
       // Ad is saved in Favourite and sent to responce
       const updated_Ad = await AdService.favouriteAds(req.body, req.user_ID, adID);
       res.status(200).send(
-          {
-            message: "success",
-            updated_Ad
-          }
-        )
+        {
+          message: "success",
+          updated_Ad
+        }
+      )
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -148,11 +148,11 @@ module.exports = class AdController {
   static async apiGetFavouriteAds(req, res, next) {
     try {
       // Ad is fetched from db & sent to responce
-      const Get_My_Fav_Ads= await AdService.getFavouriteAds(req.query,req.user_ID);
+      const Get_My_Fav_Ads = await AdService.getFavouriteAds(req.query, req.user_ID);
       // Response code is sent 
       res.status(200).send({
         message: "My Favourite Ads ",
-       Get_My_Fav_Ads
+        Get_My_Fav_Ads
       })
     } catch (e) {
       if (!e.status) {
@@ -178,7 +178,7 @@ module.exports = class AdController {
       // Ad is Removed &  response is sent
       const deletedAd = await AdService.deleteAds(req.body, req.user_ID, ad_id);
       // Reponse code is sent 
-      res.status(200).send({ message:deletedAd })
+      res.status(200).send({ message: deletedAd })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -202,19 +202,19 @@ module.exports = class AdController {
       const ad_id = req.body.ad_id;
       // AD detail is fetched from db and sent to response
       // const {updateAd , owner} = await AdService.getAdDetails(ad_id,req.query);
-      const {AdDetail,ownerDetails} = await AdService.getParticularAd(ad_id,req.query)
+      const { AdDetail, ownerDetails } = await AdService.getParticularAd(ad_id, req.query)
       // Response is sent
-        await track('viewed ad successfully', {
-          distinct_id: req.user_ID,
-          ad_id: ad_id, 
-          // message:`user : ${req.user_ID} viewed Ad`
-        })
-        res.status(200).json({
-          AdDetails: AdDetail,
-          Owner:ownerDetails
-          // owner: owner
-        })
-      
+      await track('viewed ad successfully', {
+        distinct_id: req.user_ID,
+        ad_id: ad_id,
+        // message:`user : ${req.user_ID} viewed Ad`
+      })
+      res.status(200).json({
+        AdDetails: AdDetail,
+        Owner: ownerDetails
+        // owner: owner
+      })
+
     } catch (e) {
 
       if (!e.status) {
@@ -226,13 +226,13 @@ module.exports = class AdController {
       } else {
         res.status(e.status).json({
           error: {
-            message: e.message 
+            message: e.message
           }
         });
       };
     };
   }
-  
+
   // Get Premium Ads  -- Ad is Fetched   and returned from Adservice to getPremiumAds
   static async apiGetPremiumAds(req, res, next) {
     try {
@@ -245,16 +245,16 @@ module.exports = class AdController {
           distinct_id: req.user_ID,
         })
         res.status(404).json({
-          message:  "ADS_NOT_FOUND"
+          message: "ADS_NOT_FOUND"
         })
       }
-      if(getPremiumAds.length > 0){
+      if (getPremiumAds.length > 0) {
         res.status(200).json({
           PremiumAds: getPremiumAds,
           TotalPremiumAds: getPremiumAds.length
         })
       }
-      if(getPremiumAds.length == 0){
+      if (getPremiumAds.length == 0) {
         await track('viewed Premium ads failed', {
           distinct_id: req.user_ID,
         })
@@ -285,7 +285,7 @@ module.exports = class AdController {
       const getRecentAds = await AdService.getRecentAdsService(user_ID, req.query);
       // Response is sent
       if (getRecentAds == null) {
-         // mixpanel track for get Recent ads failed
+        // mixpanel track for get Recent ads failed
         await track('viewed Recent ads failed', {
           distinct_id: req.user_ID,
         })
@@ -293,15 +293,44 @@ module.exports = class AdController {
           message: "ADS_NOT_FOUND"
         })
       }
-      if(getRecentAds.length > 0) {
+      if (getRecentAds.length > 0) {
         res.status(200).json({
           getRecentAds: getRecentAds,
           TotalRecentAds: getRecentAds.length
         })
       }
-      if(getRecentAds.length == 0){
+      if (getRecentAds.length == 0) {
         res.status(204).json({})
       }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
+  // Get Ads -- Ads are Fetched and Returned from Adservice 
+  static async apiGetMyAdDetails(req, res, next) {
+    try {
+      const { ad_id } = req.body;
+      const user_ID = req.user_ID;
+      // My ads are fetched from db abd sent to response
+      const myAdDetail = await AdService.getMyAdDetails(ad_id, user_ID);
+      // Response code is send 
+      res.status(200).send({
+        message: "success!",
+        AdDetail: myAdDetail
+      });
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

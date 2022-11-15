@@ -11,7 +11,7 @@ const {
 
 // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
-  const Ads = await Generic.find();
+  const Ads = await Generic.find({ad_status:"Selling"});
   Ads.forEach(ad => {
     if (currentDate > (ad.ad_expire_date)) {
       const updateAd = Generic.findByIdAndUpdate(ad._id,
@@ -68,7 +68,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       category: category,
       sub_category: sub_category,
       $text: {
-        $search: `${keywords[1]} ${keywords[2]}`
+        $search: `${keywords[1]} ${keywords[3]}`
       },
       $or: [
         {
@@ -86,7 +86,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       $or: [
         {
           "SelectFields.Gated Community":
-            keywords[3]
+            keywords[2]
         }
       ],
     })
@@ -106,12 +106,12 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
   const Credits = await Credit.find()
   Credits.forEach(async creditDoc => {
     await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
-      $inc: { available_free_credits: 100 },
-      $inc: { premium_credits_info: bodyData.count },
+      $inc: { available_free_credits: 100 ,  available_premium_credits:10 },
       $push: {
         free_credits_info: {
           count: 100,
           allocation: "Admin-Monthly",
+          status:"Available",
           allocated_on: currentDate,
           duration: moment(DateAfter30Days).diff(currentDate, "days"),
           credits_expires_on: DateAfter30Days
@@ -121,6 +121,7 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
         premium_credits_info: {
           count: 10,
           allocation: "Admin-Monthly",
+          status:"Available",
           allocated_on: currentDate,
           duration: moment(DateAfter30Days).diff(currentDate, "days"),
           credits_expires_on: DateAfter30Days
@@ -153,7 +154,7 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
           "free_credits_info.credits_expires_on": credits_expires_on,
         }, {
           $set: {
-            "free_credits_info.$.status": "Expired/Empty"
+            "free_credits_info.$.status": "Expired"
           }
         }, { new: true })
           .then(async res => {
@@ -178,7 +179,7 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
           "premium_credits_info.credits_expires_on": credits_expires_on
         }, {
           $set: {
-            "premium_credits_info.$.status": "Expired/Empty"
+            "premium_credits_info.$.status": "Expired"
           }
         }, { new: true })
           .then(async res => {

@@ -74,6 +74,24 @@ module.exports = class AlertService {
     }
   }
 
+  static async GetAlert(user_id) {
+    const userExist = await Profile.findById({ _id: user_id })
+    if (!userExist) {
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    const getAlerts = await Alert.find({ user_ID: user_id }, {
+      category: 1,
+      sub_category: 1,
+      name: 1,
+      keywords: 1,
+      created_Date: 1
+    })
+    if(getAlerts.length == 0){
+      throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
+    }
+    return getAlerts
+  }
+
   //Update Alert
   static async updateAlert(bodyData, alert_id, userId) {
     const {
