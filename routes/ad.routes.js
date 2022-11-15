@@ -20,4 +20,3 @@ router.get('/api/v1/getPremiumAds',verifyToken,AdController.apiGetPremiumAds);
 router.get('/api/v1/getRecentAds',verifyToken,AdController.apiGetRecentAds);
 
 module.exports = router;
- 
