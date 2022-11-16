@@ -821,7 +821,6 @@ module.exports = class AdService {
   static async getParticularAd(ad_id, query) {
     let lng = +query.lng;
     let lat = +query.lat;
-    console.log(lng, lat)
     let maxDistance = 100000;
     const AdDetail = await Generic.aggregate([
       {
@@ -879,8 +878,8 @@ module.exports = class AdService {
     })
     // mixpanel -- track  get Particular ad ads
     await track('get Particular ad ads', {
-      distinct_id: userId,
-      message: ` user_id : ${userId}  viewd ${ad_id}`
+      distinct_id: ad_id,
+      message: `viewed ${ad_id}`
     })
     return { AdDetail, ownerDetails };
   };
@@ -1133,9 +1132,6 @@ module.exports = class AdService {
     if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    if (!userExist.my_ads.includes(ad_id)) {
-      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-    }
     const myAdDetail = await Generic.findOne({ _id: ad_id }, {
       '_id': 1,
       "user_id": 1,
@@ -1157,11 +1153,17 @@ module.exports = class AdService {
       'created_at': 1,
       'isPrime': 1,
     });
+    const ownerDetails = await Profile.findById({ _id: myAdDetail.user_id }, {
+      _id: 1,
+      name: 1,
+      profile_url: 1,
+      created_date: 1
+    })
     // mixpanel -- track  get Particular ad ads
     await track('get Particular ad ads', {
       distinct_id: user_id,
       message: ` user_id : ${user_id}  viewd ${ad_id}`
     })
-    return myAdDetail
+    return {myAdDetail , ownerDetails}
   };
 };

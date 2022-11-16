@@ -152,6 +152,7 @@ module.exports = class ProfileService {
             date_of_birth: 1,
             user_type: 1,
             about: 1,
+            is_email_verified:1,
             profile_url: 1,
             followers: 1,
             followings: 1,
