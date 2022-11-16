@@ -4,9 +4,27 @@ const { track } = require("./mixpanel-service");
 const Generic = require("../models/Ads/genericSchema");
 const { currentDate } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
+const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class GlobalSearchService {
+
+    static async   createGlobalSearch(body){
+    //Create new Ad in GlobalSearch Model 
+        const {adId,category,sub_category,title,description} = body
+        console.log([category,sub_category,title,description].join(' '))
+        const createGlobalSearch = await GlobalSearch.create({
+            ad_id: adId,
+            Keyword:[category,sub_category,title,description].join(' ')
+        });
+    // Mixpanel track for global Search Keywords
+    await track('global search keywords', {
+        category: category,
+        distinct_id: createGlobalSearch._id,
+        keywords: [category, sub_category, title, description]
+      });
+    } 
+
     // api get global search 
     static async getGlobalSearch(queries, user_ID) {
         const { keyword } = queries;

@@ -5,6 +5,7 @@ const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
 const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
+const { createGlobalSearch } = require("./GlobalSearchService");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -107,21 +108,8 @@ module.exports = class AdService {
               my_ads: ObjectId(adDoc._id)
             }
           });
-          //Create new Ad in GlobalSearch Model 
-          const createGlobalSearch = await GlobalSearch.create({
-            ad_id: adDoc._id,
-            category: bodyData.category,
-            sub_category: bodyData.sub_category,
-            title: bodyData.title,
-            description: bodyData.description,
-          });
-
-          // Mixpanel track for global Search Keywords
-          await track('global search keywords', {
-            category: bodyData.category,
-            distinct_id: createGlobalSearch._id,
-            keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
-          });
+          const adId = adDoc._id
+          await createGlobalSearch({adId,category,sub_category,title,description})
           return adDoc["_doc"];
         }
       }
