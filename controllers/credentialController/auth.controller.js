@@ -10,12 +10,12 @@ const mixpanel = require("mixpanel");
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
-    const { phoneNumber } = req.body;
+    const { phoneNumber ,smsToken } = req.body;
       // Creating OTP for phoneNumber
       const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
       let msgResponse = {};
 
-      msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber);
+      msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber , smsToken);
       if (msgResponse.status === "success") {
         // mixpanel track - email sent 
         await track('Otp Sent to Phone number successfully !! ', {

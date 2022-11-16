@@ -216,7 +216,6 @@ module.exports = class AdController {
       })
 
     } catch (e) {
-
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -325,11 +324,12 @@ module.exports = class AdController {
       const { ad_id } = req.body;
       const user_ID = req.user_ID;
       // My ads are fetched from db abd sent to response
-      const myAdDetail = await AdService.getMyAdDetails(ad_id, user_ID);
+      const {myAdDetail , ownerDetails} = await AdService.getMyAdDetails(ad_id, user_ID);
       // Response code is send 
       res.status(200).send({
         message: "success!",
-        AdDetail: myAdDetail
+        AdDetail: myAdDetail,
+        ownerDetails:ownerDetails
       });
     } catch (e) {
       if (!e.status) {

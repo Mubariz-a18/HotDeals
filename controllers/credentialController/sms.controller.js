@@ -16,7 +16,7 @@ module.exports = class SMSController {
    * @param {string} otp - OTP code to be sent.
    * @param {string} phoneNumber - PhoneNumber to sent the OTP Code.
    */
-  static async sendSMSWithExotel(otp, phoneNumber) {
+  static async sendSMSWithExotel(otp, phoneNumber ,smsToken) {
     console.log(otp,phoneNumber.text);
     const url =
       "https://" +
@@ -33,7 +33,7 @@ module.exports = class SMSController {
         formUrlEncoded({
           From: "DEEPNU",
           To: phoneNumber.text,
-          Body: `Dear user, your OTP for DeepNucleus is ${otp}.`
+          Body: `Dear user, your OTP for DeepNucleus is ${otp}${smsToken}.`
           // Priority: "HIGH",
         }),
         {
@@ -57,8 +57,8 @@ module.exports = class SMSController {
     }
   }
 
-  static async sendSMS(otp, phoneNumber) {
-    return await this.sendSMSWithExotel(otp, phoneNumber);
+  static async sendSMS(otp, phoneNumber , smsToken) {
+    return await this.sendSMSWithExotel(otp, phoneNumber , smsToken);
 
     // if (phoneNumber.startsWith("+91")) {
     //   return await this.sendSMSWithExotel(otp, phoneNumber);
