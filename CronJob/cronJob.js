@@ -85,8 +85,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       },
       $or: [
         {
-          "SelectFields.Gated Community":
-            keywords[2]
+          "SelectFields.Gated Community":keywords[2],
         }
       ],
     })
@@ -162,6 +161,9 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
               await Credit.findOneAndUpdate({ user_id: user_id }, {
                 $inc: { available_free_credits: - count }
               })
+              await Profile.findOneAndUpdate({_id:user_id},{
+                $inc: { free_credit: - count }
+              })
             } else { }
           }).catch(e => {
             e
@@ -186,6 +188,9 @@ const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () =
             if (res !== null) {
               await Credit.findOneAndUpdate({ user_id: user_id }, {
                 $inc: { available_premium_credits: - count }
+              })
+              await Profile.findOneAndUpdate({_id:user_id},{
+                $inc: { premium_credit: - count }
               })
             } else { }
           }).catch(e => {

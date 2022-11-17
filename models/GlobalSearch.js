@@ -4,20 +4,13 @@ const GlobalSearchSchema = mongoose.Schema({
   ad_id: {
     type: mongoose.Schema.Types.ObjectId,
   },
-  category: {
-    type: String,
-    required: true,
+  Keyword:{
+    type:String
   },
-  sub_category: {
-    type: String,
-    required: true,
-  },
-  title:{
-      type: String,
-    },
-  description:{
-    type: String,
-  }
+  ad_posted_location: {
+    type: {type:String} ,
+    coordinates: [],
+},
 });
 
 GlobalSearchSchema.index({ category: "text", sub_category: "text"});

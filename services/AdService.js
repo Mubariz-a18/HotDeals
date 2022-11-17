@@ -1,10 +1,10 @@
 const Profile = require("../models/Profile/Profile");
-const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
 const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
+const { createGlobalSearch } = require("./GlobalSearchService");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -87,6 +87,7 @@ module.exports = class AdService {
             ad_posted_location,
             ad_posted_address,
             ad_present_address,
+            ad_Premium_Date: isPrime == true ? currentDate : "",
             ad_status,
             is_negotiable,
             is_ad_posted,
@@ -98,8 +99,8 @@ module.exports = class AdService {
           await track('Ad creation succeed', {
             category: bodyData.category,
             distinct_id: adDoc._id,
-            $latitude: bodyData.ad_posted_location.coordinates[1],
-            $longitude: bodyData.ad_posted_location.coordinates[0],
+            $latitude:ad_posted_location.coordinates[1],
+            $longitude: ad_posted_location.coordinates[0],
           })
           //save the ad_id in users profile in myads
           await Profile.findByIdAndUpdate({ _id: userId }, {
@@ -107,21 +108,17 @@ module.exports = class AdService {
               my_ads: ObjectId(adDoc._id)
             }
           });
-          //Create new Ad in GlobalSearch Model 
-          const createGlobalSearch = await GlobalSearch.create({
-            ad_id: adDoc._id,
-            category: bodyData.category,
-            sub_category: bodyData.sub_category,
-            title: bodyData.title,
-            description: bodyData.description,
-          });
-
-          // Mixpanel track for global Search Keywords
-          await track('global search keywords', {
-            category: bodyData.category,
-            distinct_id: createGlobalSearch._id,
-            keywords: [bodyData.category, bodyData.sub_category, bodyData.title, bodyData.description]
-          });
+          const adId = adDoc._id
+          const body = {adId,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            ad_posted_location,
+            SelectFields
+          }
+          await createGlobalSearch(body)
           return adDoc["_doc"];
         }
       }
