@@ -19,6 +19,7 @@ const GlobalSearchRouter = require('./routes/global_search.routes');
 const cat_subCat_SearchRouter = require('./routes/cat_subCat_search.routes')
 const {} = require("./CronJob/cronJob");
 
+
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 

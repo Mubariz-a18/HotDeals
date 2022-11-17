@@ -9,8 +9,8 @@ const ObjectId = require('mongodb').ObjectId;
 
 module.exports = class GlobalSearchService {
 
-    static async   createGlobalSearch(body){
-    //Create new Ad in GlobalSearch Model 
+    static async createGlobalSearch(body) {
+        //Create new Ad in GlobalSearch Model 
         const {
             adId,
             category,
@@ -18,6 +18,7 @@ module.exports = class GlobalSearchService {
             title,
             description,
             ad_posted_address,
+            ad_posted_location,
             SelectFields } = body
         const {
             Condition,
@@ -25,6 +26,7 @@ module.exports = class GlobalSearchService {
             Color } = SelectFields
         const createGlobalSearch = await GlobalSearch.create({
             ad_id: adId,
+            ad_posted_location:ad_posted_location,
             Keyword: [
                 category,
                 sub_category,
@@ -45,6 +47,10 @@ module.exports = class GlobalSearchService {
 
     // api get global search 
     static async getGlobalSearch(queries, user_ID) {
+        let lng = +queries.lng;
+        let lat = +queries.lat;
+        let maxDistance = 10000;
+        console.log(lng,lat)
         const { keyword } = queries;
         // check if user exist 
         const userExist = await Profile.findOne({ _id: user_ID })
@@ -58,9 +64,33 @@ module.exports = class GlobalSearchService {
             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         } else {
             //if user exist find ads using $search and $text
-            const result = await GlobalSearch.find({
-                $text: { $search: `${keyword}` },
-            });
+            const result = await GlobalSearch.aggregate([
+                {
+                    '$geoNear': {
+                      'near': { type: 'Point', coordinates: [lng, lat] },
+                      "distanceField": "dist.calculated",
+                      'maxDistance': maxDistance,
+                      "includeLocs": "dist.location",
+                      'spherical': true
+                    }
+                },
+                {
+                  "$search": {
+                    "index": "new",
+                    "text": {
+                      "query": keyword,
+                      "path": {
+                        "wildcard": "*"
+                      }
+                    }
+                  }
+                },
+                {
+                    $project:{
+                        ad_id:1
+                    }
+                }
+              ]);
             let GenericAds = [];
             result.forEach(item => {
                 GenericAds.push(item.ad_id)

@@ -87,6 +87,7 @@ module.exports = class AdService {
             ad_posted_location,
             ad_posted_address,
             ad_present_address,
+            ad_Premium_Date: isPrime == true ? currentDate : "",
             ad_status,
             is_negotiable,
             is_ad_posted,
@@ -98,8 +99,8 @@ module.exports = class AdService {
           await track('Ad creation succeed', {
             category: bodyData.category,
             distinct_id: adDoc._id,
-            $latitude: bodyData.ad_posted_location.coordinates[1],
-            $longitude: bodyData.ad_posted_location.coordinates[0],
+            $latitude:ad_posted_location.coordinates[1],
+            $longitude: ad_posted_location.coordinates[0],
           })
           //save the ad_id in users profile in myads
           await Profile.findByIdAndUpdate({ _id: userId }, {
@@ -114,6 +115,7 @@ module.exports = class AdService {
             title,
             description,
             ad_posted_address,
+            ad_posted_location,
             SelectFields
           }
           await createGlobalSearch(body)
