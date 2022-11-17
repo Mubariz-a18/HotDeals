@@ -1,5 +1,4 @@
 const Profile = require("../models/Profile/Profile");
-const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
@@ -109,7 +108,15 @@ module.exports = class AdService {
             }
           });
           const adId = adDoc._id
-          await createGlobalSearch({adId,category,sub_category,title,description})
+          const body = {adId,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            SelectFields
+          }
+          await createGlobalSearch(body)
           return adDoc["_doc"];
         }
       }

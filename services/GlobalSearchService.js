@@ -11,19 +11,37 @@ module.exports = class GlobalSearchService {
 
     static async   createGlobalSearch(body){
     //Create new Ad in GlobalSearch Model 
-        const {adId,category,sub_category,title,description} = body
-        console.log([category,sub_category,title,description].join(' '))
+        const {
+            adId,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            SelectFields } = body
+        const {
+            Condition,
+            Brand,
+            Color } = SelectFields
         const createGlobalSearch = await GlobalSearch.create({
             ad_id: adId,
-            Keyword:[category,sub_category,title,description].join(' ')
+            Keyword: [
+                category,
+                sub_category,
+                title,
+                description,
+                ad_posted_address,
+                Condition,
+                Brand,
+                Color].join(' ')
         });
-    // Mixpanel track for global Search Keywords
-    await track('global search keywords', {
-        category: category,
-        distinct_id: createGlobalSearch._id,
-        keywords: [category, sub_category, title, description]
-      });
-    } 
+        // Mixpanel track for global Search Keywords
+        await track('global search keywords', {
+            category: category,
+            distinct_id: createGlobalSearch._id,
+            keywords: [category, sub_category, title, description]
+        });
+    }
 
     // api get global search 
     static async getGlobalSearch(queries, user_ID) {
@@ -40,15 +58,21 @@ module.exports = class GlobalSearchService {
             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         } else {
             //if user exist find ads using $search and $text
-            const result = await Generic.find({
+            const result = await GlobalSearch.find({
                 $text: { $search: `${keyword}` },
+            });
+            let GenericAds = [];
+            result.forEach(item => {
+                GenericAds.push(item.ad_id)
             })
+            const searched_ads = await Generic.find({ _id: GenericAds })
+
             // mix panel track for Global search api
             await track('Global search  success !! ', {
                 distinct_id: user_ID,
                 keywords: keyword
             });
-            return result
+            return searched_ads
         }
     };
     // Api create Analytics keywords
