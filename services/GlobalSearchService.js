@@ -65,26 +65,48 @@ module.exports = class GlobalSearchService {
         } else {
             //if user exist find ads using $search and $text
             const result = await GlobalSearch.aggregate([
+                // {
+                //     '$geoNear': {
+                //       'near': { type: 'Point', coordinates: [lng, lat] },
+                //       "distanceField": "dist.calculated",
+                //       'maxDistance': maxDistance,
+                //       "includeLocs": "dist.location",
+                //       'spherical': true
+                //     }
+                // },
+                // {
+                //   "$search": {
+                //     "index": "new",
+                //     "text": {
+                //       "query": keyword,
+                //       "path": {
+                //         "wildcard": "*"
+                //       }
+                //     }
+                //   }
+                // },
                 {
-                    '$geoNear': {
-                      'near': { type: 'Point', coordinates: [lng, lat] },
-                      "distanceField": "dist.calculated",
-                      'maxDistance': maxDistance,
-                      "includeLocs": "dist.location",
-                      'spherical': true
-                    }
-                },
-                {
-                  "$search": {
-                    "index": "new",
-                    "text": {
-                      "query": keyword,
-                      "path": {
-                        "wildcard": "*"
+                    $search: {
+                      "compound": {
+                        "must": {
+                          "text": {
+                            "query": "bags",
+                            "path": "keyword"
+                          }
+                        },
+                        "should": {
+                          "near": {
+                            "origin": {
+                              "type": "Point",
+                              "coordinates": [lng, lat]
+                            },
+                            "pivot": 1000,
+                            "path": "address.location"
+                          }
+                        }
                       }
                     }
-                  }
-                },
+                  },
                 {
                     $project:{
                         ad_id:1
