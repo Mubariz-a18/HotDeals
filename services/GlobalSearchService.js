@@ -46,11 +46,15 @@ module.exports = class GlobalSearchService {
     }
 
     // api get global search 
-    static async getGlobalSearch(queries, user_ID) {
+    static async getGlobalSearch(queries,user_id) {
         let lng = +queries.lng;
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
+        const userExist = await Profile.findById({_id:user_id});
+        if(!userExist){
+            throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+        }
         //if user exist find ads using $search and $text
         const result = await GlobalSearch.aggregate([
             {
