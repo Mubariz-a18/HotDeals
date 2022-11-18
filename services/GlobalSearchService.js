@@ -46,11 +46,15 @@ module.exports = class GlobalSearchService {
     }
 
     // api get global search 
-    static async getGlobalSearch(queries, user_ID) {
+    static async getGlobalSearch(queries,user_id) {
         let lng = +queries.lng;
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
+        const userExist = await Profile.findById({_id:user_id});
+        if(!userExist){
+            throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+        }
         //if user exist find ads using $search and $text
         const result = await GlobalSearch.aggregate([
             {
@@ -64,7 +68,7 @@ module.exports = class GlobalSearchService {
                                         "type": "Point",
                                         "coordinates": [lng, lat]
                                     },
-                                    "radius": maxDistance
+                                    "radius": maxDistance,
                                 },
                                 "path": "ad_posted_location"
                             },
@@ -81,6 +85,8 @@ module.exports = class GlobalSearchService {
             {
                 $project: {
                     ad_id: 1,
+                    Keyword: 1,
+                    ad_posted_location: 1,
                     "score": { "$meta": "searchScore" }
                 }
             }]
@@ -89,7 +95,13 @@ module.exports = class GlobalSearchService {
             result.forEach(item => {
                 GenericAds.push(item.ad_id)
             })
-            const searched_ads = await Generic.find({ _id: GenericAds })
+            const searched_ads = await Generic.find({ _id: GenericAds },{
+                title:1,
+                image_url:1,
+                price:1,
+                created_at:1,
+                isPrime:-1
+            }).sort({isPrime:-1,created_at:-1})
             // mix panel track for Global search api
             await track('Global search  success !! ', {
                 keywords: keyword

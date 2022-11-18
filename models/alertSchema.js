@@ -5,9 +5,6 @@ const alertSchema = mongoose.Schema(
     user_ID: {
       type: mongoose.Schema.Types.ObjectId,
     },
-    // title:{
-    //   type:String
-    // },
     category: {
       type: String,
     },
@@ -22,18 +19,9 @@ const alertSchema = mongoose.Schema(
         type: String,
       },
     ],
-    // condition:{
-    //     type:String
-    // },
     location:{
       type:String
     },
-    // price:{
-    //   type:Number
-    // },
-    // age:{
-    //   type:String
-    // },
     activate_status: {
       type: Boolean,
       default:true
