@@ -26,7 +26,7 @@ module.exports = class GlobalSearchService {
             Color } = SelectFields
         const createGlobalSearch = await GlobalSearch.create({
             ad_id: adId,
-            ad_posted_location:ad_posted_location,
+            ad_posted_location: ad_posted_location,
             Keyword: [
                 category,
                 sub_category,
@@ -49,83 +49,53 @@ module.exports = class GlobalSearchService {
     static async getGlobalSearch(queries, user_ID) {
         let lng = +queries.lng;
         let lat = +queries.lat;
-        let maxDistance = 10000;
-        console.log(lng,lat)
+        let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
-        // check if user exist 
-        const userExist = await Profile.findOne({ _id: user_ID })
-        // if not exist throw error
-        if (!userExist) {
-            // mixpanel - track blobal search failed 
-            await track('failed -- Global search  ', {
-                distinct_id: user_ID,
-                keywords: keyword
-            });
-            throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-        } else {
-            //if user exist find ads using $search and $text
-            const result = await GlobalSearch.aggregate([
-                // {
-                //     '$geoNear': {
-                //       'near': { type: 'Point', coordinates: [lng, lat] },
-                //       "distanceField": "dist.calculated",
-                //       'maxDistance': maxDistance,
-                //       "includeLocs": "dist.location",
-                //       'spherical': true
-                //     }
-                // },
-                // {
-                //   "$search": {
-                //     "index": "new",
-                //     "text": {
-                //       "query": keyword,
-                //       "path": {
-                //         "wildcard": "*"
-                //       }
-                //     }
-                //   }
-                // },
-                {
-                    $search: {
-                      "compound": {
-                        "must": {
-                          "text": {
-                            "query": "bags",
-                            "path": "keyword"
-                          }
-                        },
-                        "should": {
-                          "near": {
-                            "origin": {
-                              "type": "Point",
-                              "coordinates": [lng, lat]
+        //if user exist find ads using $search and $text
+        const result = await GlobalSearch.aggregate([
+            {
+                $search: {
+                    "index": "Global_search_Index",
+                    "compound": {
+                        "filter": {
+                            "geoWithin": {
+                                "circle": {
+                                    "center": {
+                                        "type": "Point",
+                                        "coordinates": [lng, lat]
+                                    },
+                                    "radius": maxDistance
+                                },
+                                "path": "ad_posted_location"
                             },
-                            "pivot": 1000,
-                            "path": "address.location"
-                          }
+                        },
+                        "must": {
+                            "autocomplete": {
+                                "query": keyword,
+                                "path": "Keyword"
+                            }
                         }
-                      }
-                    }
-                  },
-                {
-                    $project:{
-                        ad_id:1
                     }
                 }
-              ]);
+            },
+            {
+                $project: {
+                    ad_id: 1,
+                    "score": { "$meta": "searchScore" }
+                }
+            }]
+        );
             let GenericAds = [];
             result.forEach(item => {
                 GenericAds.push(item.ad_id)
             })
             const searched_ads = await Generic.find({ _id: GenericAds })
-
             // mix panel track for Global search api
             await track('Global search  success !! ', {
-                distinct_id: user_ID,
                 keywords: keyword
             });
             return searched_ads
-        }
+        
     };
     // Api create Analytics keywords
     static async createAnalyticsKeyword(result, queries, user_ID) {
