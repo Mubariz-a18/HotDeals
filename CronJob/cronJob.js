@@ -53,7 +53,7 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
   });
 });
 //(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async () => {
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
@@ -61,19 +61,18 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
       category,
       sub_category,
       keywords,
-      location,
     } = alert
     const alertNotificationDoc = await Generic.find({
       ad_status: "Selling",
       category: category,
       sub_category: sub_category,
       $text: {
-        $search: `${keywords[1]} ${keywords[3]}`
+        $search: `${keywords[2]} ${keywords[3]} ${keywords[4]}`
       },
       $or: [
         {
           $in: {
-            "ad_posted_address": { "$regex": location, "$options": "i" },
+            "ad_posted_address": { "$regex": keywords[0], "$options": "i" },
           },
           $in: {
             "title": { "$regex": name, "$options": "i" }
@@ -81,13 +80,8 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
         }
       ],
       "price": {
-        $lte: keywords[0]
-      },
-      $or: [
-        {
-          "SelectFields.Gated Community":keywords[2],
-        }
-      ],
+        $lte: keywords[1] + 1000
+      }
     })
     const ad_Ids = []
     alertNotificationDoc.forEach(e => {
@@ -218,7 +212,7 @@ const Schedule_Task_Is_user_Recommended = cron.schedule('0 0 0 * * *', async () 
 // ScheduleTask_Ad_Status_Expire.start()
 // ScheduleTask_Display_Historic_Ads.start()
 // ScheduleTask_Alert_activation.start()
-// Schedule_Task_Alert_6am_to_10pm.start()
+Schedule_Task_Alert_6am_to_10pm.start()
 // Schedule_Task_Monthly_credits.start()
 // Schedule_Task_Credit_Status_Update.start()
 // Schedule_Task_Is_user_Recommended.start()

@@ -68,7 +68,7 @@ module.exports = class GlobalSearchService {
                                         "type": "Point",
                                         "coordinates": [lng, lat]
                                     },
-                                    "radius": maxDistance
+                                    "radius": maxDistance,
                                 },
                                 "path": "ad_posted_location"
                             },
@@ -85,6 +85,8 @@ module.exports = class GlobalSearchService {
             {
                 $project: {
                     ad_id: 1,
+                    Keyword: 1,
+                    ad_posted_location: 1,
                     "score": { "$meta": "searchScore" }
                 }
             }]
@@ -93,7 +95,13 @@ module.exports = class GlobalSearchService {
             result.forEach(item => {
                 GenericAds.push(item.ad_id)
             })
-            const searched_ads = await Generic.find({ _id: GenericAds })
+            const searched_ads = await Generic.find({ _id: GenericAds },{
+                title:1,
+                image_url:1,
+                price:1,
+                created_at:1,
+                isPrime:-1
+            }).sort({isPrime:-1,created_at:-1})
             // mix panel track for Global search api
             await track('Global search  success !! ', {
                 keywords: keyword
