@@ -3,9 +3,8 @@ const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const { track } = require("./mixpanel-service");
-const { currentDate , DOB, Free_credit_Expiry, DateAfter30Days, my_age} = require("../utils/moment");
+const { currentDate , my_age} = require("../utils/moment");
 const moment = require('moment');
-const Credit = require("../models/creditSchema");
 const { createCreditForNewUser } = require("./CreditService");
 
 module.exports = class ProfileService {
