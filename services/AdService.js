@@ -557,7 +557,7 @@ module.exports = class AdService {
         }
         else {
           // save the ads ino favourite ads list in user profile
-          await Profile.updateOne(
+          const updatedUser = await Profile.updateOne(
             { _id: userId },
             {
               $addToSet: {
@@ -568,15 +568,17 @@ module.exports = class AdService {
               }
             })
           // increase the saved count by 1  
-          await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $inc: { saved: 1 } }
-          )
-          // mixpanel track make Ad favourite
-          await track('Make Ad favourite successfully !! ', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
+          if (updatedUser.modifiedCount > 0) {
+            await Generic.findByIdAndUpdate(
+              { _id: ad_id },
+              { $inc: { saved: 1 } }
+            )
+            // mixpanel track make Ad favourite
+            await track('Make Ad favourite successfully !! ', {
+              distinct_id: userId,
+              ad_id: ad_id
+            })
+          }
           return findAd;
         }
       }
@@ -597,7 +599,7 @@ module.exports = class AdService {
         }
         else {
           // remove the ads from favourite_ads  list in user profile
-          await Profile.findOneAndUpdate(
+          const updatedUser = await Profile.updateOne(
             { _id: userId },
             {
               $pull: {
@@ -608,19 +610,20 @@ module.exports = class AdService {
             },
             { new: true }
           );
-          // decrease the saved count by 1  
-          await Generic.findByIdAndUpdate(
-            { _id: ad_id },
-            { $inc: { saved: -1 } }
-          )
-          // mixpanel track remove Ad favourite
-          await track('Removed Ad from Favourites successfully', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-          return {
-            findAd
-          };
+          if (updatedUser.modifiedCount > 0) {
+            // decrease the saved count by 1  
+            await Generic.findByIdAndUpdate(
+              { _id: ad_id },
+              { $inc: { saved: -1 } }
+            )
+            console.log(updatedUser)
+            // mixpanel track remove Ad favourite
+            await track('Removed Ad from Favourites successfully', {
+              distinct_id: userId,
+              ad_id: ad_id
+            })
+          }
+          return findAd
         }
       }
     }

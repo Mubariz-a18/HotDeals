@@ -17,7 +17,7 @@ const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
 const cat_subCat_SearchRouter = require('./routes/cat_subCat_search.routes')
-const {} = require("./CronJob/cronJob");
+// const {} = require("./CronJob/cronJob");
 
 
 //Middlewares
