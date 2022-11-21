@@ -53,7 +53,7 @@ const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => 
   });
 });
 //(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
@@ -212,7 +212,7 @@ const Schedule_Task_Is_user_Recommended = cron.schedule('0 0 0 * * *', async () 
 // ScheduleTask_Ad_Status_Expire.start()
 // ScheduleTask_Display_Historic_Ads.start()
 // ScheduleTask_Alert_activation.start()
-Schedule_Task_Alert_6am_to_10pm.start()
+// Schedule_Task_Alert_6am_to_10pm.start()
 // Schedule_Task_Monthly_credits.start()
 // Schedule_Task_Credit_Status_Update.start()
 // Schedule_Task_Is_user_Recommended.start()
