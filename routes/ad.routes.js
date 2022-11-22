@@ -18,5 +18,6 @@ router.post('/api/v1/get-particular-ad-details',AdController.apiGetParticularAdD
 router.post('/api/v1/getMyAdDetail',verifyToken,AdController.apiGetMyAdDetails);
 router.get('/api/v1/getPremiumAds',verifyToken,AdController.apiGetPremiumAds);
 router.get('/api/v1/getRecentAds',verifyToken,AdController.apiGetRecentAds);
+router.post('/api/v1/isAdFav',verifyToken,AdController.apiIsAdFav);
 
 module.exports = router;

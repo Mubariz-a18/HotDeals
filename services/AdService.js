@@ -1166,4 +1166,19 @@ module.exports = class AdService {
     })
     return {myAdDetail , ownerDetails}
   };
+
+  static async isAdFav(ad_id, user_id) {
+    const user = await Profile.find(
+      {
+        _id: user_id,
+        "favourite_ads": {
+          $elemMatch: { "ad_id": ad_id }
+        }
+      })
+    if (user.length == 0)
+    throw ({ status: 404, message: "Ad_Not_fav" }) 
+    else {
+      return  "AD_FOUND"
+    }
+  }
 };

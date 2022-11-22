@@ -1,13 +1,13 @@
-// const cron = require('node-cron')
-// const moment = require("moment")
-// const Generic = require('../models/Ads/genericSchema');
-// const Alert = require('../models/alertSchema');
-// const Credit = require('../models/creditSchema');
-// const Profile = require('../models/Profile/Profile');
-// const { 
-//   currentDate, 
-//   Ad_Historic_Duration, 
-//   DateAfter30Days } = require('../utils/moment');
+const cron = require('node-cron')
+const moment = require("moment")
+const Generic = require('../models/Ads/genericSchema');
+const Alert = require('../models/alertSchema');
+const Credit = require('../models/creditSchema');
+const Profile = require('../models/Profile/Profile');
+const { 
+  currentDate, 
+  Ad_Historic_Duration, 
+  DateAfter30Days } = require('../utils/moment');
 
 // // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 // const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
@@ -52,7 +52,7 @@
 //     }
 //   });
 // });
-// //(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
+//(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
 // const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
 //   const Alerts = await Alert.find({ activate_status: true })
 //   Alerts.forEach(async (alert) => {
@@ -62,7 +62,6 @@
 //       sub_category,
 //       keywords,
 //     } = alert
-    
 //     let price= Number(keywords[1])
 //     let myFilterArray = keywords.filter(Boolean);
 
@@ -120,10 +119,10 @@
 //       ad_Ids.push(e._id)
 //     })
 //     // console.log(ad_Ids)
-//     await Profile.updateOne(
-//       { _id: alert.user_ID, "alert.alert_id": alert["_id"] },
+//     await Alert.updateOne(
+//       { _id: alert._id},
 //       {
-//         $addToSet: { "alert.$.alerted_Ads": ad_Ids }
+//         $addToSet: { "alerted_Ads": ad_Ids }
 //       })
 //   })
 // });
