@@ -201,17 +201,17 @@ module.exports = class AdController {
     try {
       const ad_id = req.body.ad_id;
       // AD detail is fetched from db and sent to response
-      // const {updateAd , owner} = await AdService.getAdDetails(ad_id,req.query);
-      const { AdDetail, ownerDetails } = await AdService.getParticularAd(ad_id, req.query)
+      const { AdDetail, ownerDetails, isAdFav } = await AdService.getParticularAd(ad_id, req.query, req.user_ID)
       // Response is sent
       await track('viewed ad successfully', {
         distinct_id: req.user_ID,
         ad_id: ad_id,
-        // message:`user : ${req.user_ID} viewed Ad`
+        message: `user : ${req.user_ID} viewed Ad`
       })
       res.status(200).json({
         AdDetails: AdDetail,
-        Owner: ownerDetails
+        Owner: ownerDetails,
+        isAdFav: isAdFav
         // owner: owner
       })
 
@@ -324,39 +324,13 @@ module.exports = class AdController {
       const { ad_id } = req.body;
       const user_ID = req.user_ID;
       // My ads are fetched from db abd sent to response
-      const {myAdDetail , ownerDetails} = await AdService.getMyAdDetails(ad_id, user_ID);
+      const { myAdDetail, ownerDetails, isAdFav } = await AdService.getMyAdDetails(ad_id, user_ID);
       // Response code is send 
       res.status(200).send({
         message: "success!",
         AdDetail: myAdDetail,
-        ownerDetails:ownerDetails
-      });
-    } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
-    };
-  };
-  // is ad_fav
-  static async apiIsAdFav(req,res,next){
-    try {
-      const { ad_id } = req.body;
-      const user_ID = req.user_ID;
-      // My ads are fetched from db abd sent to response
-      const AdFav = await AdService.isAdFav(ad_id, user_ID);
-      // Response code is send 
-      res.status(200).send({
-        message: AdFav
+        ownerDetails: ownerDetails,
+        isAdFav: isAdFav
       });
     } catch (e) {
       if (!e.status) {
