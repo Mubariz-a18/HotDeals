@@ -84,6 +84,7 @@ module.exports = class AlertService {
       sub_category: 1,
       name: 1,
       keywords: 1,
+      alerted_Ads:1,
       created_Date: 1
     })
     if(getAlerts.length == 0){

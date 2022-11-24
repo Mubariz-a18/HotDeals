@@ -99,7 +99,7 @@ module.exports = class AdService {
           await track('Ad creation succeed', {
             category: bodyData.category,
             distinct_id: adDoc._id,
-            $latitude:ad_posted_location.coordinates[1],
+            $latitude: ad_posted_location.coordinates[1],
             $longitude: ad_posted_location.coordinates[0],
           })
           //save the ad_id in users profile in myads
@@ -109,7 +109,8 @@ module.exports = class AdService {
             }
           });
           const adId = adDoc._id
-          const body = {adId,
+          const body = {
+            adId,
             category,
             sub_category,
             title,
@@ -818,7 +819,7 @@ module.exports = class AdService {
   };
 
   // Get particular Ad Detail with distance and user details
-  static async getParticularAd(ad_id, query) {
+  static async getParticularAd(ad_id, query, user_id) {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = 100000;
@@ -854,6 +855,7 @@ module.exports = class AdService {
           'price': 1,
           'image_url': 1,
           'SelectFields': 1,
+          'ad_posted_address': 1,
           'special_mention': 1,
           'description': 1,
           'ad_status': 1,
@@ -876,15 +878,28 @@ module.exports = class AdService {
       profile_url: 1,
       created_date: 1
     })
+    const user = await Profile.findOne(
+      {
+        _id: user_id,
+        "favourite_ads": {
+          $elemMatch: { "ad_id": ad_id }
+        }
+      })
+    let isAdFav
+    if (user) {
+      isAdFav = true
+    } else {
+      isAdFav = false
+    }
     // mixpanel -- track  get Particular ad ads
     await track('get Particular ad ads', {
       distinct_id: ad_id,
       message: `viewed ${ad_id}`
     })
-    return { AdDetail, ownerDetails };
+    return { AdDetail, ownerDetails, isAdFav };
   };
 
-  // Get Premium Ads -- User is authentcated and Ads Are filtered
+  // Get Premium Ads -- User is authentcated 1  1and Ads Are filtered
   static async getPremiumAdsService(userId, query) {
     // input from parameters (longitute , latitude , maxDistance ,page ,limit )
     let lng = +query.lng;
@@ -893,116 +908,109 @@ module.exports = class AdService {
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 20;
-    //  check if user exist 
-    const userExist = await Profile.findOne({ _id: userId });
-    //if not exist throw error
-    if (!userExist) {
-      await track('failed To get Premium Ads', {
-        distinct_id: userId
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    //else find Premium ads byfiltering isPrime true
-    else {
-      /* 
-      $geonear to find all the ads existing near the given coordinates
-      $lookup for the relation between the profiles and Generics
-      $unwind to extract the array from sample_result
-      $addfeilds to join profile fields with sample result
-      $project to show only the required fields
-      $match for filtering only premium ads
-      $sort to sort all the ads by order 
-      $skip and limit for pagination
-      */
-      const premiumAdsData = await Generic.aggregate([
-        [
-          {
-            '$geoNear': {
-              'near': { type: 'Point', coordinates: [lng, lat] },
-              "distanceField": "dist.calculated",
-              'maxDistance': maxDistance,
-              "includeLocs": "dist.location",
-              'spherical': true
-            }
-          },
-          {
-            '$lookup': {
-              'from': 'profiles',
-              'localField': 'user_id',
-              'foreignField': '_id',
-              'as': 'sample_result'
-            }
-          },
-          {
-            '$unwind': {
-              'path': '$sample_result'
-            }
-          },
-          {
-            '$addFields': {
-              'Seller_Name': '$sample_result.name',
-              'Seller_Id': '$sample_result._id',
-              'Seller_Joined': '$sample_result.created_date',
-              'Seller_Image': '$sample_result.profile_url',
-              'Seller_verified': '$sample_result.is_email_verified',
-              'Seller_recommended': '$sample_result.is_recommended',
-            }
-          },
-          {
-            '$project': {
-              '_id': 1,
-              'Seller_Id': 1,
-              'Seller_Name': 1,
-              'Seller_Joined': 1,
-              'Seller_Image': 1,
-              "Seller_verified": 1,
-              "Seller_recommended": 1,
-              'category': 1,
-              'sub_category': 1,
-              'title': 1,
-              'price': 1,
-              'image_url': 1,
-              'special_mention': 1,
-              'description': 1,
-              'reported': 1,
-              'reported_by': 1,
-              'ad_status': 1,
-              'ad_type': 1,
-              "created_at": 1,
-              'ad_expire_date': 1,
-              'ad_promoted': 1,
-              'isPrime': 1,
-              "dist": 1
-            }
-          },
-          {
-            $match: {
-              isPrime: true,
-              ad_status: "Selling"
-            }
-          },
-          {
-            $sort: {
-              "created_at": -1,
-              "dist.calculated": 1,
-              "Seller_verified": -1,
-              "Seller_recommended": -1
-            }
-          },
-          {
-            $skip: limitval * (pageVal - 1)
-          },
-          {
-            $limit: limitval
-          },
-        ]
-      ])
-      // mix panel track for get premium ads 
-      await track('get Premium Ads Successfully', {
-        distinct_id: userId
-      })
-      return premiumAdsData;
-    };
+    /* 
+    $geonear to find all the ads existing near the given coordinates
+    $lookup for the relation between the profiles and Generics
+    $unwind to extract the array from sample_result
+    $addfeilds to join profile fields with sample result
+    $project to show only the required fields
+    $match for filtering only premium ads
+    $sort to sort all the ads by order 
+    $skip and limit for pagination
+    */
+    const premiumAdsData = await Generic.aggregate([
+      [
+        {
+          '$geoNear': {
+            'near': { type: 'Point', coordinates: [lng, lat] },
+            "distanceField": "dist.calculated",
+            'maxDistance': maxDistance,
+            "includeLocs": "dist.location",
+            'spherical': true
+          }
+        },
+        {
+          '$lookup': {
+            'from': 'profiles',
+            'localField': 'user_id',
+            'foreignField': '_id',
+            'as': 'sample_result'
+          }
+        },
+        {
+          '$unwind': {
+            'path': '$sample_result'
+          }
+        },
+        {
+          '$addFields': {
+            'Seller_Name': '$sample_result.name',
+            'Seller_Id': '$sample_result._id',
+            'Seller_Joined': '$sample_result.created_date',
+            'Seller_Image': '$sample_result.profile_url',
+            'Seller_verified': '$sample_result.is_email_verified',
+            'Seller_recommended': '$sample_result.is_recommended',
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'Seller_Name': 1,
+            "Seller_verified": 1,
+            "Seller_recommended": 1,
+            'category': 1,
+            'sub_category': 1,
+            'ad_status': 1,
+            'title': 1,
+            "created_at": 1,
+            'price': 1,
+            'image_url': 1,
+            'isPrime': 1,
+            "dist": 1
+          }
+        },
+        {
+          $match: {
+            isPrime: true,
+            ad_status: "Selling"
+          }
+        },
+        {
+          $sort: {
+            "created_at": -1,
+            "dist.calculated": 1,
+            "Seller_verified": -1,
+            "Seller_recommended": -1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ])
+    premiumAdsData.forEach(async premiumAd => {
+      const user = await Profile.find(
+        {
+          _id: userId,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": premiumAd._id }
+          }
+        })
+      if (user.length == 0) {
+        premiumAd.isAdFav = false
+      } else {
+        premiumAd.isAdFav = true
+      }
+    })
+    // mix panel track for get premium ads 
+    await track('get Premium Ads Successfully', {
+      distinct_id: userId
+    })
+    return premiumAdsData;
+
   };
 
   // Get Recent Ads  -- User is authentcated and Ads Are filtered
@@ -1014,117 +1022,109 @@ module.exports = class AdService {
     let pageVal = +query.page;
     let limitval = +query.limit || 20;
     if (pageVal == 0) pageVal = pageVal + 1
-    //  check if user exist 
-    const userExist = await Profile.findOne({ _id: userId });
-    //if not exist throw error
-    if (!userExist) {
-      await track('failed To get Recent Ads', {
-        distinct_id: userId
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    //else find recent ads by filtering isPrime false
-    else {
-      /* 
-  $geonear to find all the ads existing near the given coordinates
-  $lookup for the relation between the profiles and Generics
-  $unwind to extract the array from sample_result
-  $addfeilds to join profile fields with sample result
-  $project to show only the required fields
-  $match for filtering only recent ads
-  $sort to sort all the ads by order 
-  $skip and limit for pagination
-  */
-      const getRecentAds = await Generic.aggregate([
-        [
-          {
-            '$geoNear': {
-              'near': { type: 'Point', coordinates: [lng, lat] },
-              "distanceField": "dist.calculated",
-              'maxDistance': maxDistance,
-              "includeLocs": "dist.location",
-              'spherical': true
-            }
-          },
-          {
-            '$lookup': {
-              'from': 'profiles',
-              'localField': 'user_id',
-              'foreignField': '_id',
-              'as': 'sample_result'
-            }
-          },
-          {
-            '$unwind': {
-              'path': '$sample_result'
-            }
-          },
-          {
-            '$addFields': {
-              'Seller_Name': '$sample_result.name',
-              'Seller_Id': '$sample_result._id',
-              'Seller_Joined': '$sample_result.created_date',
-              'Seller_Image': '$sample_result.profile_url',
-              'Seller_verified': '$sample_result.is_email_verified',
-              'Seller_recommended': '$sample_result.is_recommended',
+    /* 
+$geonear to find all the ads existing near the given coordinates
+$lookup for the relation between the profiles and Generics
+$unwind to extract the array from sample_result
+$addfeilds to join profile fields with sample result
+$project to show only the required fields
+$match for filtering only recent ads
+$sort to sort all the ads by order 
+$skip and limit for pagination
+*/
+    const getRecentAds = await Generic.aggregate([
+      [
+        {
+          '$geoNear': {
+            'near': { type: 'Point', coordinates: [lng, lat] },
+            "distanceField": "dist.calculated",
+            'maxDistance': maxDistance,
+            "includeLocs": "dist.location",
+            'spherical': true
+          }
+        },
+        {
+          '$lookup': {
+            'from': 'profiles',
+            'localField': 'user_id',
+            'foreignField': '_id',
+            'as': 'sample_result'
+          }
+        },
+        {
+          '$unwind': {
+            'path': '$sample_result'
+          }
+        },
+        {
+          '$addFields': {
+            'Seller_Name': '$sample_result.name',
+            'Seller_Id': '$sample_result._id',
+            'Seller_Joined': '$sample_result.created_date',
+            'Seller_Image': '$sample_result.profile_url',
+            'Seller_verified': '$sample_result.is_email_verified',
+            'Seller_recommended': '$sample_result.is_recommended',
 
-            }
-          },
-          {
-            '$project': {
-              '_id': 1,
-              'Seller_Id': 1,
-              'Seller_Name': 1,
-              'Seller_Joined': 1,
-              'Seller_Image': 1,
-              "Seller_verified": 1,
-              "Seller_recommended": 1,
-              'category': 1,
-              'sub_category': 1,
-              'title': 1,
-              'price': 1,
-              'image_url': 1,
-              'special_mention': 1,
-              'description': 1,
-              'reported': 1,
-              'reported_by': 1,
-              'ad_status': 1,
-              'ad_type': 1,
-              "created_at": 1,
-              'ad_expire_date': 1,
-              'ad_promoted': 1,
-              'isPrime': 1,
-              "dist": 1
-            }
-          },
-          {
-            $match: {
-              isPrime: false,
-              ad_status: "Selling"
-            }
-          },
-          {
-            $sort: {
-              "created_at": -1,
-              "dist.calculated": 1,
-              "Seller_verified": -1,
-              "Seller_recommended": -1,
-            }
-          },
-          {
-            $skip: limitval * (pageVal - 1)
-          },
-          {
-            $limit: limitval
-          },
-        ]
-      ])
-      //mix panel track get recent ads 
-      await track('get recent Ads Successfully', {
-        distinct_id: userId
-      })
-      return getRecentAds;
-    };
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'Seller_Name': 1,
+            "Seller_verified": 1,
+            "Seller_recommended": 1,
+            'category': 1,
+            'sub_category': 1,
+            'ad_status': 1,
+            'title': 1,
+            "created_at": 1,
+            'price': 1,
+            'image_url': 1,
+            'isPrime': 1,
+            "dist": 1
+          }
+        },
+        {
+          $match: {
+            isPrime: false,
+            ad_status: "Selling"
+          }
+        },
+        {
+          $sort: {
+            "created_at": -1,
+            "dist.calculated": 1,
+            "Seller_verified": -1,
+            "Seller_recommended": -1,
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ])
+    getRecentAds.forEach(async recentAd => {
+      const user = await Profile.find(
+        {
+          _id: userId,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": recentAd._id }
+          }
+        })
+      if (user.length == 0) {
+        recentAd.isAdFav = false
+      } else {
+        recentAd.isAdFav = true
+      }
+    })
+    //mix panel track get recent ads 
+    await track('get recent Ads Successfully', {
+      distinct_id: userId
+    })
+    return getRecentAds;
   };
 
   static async getMyAdDetails(ad_id, user_id) {
@@ -1153,6 +1153,19 @@ module.exports = class AdService {
       'created_at': 1,
       'isPrime': 1,
     });
+    const user = await Profile.findOne(
+      {
+        _id: user_id,
+        "favourite_ads": {
+          $elemMatch: { "ad_id": ad_id }
+        }
+      })
+    let isAdFav
+    if (user) {
+      isAdFav = true
+    } else {
+      isAdFav = false
+    }
     const ownerDetails = await Profile.findById({ _id: myAdDetail.user_id }, {
       _id: 1,
       name: 1,
@@ -1164,6 +1177,6 @@ module.exports = class AdService {
       distinct_id: user_id,
       message: ` user_id : ${user_id}  viewd ${ad_id}`
     })
-    return {myAdDetail , ownerDetails}
+    return { myAdDetail, ownerDetails, isAdFav }
   };
 };
