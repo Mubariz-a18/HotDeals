@@ -694,10 +694,6 @@ module.exports = class AdService {
             'isPrime': '$firstResult.isPrime'
           }
         },
-        // {
-        //   $match:
-        //     { "category": query.category },
-        // },
         {
           $sort: {
             "favourite_ads.ad_Favourite_Date": -1
@@ -736,7 +732,7 @@ module.exports = class AdService {
   };
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
-  static async deleteAds(bodyData, userId, ad_id) {
+  static async deleteAds( userId, ad_id) {
     // check if user exists
     const userExist = await Profile.findOne({
       _id: userId
@@ -752,37 +748,6 @@ module.exports = class AdService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
-      // check if body contains "FAVOURITE" 
-      if (bodyData.AD_SECTION == 'FAVOURITE') {
-        const findAd = await Generic.findOne({
-          _id: ad_id
-        });
-        // if ad exist update users profile ( remove ad_id from favourite_ad)
-        if (findAd) {
-          await Profile.findOneAndUpdate(
-            { _id: userId },
-            {
-              $pull: {
-                favourite_ads: {
-                  ad_id: ad_id,
-                }
-              }
-            },
-            { new: true }
-          );
-          // mix-panel Track for - Removing Ad
-          await track(' ad removed', {
-            distinct_id: userId,
-            ad_id: ad_id
-          })
-          return "AD_REMOVED_SUCCESSFULLY"
-        }
-        else {
-          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-        }
-      }
-      // if body contains "MY_ADS" remove ad from My_ads
-      else if (bodyData.AD_SECTION == 'MY_ADS') {
         const findAd = await Generic.findOne({
           _id: ad_id, user_id: userId
         });
@@ -813,8 +778,7 @@ module.exports = class AdService {
             message: `ad_id : ${ad_id}  does not exist`
           });
           throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-        };
-      };
+       };
     };
   };
 
