@@ -176,7 +176,7 @@ module.exports = class AdController {
     try {
       const ad_id = req.body.ad_id;
       // Ad is Removed &  response is sent
-      const deletedAd = await AdService.deleteAds(req.body, req.user_ID, ad_id);
+      const deletedAd = await AdService.deleteAds(req.user_ID, ad_id);
       // Reponse code is sent 
       res.status(200).send({ message: deletedAd })
     } catch (e) {

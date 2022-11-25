@@ -12,23 +12,29 @@ module.exports = class AuthController {
   static async apiGetOTP(req, res, next) {
     const { phoneNumber ,smsToken } = req.body;
       // Creating OTP for phoneNumber
-      const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
-      let msgResponse = {};
-
-      msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber , smsToken);
-      if (msgResponse.status === "success") {
-        // mixpanel track - email sent 
-        await track('Otp Sent to Phone number successfully !! ', {
-          phoneNumber: phoneNumber,
-          message: `otp sent to  ${phoneNumber}`
-        })
-        res.json({
-          message: "OTP Sent Successfully",
-        });
-      } else {
+      if(!phoneNumber.text){
         res.status(400).json({
-          message: msgResponse.data,
+          message: "Phone_Number_Is_Required"
         });
+      }else{
+        const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
+        let msgResponse = {};
+  
+        msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber , smsToken);
+        if (msgResponse.status === "success") {
+          // mixpanel track - email sent 
+          await track('Otp Sent to Phone number successfully !! ', {
+            phoneNumber: phoneNumber,
+            message: `otp sent to  ${phoneNumber}`
+          })
+          res.json({
+            message: "OTP Sent Successfully",
+          });
+        } else {
+          res.status(400).json({
+            message: msgResponse.data,
+          });
+        }
       }
   }
 

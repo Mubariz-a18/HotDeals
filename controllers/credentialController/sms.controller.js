@@ -33,7 +33,7 @@ module.exports = class SMSController {
         formUrlEncoded({
           From: "DEEPNU",
           To: phoneNumber.text,
-          Body: `Dear user, your OTP for DeepNucleus is ${otp}${smsToken}.`
+          Body: `Dear user, your OTP for DeepNucleus is ${otp}--${smsToken}.`
           // Priority: "HIGH",
         }),
         {
