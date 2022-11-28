@@ -46,5 +46,8 @@ module.exports = class Cat_SubCat_Search_service {
             ).sort({ created_at: -1 })
             return cat_ads
         }
+        else if(!category && ! sub_category){
+            throw ({ status: 404, message: 'Select any category' });
+        }
     }
 }

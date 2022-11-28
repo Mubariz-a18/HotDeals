@@ -25,5 +25,4 @@ static async get_Ads_category_subcategory(req, res, next) {
       };
     };
   }
-
 }
