@@ -5,6 +5,6 @@ const GlobalSearchController = require('../controllers/GlobalSearch/globalsearch
 const { verifyJwtToken } = require('../utils/verifyToken');
 
 // Get Global Search
-router.post('/api/v1/ads/global-search/',verifyJwtToken,GlobalSearchController.apiGetGlobalSearch);
+router.get('/api/v1/ads/global-search/',verifyJwtToken,GlobalSearchController.apiGetGlobalSearch);
 
 module.exports = router;
