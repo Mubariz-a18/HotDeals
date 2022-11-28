@@ -6,7 +6,7 @@ const FollowUnfollowController = require('../controllers/followUnfollowControlle
 
 
 // Follow & Unfollow
-router.post('/user/follow',verifyToken,FollowUnfollowController.apiFollowUser);
-router.post('/user/unfollow',verifyToken,FollowUnfollowController.apiUnfollowUser);
+router.post('/user/follow', verifyToken, FollowUnfollowController.apiFollowUser);
+router.post('/user/unfollow', verifyToken, FollowUnfollowController.apiUnfollowUser);
 
 module.exports = router;

@@ -72,14 +72,14 @@ module.exports = class OtpService {
             await OtpModel.create({
               otp,
               email,
-              user_id:userId
+              user_id: userId
             });
           })
-      // mixpanel track - email sent 
-      await track('Otp Sent to Email Success !! ', {
-        email: email,
-        message: `sent email to user : ${userId}  `
-      })
+        // mixpanel track - email sent 
+        await track('Otp Sent to Email Success !! ', {
+          email: email,
+          message: `sent email to user : ${userId}  `
+        })
         return "OTP_SENT_TO_EMAIL_SUCCESS"
       };
     }
@@ -97,7 +97,7 @@ module.exports = class OtpService {
     //if exist find document in otp collection
     if (userExist) {
       const verify_otp = await OtpModel.findOne({
-        user_id:userId,
+        user_id: userId,
         email,
         otp
       })

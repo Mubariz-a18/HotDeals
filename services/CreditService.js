@@ -104,7 +104,7 @@ module.exports = class CreditService {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId })
       const userDoc = await Profile.findOne({ _id: userId })
-      if (docs.available_free_credits <= 0 && docs.available_free_credits <= credit_value(category) || userDoc.free_credit <=0 ) {   //if users available_free_credits == 0 return message "empty_ credits"
+      if (docs.available_free_credits <= 0 && docs.available_free_credits <= credit_value(category) || userDoc.free_credit <= 0) {   //if users available_free_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
       //if user available_free_credits < 0
@@ -153,7 +153,7 @@ module.exports = class CreditService {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId });
       const userDoc = await Profile.findOne({ _id: userId })
-      if (docs.available_premium_credits <= 0 || docs.available_premium_credits <= credit_value(category) || userDoc.premium_credit <=0 ) {      //if users available_premium_credits == 0 return message "empty_ credits"
+      if (docs.available_premium_credits <= 0 || docs.available_premium_credits <= credit_value(category) || userDoc.premium_credit <= 0) {      //if users available_premium_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
       //if user available_premium_credits < 0

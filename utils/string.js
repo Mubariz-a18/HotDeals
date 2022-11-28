@@ -29,10 +29,10 @@ async function getSelectionData(profileData) {
   return seeProfileData;
 }
 
-async function getFormattedDate(ISODate){
-    let date = new Date(ISODate);
-    if (date === undefined || date === null) return "";
-    return date.toISOString().substring(0, 10);
+async function getFormattedDate(ISODate) {
+  let date = new Date(ISODate);
+  if (date === undefined || date === null) return "";
+  return date.toISOString().substring(0, 10);
 }
 
 module.exports = {

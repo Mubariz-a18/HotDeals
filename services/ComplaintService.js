@@ -8,7 +8,7 @@ module.exports = class ComplainService {
 
   // Create Complaint
   static async createComplaint(bodyData, userId) {
-    const { reason, description, attachment, status , ad_id } = bodyData.complaint
+    const { reason, description, attachment, status, ad_id } = bodyData.complaint
     const user = await User.findOne({ _id: userId });
     // if user is verified new complain doc is created 
     if (!user) {
@@ -77,7 +77,7 @@ module.exports = class ComplainService {
   }
   // update complaint
   static async updateComplain(bodyData, userId) {
-    const {reason , description , attachment , status} = bodyData
+    const { reason, description, attachment, status } = bodyData
     const user = await User.findOne({ _id: userId });
     // check if user exists -if not throw error
     if (!user) {
@@ -90,7 +90,7 @@ module.exports = class ComplainService {
     else {
       // if user is verified - check if complaint exist
       // check if complaint exist in Complaint array of Complaint Collection 
-      const complain = await Complaint.findOne({ user_id: ObjectId(userId)  , "complaint.complaint_id" : ObjectId(bodyData.complaint_id)})  
+      const complain = await Complaint.findOne({ user_id: ObjectId(userId), "complaint.complaint_id": ObjectId(bodyData.complaint_id) })
       //if not exist throw error 
       if (!complain) {
         await track('failed !! to update complaint', {
@@ -112,7 +112,7 @@ module.exports = class ComplainService {
               "complaint.$.reason": reason,
               "complaint.$.description": description,
               "complaint.$.attachment": attachment,
-              "complaint.$.status":status,
+              "complaint.$.status": status,
               "complaint.$.complaint_updated_date": currentDate
             }
           },

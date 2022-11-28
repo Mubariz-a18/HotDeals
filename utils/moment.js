@@ -42,13 +42,13 @@ const nearestExpiryDateFunction = (arrayOfExpiryDates) => {
   return (nearestExpiryDate);
 }
 
-const durationInDays = (expiryDate)=>{
-  const duration  = moment(expiryDate).diff(currentDate,"days")
+const durationInDays = (expiryDate) => {
+  const duration = moment(expiryDate).diff(currentDate, "days")
   return duration
 }
 
-const my_age = ( date_of_birth)=>{
-  var age = moment(DOB).diff(date_of_birth , "years");
+const my_age = (date_of_birth) => {
+  var age = moment(DOB).diff(date_of_birth, "years");
   return age
 }
 

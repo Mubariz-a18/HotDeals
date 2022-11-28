@@ -46,13 +46,13 @@ module.exports = class GlobalSearchService {
     }
 
     // api get global search 
-    static async getGlobalSearch(queries,user_id) {
+    static async getGlobalSearch(queries, user_id) {
         let lng = +queries.lng;
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
-        const userExist = await Profile.findById({_id:user_id});
-        if(!userExist){
+        const userExist = await Profile.findById({ _id: user_id });
+        if (!userExist) {
             throw ({ status: 404, message: 'USER_NOT_EXISTS' });
         }
         //if user exist find ads using $search and $text
@@ -91,23 +91,23 @@ module.exports = class GlobalSearchService {
                 }
             }]
         );
-            let GenericAds = [];
-            result.forEach(item => {
-                GenericAds.push(item.ad_id)
-            })
-            const searched_ads = await Generic.find({ _id: GenericAds },{
-                title:1,
-                image_url:1,
-                price:1,
-                created_at:1,
-                isPrime:-1
-            }).sort({isPrime:-1,created_at:-1})
-            // mix panel track for Global search api
-            await track('Global search  success !! ', {
-                keywords: keyword
-            });
-            return searched_ads
-        
+        let GenericAds = [];
+        result.forEach(item => {
+            GenericAds.push(item.ad_id)
+        })
+        const searched_ads = await Generic.find({ _id: GenericAds }, {
+            title: 1,
+            image_url: 1,
+            price: 1,
+            created_at: 1,
+            isPrime: -1
+        }).sort({ isPrime: -1, created_at: -1 })
+        // mix panel track for Global search api
+        await track('Global search  success !! ', {
+            keywords: keyword
+        });
+        return searched_ads
+
     };
     // Api create Analytics keywords
     static async createAnalyticsKeyword(result, queries, user_ID) {

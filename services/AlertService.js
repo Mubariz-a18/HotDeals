@@ -64,15 +64,15 @@ module.exports = class AlertService {
     if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-    const getAlerts = await Alert.find({ user_ID: user_id , activate_status:true }, {
+    const getAlerts = await Alert.find({ user_ID: user_id, activate_status: true }, {
       category: 1,
       sub_category: 1,
       name: 1,
       keywords: 1,
-      alerted_Ads:1,
+      alerted_Ads: 1,
       created_Date: 1
     })
-    if(getAlerts.length == 0){
+    if (getAlerts.length == 0) {
       throw ({ status: 404, message: 'ALERT_NOT_EXISTS' });
     }
     return getAlerts
@@ -149,9 +149,9 @@ module.exports = class AlertService {
         },
         { new: true }
       );
-      await Alert.findOneAndUpdate({_id:alert_id},{
-        $set:{
-          activate_status:false
+      await Alert.findOneAndUpdate({ _id: alert_id }, {
+        $set: {
+          activate_status: false
         }
       })
       // mixpanel - delete alert from user alert feild

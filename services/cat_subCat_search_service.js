@@ -12,7 +12,7 @@ module.exports = class Cat_SubCat_Search_service {
             'sub_category': 1,
             'title': 1,
             'price': 1,
-            'image_url':  { $arrayElemAt: ["$image_url", 0] },
+            'image_url': { $arrayElemAt: ["$image_url", 0] },
             'ad_type': 1,
             "created_at": 1,
             'isPrime': 1,
@@ -46,7 +46,7 @@ module.exports = class Cat_SubCat_Search_service {
             ).sort({ created_at: -1 })
             return cat_ads
         }
-        else if(!category && ! sub_category){
+        else if (!category && !sub_category) {
             throw ({ status: 404, message: 'Select any category' });
         }
     }

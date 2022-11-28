@@ -91,9 +91,9 @@ const profileSchema = mongoose.Schema({
   ],
   favourite_ads: [
     {
-      _id:false,
-      ad_id : mongoose.Schema.Types.ObjectId,
-      ad_Favourite_Date:String
+      _id: false,
+      ad_id: mongoose.Schema.Types.ObjectId,
+      ad_Favourite_Date: String
     },
   ],
   help_center: [
@@ -103,14 +103,14 @@ const profileSchema = mongoose.Schema({
   ],
   alert: [
     {
-      _id:false,
+      _id: false,
       alert_id: mongoose.Schema.Types.ObjectId,
-      alerted_Ads:[
+      alerted_Ads: [
         {
-          type : mongoose.Schema.Types.ObjectId
+          type: mongoose.Schema.Types.ObjectId
         }
       ],
-      alert_Expire_Date:String
+      alert_Expire_Date: String
     },
   ],
   report: [
@@ -132,19 +132,19 @@ const profileSchema = mongoose.Schema({
   profile_url: {
     type: String
   },
-  followers:  Array,
-  followers_count:{
+  followers: Array,
+  followers_count: {
     type: Number,
     default: 0
   },
   followings: Array,
-  followings_count:{
+  followings_count: {
     type: Number,
     default: 0
   },
-  is_recommended:{
-    type:Boolean,
-    default:false
+  is_recommended: {
+    type: Boolean,
+    default: false
   },
   rate_count: {
     type: Number,

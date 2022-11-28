@@ -6,9 +6,9 @@ const { verifyJwtToken } = require('../utils/verifyToken');
 
 
 //Alert Routes
-router.post('/api/createAlert',verifyJwtToken,AlertController.apiCreateAlert);
-router.get('/api/getMyAlertsAlert',verifyJwtToken,AlertController.apiGetAlert);
-router.post('/api/updateAlert',verifyJwtToken,AlertController.apiUpdateAlert);
-router.delete('/api/deleteAlert',verifyJwtToken,AlertController.apiDeleteAlert)
+router.post('/api/createAlert', verifyJwtToken, AlertController.apiCreateAlert);
+router.get('/api/getMyAlertsAlert', verifyJwtToken, AlertController.apiGetAlert);
+router.post('/api/updateAlert', verifyJwtToken, AlertController.apiUpdateAlert);
+router.delete('/api/deleteAlert', verifyJwtToken, AlertController.apiDeleteAlert)
 
 module.exports = router;

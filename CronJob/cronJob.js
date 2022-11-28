@@ -1,13 +1,13 @@
-const cron = require('node-cron')
-const moment = require("moment")
-const Generic = require('../models/Ads/genericSchema');
-const Alert = require('../models/alertSchema');
-const Credit = require('../models/creditSchema');
-const Profile = require('../models/Profile/Profile');
-const { 
-  currentDate, 
-  Ad_Historic_Duration, 
-  DateAfter30Days } = require('../utils/moment');
+// const cron = require('node-cron')
+// const moment = require("moment")
+// const Generic = require('../models/Ads/genericSchema');
+// const Alert = require('../models/alertSchema');
+// const Credit = require('../models/creditSchema');
+// const Profile = require('../models/Profile/Profile');
+// const { 
+//   currentDate, 
+//   Ad_Historic_Duration, 
+//   DateAfter30Days } = require('../utils/moment');
 
 // // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 // const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {

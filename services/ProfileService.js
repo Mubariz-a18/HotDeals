@@ -173,46 +173,46 @@ module.exports = class ProfileService {
   // Updating Profile
   static async updateProfile(bodyData, userId) {
     const userProfile = await Profile.findOne({ _id: userId });
-    if(!userProfile){
+    if (!userProfile) {
       await track('Failed to  updated User Profile  ', {
         distinct_id: userId,
         $email: bodyData.email.text,
       });
-      throw ({ status: 404, message : 'USER_NOT_EXISTS'})
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
-    else{
+    else {
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
-                name: bodyData.name,
-                email: {
-                    text: bodyData.email.text,
-                    private: bodyData.email.private
-                  },
-                user_type: {
-                    text: bodyData.user_type.text,
-                    private: bodyData.user_type.private
-                  },
-                city: {
-                    text: bodyData.city.text,
-                    private: bodyData.city.private
-                  },
-                about: {
-                    text: bodyData.about.text,
-                    private: bodyData.about.private
-                  },
-                // country_code: bodyData.country_code,
-                date_of_birth: bodyData.date_of_birth,
-                age: my_age(moment(bodyData.date_of_birth)),
-                gender: bodyData.gender,
-                language_preference: bodyData.language_preference,
-                profile_url: bodyData.profile_url,
-                updated_date: currentDate
+            name: bodyData.name,
+            email: {
+              text: bodyData.email.text,
+              private: bodyData.email.private
+            },
+            user_type: {
+              text: bodyData.user_type.text,
+              private: bodyData.user_type.private
+            },
+            city: {
+              text: bodyData.city.text,
+              private: bodyData.city.private
+            },
+            about: {
+              text: bodyData.about.text,
+              private: bodyData.about.private
+            },
+            // country_code: bodyData.country_code,
+            date_of_birth: bodyData.date_of_birth,
+            age: my_age(moment(bodyData.date_of_birth)),
+            gender: bodyData.gender,
+            language_preference: bodyData.language_preference,
+            profile_url: bodyData.profile_url,
+            updated_date: currentDate
+          },
         },
-      },
-      {
-        new: true
-      }
+        {
+          new: true
+        }
       );
       await track('User Profile updated  ', {
         distinct_id: userId,
