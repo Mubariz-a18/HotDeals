@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const helpCenterSchema = mongoose.Schema({
-  user_id: 
-    {
-      type: mongoose.Schema.Types.ObjectId,
-    },
+  user_id:
+  {
+    type: mongoose.Schema.Types.ObjectId,
+  },
   phone_Info: {
     type: String,
   },
@@ -17,8 +17,8 @@ const helpCenterSchema = mongoose.Schema({
   attachment: [{
     type: String,
   }],
-  created_Date:{
-    type:String
+  created_Date: {
+    type: String
   }
 });
 

@@ -1,47 +1,47 @@
 const User = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
-const {currentDate} = require("../utils/moment");
+const { currentDate } = require("../utils/moment");
 const { track } = require("./mixpanel-service");
 
 module.exports = class RatingService {
   // creating a new Rating document for a particular user
   static async createRating(bodyData, userId) {
     // check if user exist 
-      const user = await User.findOne({
-        _id: userId,
+    const user = await User.findOne({
+      _id: userId,
+    });
+    // if user doesnot exist throw error
+    if (!user) {
+      //mixpanel track for failed to create rating 
+      await track('failed to create Rating !! ', {
+        distinct_id: userId,
+        message: `user : ${userId}  does not exist`
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    // else find the user_to_rate  
+    else {
+
+      const user_to_rate_exist = await User.findOne({
+        _id: bodyData.user_id
       });
-      // if user doesnot exist throw error
-      if(!user){
-        //mixpanel track for failed to create rating 
-        await track('failed to create Rating !! ', { 
+      // if user_to_rate doesnot exist throw error
+      if (!user_to_rate_exist) {
+        //mixpanel track for failed to create rating
+        await track('failed to create Rating !! ', {
           distinct_id: userId,
-          message:`user : ${userId}  does not exist`
+          message: `user_id : ${userId} to rate does not exist`
         })
-        throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+        throw ({ status: 404, message: 'USER_TO_RATE_NOT_EXISTS' });
+        //else find if the rating exist
       }
-      // else find the user_to_rate  
       else {
-        
-        const user_to_rate_exist = await User.findOne({
-          _id: bodyData.user_id
-        });
-        // if user_to_rate doesnot exist throw error
-        if(!user_to_rate_exist){
-          //mixpanel track for failed to create rating
-          await track('failed to create Rating !! ', { 
-            distinct_id: userId,
-            message:`user_id : ${userId} to rate does not exist`
-          })
-          throw ({ status: 404, message: 'USER_TO_RATE_NOT_EXISTS' });
-          //else find if the rating exist
+        if (userId == bodyData.user_id) {
+          throw ({ status: 401, message: 'ACCESS_DENIED' });
         }
-        else{
-          if(userId == bodyData.user_id){
-            throw ({ status: 401, message: 'ACCESS_DENIED' });
-          }
         // If RatingInfo doesnot exist for a user create new one
         const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
-        if (!alreadyexist) {     
+        if (!alreadyexist) {
           const ratDoc = await Rating.create({
             user_id: bodyData.user_id,
             average_rating: bodyData.RatingInfo.rating,
@@ -53,20 +53,20 @@ module.exports = class RatingService {
             }
           });
           //updating the rating feilds in ratedUser
-          
+
           const ratedUser = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-            rate_average:bodyData.RatingInfo.rating,
-            rate_count:1
+            rate_average: bodyData.RatingInfo.rating,
+            rate_count: 1
           });
           //mixpanel create rating track 
-          await track('  create Rating successfully !! ', { 
+          await track('  create Rating successfully !! ', {
             distinct_id: userId,
-            message:` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${ratedUser.name}`
+            message: ` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${ratedUser.name}`
           })
           return ratDoc;
         } else {
           // else if the ratingInfo Exist push other rating inside the array
-          const Rating_Already_exist_By_User = await Rating.findOne({ user_id :bodyData.user_id ,"RatingInfo.rating_given_by": userId})
+          const Rating_Already_exist_By_User = await Rating.findOne({ user_id: bodyData.user_id, "RatingInfo.rating_given_by": userId })
 
           if (!Rating_Already_exist_By_User) {
             // Insert RatingInfo inside Document of Rating
@@ -102,11 +102,11 @@ module.exports = class RatingService {
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
               rate_average: Rating_doc.average_rating,
               rate_count: Rating_doc.RatingInfo.length
-            },  { new: true })
+            }, { new: true })
             // mixpanel track create rating success
-            await track('  create Rating successfully !! ', { 
+            await track('  create Rating successfully !! ', {
               distinct_id: userId,
-              message:` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${update_User_avg_rating.name}`
+              message: ` ${user.name} gave "${bodyData.RatingInfo.rating}" rating to ${update_User_avg_rating.name}`
             })
             return Rating_doc
           } else {
@@ -118,25 +118,25 @@ module.exports = class RatingService {
               {
                 $set: {
                   "RatingInfo.$.rating": bodyData.RatingInfo.rating,
-                  "RatingInfo.$.rating_updated_date" : currentDate
+                  "RatingInfo.$.rating_updated_date": currentDate
                 }
               })
-              // Rating calculation
-              const Rating_doc = await Rating.findOne({ user_id: bodyData.user_id })
-              let average = 0;
-              // sum of all the ratings
-              Rating_doc.RatingInfo.forEach(rat => {
-                average += rat.rating;
-              });
-              // deviding all ratings by length of array
-              Rating_doc.average_rating = (average / Rating_doc.RatingInfo.length).toFixed(2);
-              //saving doc
-              await Rating_doc.save();
-              //updating user rating count
-              await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-                rate_average: Rating_doc.average_rating,
-                rate_count: Rating_doc.RatingInfo.length
-              })
+            // Rating calculation
+            const Rating_doc = await Rating.findOne({ user_id: bodyData.user_id })
+            let average = 0;
+            // sum of all the ratings
+            Rating_doc.RatingInfo.forEach(rat => {
+              average += rat.rating;
+            });
+            // deviding all ratings by length of array
+            Rating_doc.average_rating = (average / Rating_doc.RatingInfo.length).toFixed(2);
+            //saving doc
+            await Rating_doc.save();
+            //updating user rating count
+            await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
+              rate_average: Rating_doc.average_rating,
+              rate_count: Rating_doc.RatingInfo.length
+            })
             return Rating_doc;
           }
         }
@@ -144,24 +144,24 @@ module.exports = class RatingService {
     }
   };
   // Get Rating for a user
-  static async getRating(bodyData,userId) {
+  static async getRating(bodyData, userId) {
     // check if user exist or not
-    const userExist = await User.findById({_id :userId});
+    const userExist = await User.findById({ _id: userId });
     //if not exist throw error
-    if(!userExist){
+    if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }else{
+    } else {
       //if exist find Rating doc for the user in bodyData 
-      if(userId == bodyData.user_id){
+      if (userId == bodyData.user_id) {
         throw ({ status: 401, message: 'ACCESS_DENIED' });
       }
-      const RatingDoc = await Rating.find({user_id:bodyData.user_id},{_id:0,"RatingInfo": {$elemMatch: {"rating_given_by": userId}}})
+      const RatingDoc = await Rating.find({ user_id: bodyData.user_id }, { _id: 0, "RatingInfo": { $elemMatch: { "rating_given_by": userId } } })
       let ratingInfo = RatingDoc[0].RatingInfo[0]
       //if rating found return to controller
-      if(ratingInfo){
+      if (ratingInfo) {
         return ratingInfo.rating
         //else throw error
-      }else{
+      } else {
         throw ({ status: 404, message: 'RATING_NOT_EXISTS' });
       }
     }

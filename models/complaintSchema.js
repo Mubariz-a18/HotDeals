@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const complaintSchema = mongoose.Schema({
   user_id: mongoose.Schema.Types.ObjectId,
   complaint: [
-      {
+    {
       complaint_id: {
         type: mongoose.Schema.Types.ObjectId
       },
@@ -25,7 +25,7 @@ const complaintSchema = mongoose.Schema({
         default: "OPEN"
       }
     }
-]
+  ]
 });
 
 const Complaint = mongoose.model("Complaint", complaintSchema);

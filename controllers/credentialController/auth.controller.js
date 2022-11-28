@@ -99,7 +99,6 @@ module.exports = class AuthController {
         }
   }
 
-
   // Sent OTP by email
   static async apiSentOtpByEmail(req, res, next) {
     try {

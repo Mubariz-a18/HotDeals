@@ -6,7 +6,7 @@ const Validator = require('../middlewares/validatorMiddleware');
 const ComplaintController = require('../controllers/Complaint/complaint.controller')
 
 //Complain Route
-router.post('/api/createComplaint',verifyToken,ComplaintController.apiCreateComplaint);
-router.post('/api/updateComplaint',verifyToken, ComplaintController.apiUpdateController)
+router.post('/api/createComplaint', verifyToken, ComplaintController.apiCreateComplaint);
+router.post('/api/updateComplaint', verifyToken, ComplaintController.apiUpdateController)
 
 module.exports = router;

@@ -5,9 +5,7 @@ const trackAsync = util.promisify(mixpanel.track);
 // We tried to wrap it with async/await to consist the
 // codebase style and to avoid callback hell.
 async function track(event, properties) {
- await trackAsync(event, properties)
+    await trackAsync(event, properties)
 }
-
-
 
 module.exports = { track }

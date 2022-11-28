@@ -2,13 +2,13 @@ const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
 const { track } = require('./mixpanel-service');
 const { currentDate } = require('../utils/moment');
- 
+
 
 module.exports = class HelpService {
 
   // Create Help 
   static async createHelp(bodyData, userId) {
-    const {phone_Info , title , description , attachment} = bodyData
+    const { phone_Info, title, description, attachment } = bodyData
     //check if user exist 
     const findUser = await Profile.findOne({ _id: userId });
     if (!findUser) {
@@ -105,7 +105,7 @@ module.exports = class HelpService {
     // create Help doc
     const findUser = await Profile.findOne({
       _id: userId
-    } );
+    });
     // verify if the user is authorized -- if authorized find help doc with users id
     if (!findUser) {
       //mixpanel track for failed to delete help
@@ -123,28 +123,28 @@ module.exports = class HelpService {
               $in: findUser.help_center
             }
           }
-        },{
-          $project:{
-            title:1,
-            description:1,
-            attachment :{ $arrayElemAt: ["$attachment", 0] },
-            created_Date:1
+        }, {
+          $project: {
+            title: 1,
+            description: 1,
+            attachment: { $arrayElemAt: ["$attachment", 0] },
+            created_Date: 1
           }
         }
       ])
-      if(helpDocs.length == 0){
-      //mixpanel track for failed to delete help
-      await track('failed to get help !!', {
-        distinct_id: userId,
-        message: `user_id : ${userId} doesnot have any Help Docs `,
-      });
+      if (helpDocs.length == 0) {
+        //mixpanel track for failed to delete help
+        await track('failed to get help !!', {
+          distinct_id: userId,
+          message: `user_id : ${userId} doesnot have any Help Docs `,
+        });
         throw ({ status: 404, message: 'HELPS_NOT_EXISTS' });
-      }else{
-      //mixpanel track for failed to delete help
-      await track('get help success !!', {
-        distinct_id: userId,
-        message: `user_id : ${userId}  fetched help documents `,
-      });
+      } else {
+        //mixpanel track for failed to delete help
+        await track('get help success !!', {
+          distinct_id: userId,
+          message: `user_id : ${userId}  fetched help documents `,
+        });
         return helpDocs
       }
     }

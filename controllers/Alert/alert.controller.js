@@ -30,7 +30,8 @@ module.exports = class AlertController {
       };
     };
   };
-
+  
+  // Get my alerts  -- Alerts are fetched and returned from alert service
   static async apiGetAlert(req, res, next) {
     try {
       const userId = req.user_ID;
@@ -57,6 +58,7 @@ module.exports = class AlertController {
       };
     };
   };
+
   //Update Alert -- Alert doc is Updated and retured from adservice  in updateAlert
   static async apiUpdateAlert(req, res, next) {
     try {

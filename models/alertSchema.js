@@ -24,25 +24,25 @@ const alertSchema = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId
       }
     ],
-    location:{
-      type:String
+    location: {
+      type: String
     },
     activate_status: {
       type: Boolean,
-      default:true
+      default: true
     },
-    alert_Expiry_Date:{
-      type:String
+    alert_Expiry_Date: {
+      type: String
     },
-    created_Date:{
-    type:String
+    created_Date: {
+      type: String
     },
-    updated_Date:{
-      type:String
-      }
+    updated_Date: {
+      type: String
+    }
   },
 
 );
 
-const Alert = mongoose.model('Alert',alertSchema);
+const Alert = mongoose.model('Alert', alertSchema);
 module.exports = Alert;
