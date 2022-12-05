@@ -1,11 +1,12 @@
 const User = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
-const { currentDate } = require("../utils/moment");
+const moment = require('moment');
 const { track } = require("./mixpanel-service");
 
 module.exports = class RatingService {
   // creating a new Rating document for a particular user
   static async createRating(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     // check if user exist 
     const user = await User.findOne({
       _id: userId,

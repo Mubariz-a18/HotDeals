@@ -1,13 +1,14 @@
 const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
 const { track } = require('./mixpanel-service');
-const { currentDate } = require('../utils/moment');
+const moment = require('moment');
 
 
 module.exports = class HelpService {
 
   // Create Help 
   static async createHelp(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { phone_Info, title, description, attachment } = bodyData
     //check if user exist 
     const findUser = await Profile.findOne({ _id: userId });

@@ -2,13 +2,15 @@ const Profile = require("../models/Profile/Profile");
 const ObjectId = require('mongodb').ObjectId;
 const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
-const { currentDate, DateAfter30Days, Ad_Historic_Duration, age_func } = require("../utils/moment");
+const { age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-
+const moment = require("moment");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
     // check if user exist or not
     const findUsr = await Profile.findOne({
       _id: ObjectId(userId)
@@ -62,7 +64,6 @@ module.exports = class AdService {
         const _id = ObjectId()
         const creditParams = { isPrime, _id, userId, category }
         const balance = await creditDeductFuntion(creditParams)
-
         if (balance.message == "Empty_Credits") {
           throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
         }
@@ -336,6 +337,8 @@ module.exports = class AdService {
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
     // check if user exist 
     const userExist = await Profile.findOne({
       _id: userId
@@ -528,6 +531,7 @@ module.exports = class AdService {
 
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     // check if user exist 
     const findUser = await Profile.findOne({ _id: userId });
     //if user doesnt exist throw error 
@@ -733,6 +737,9 @@ module.exports = class AdService {
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
   static async deleteAds(userId, ad_id) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    // ad history date for 6 months
+    const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
     // check if user exists
     const userExist = await Profile.findOne({
       _id: userId
@@ -979,7 +986,7 @@ module.exports = class AdService {
 
   // Get Recent Ads  -- User is authentcated and Ads Are filtered
   static async getRecentAdsService(userId, query) {
-
+    
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
@@ -1143,4 +1150,86 @@ $skip and limit for pagination
     })
     return { myAdDetail, ownerDetails, isAdFav }
   };
+
+    // Get particular Ad Detail with distance and user details
+    static async getRelatedAds( query, user_id) {
+      let category = query.category;
+      let sub_category = query.sub_category;
+      let lng = +query.lng;
+      let lat = +query.lat;
+      let maxDistance = 100000;
+      if(!category || !sub_category){
+        throw ({ status: 404, message: 'category or sub_category Field is missing' });
+      }
+      const RelatedAds = await Generic.aggregate([
+        {
+          '$geoNear': {
+            'near': {
+              'type': 'Point',
+              'coordinates': [
+                lng, lat
+              ]
+            },
+            'distanceField': 'dist.calculated',
+            'maxDistance': maxDistance,
+            'includeLocs': 'dist.location',
+            'spherical': true
+          }
+        },
+        {
+          '$match': {
+            "category":category,
+            "sub_category":sub_category,
+            'ad_status': 'Selling'
+          }
+        },
+        {
+          $sort: {
+            "created_at": -1,
+            "dist.calculated": 1,
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'category': 1,
+            'sub_category': 1,
+            'title': 1,
+            'views': 1,
+            'saved': 1,
+            'price': 1,
+            'image_url': 1,
+            'SelectFields': 1,
+            'ad_posted_address': 1,
+            'special_mention': 1,
+            'description': 1,
+            'ad_status': 1,
+            'ad_type': 1,
+            'created_at': 1,
+            'isPrime': 1,
+            'dist': 1
+          }
+        }
+      ])
+      RelatedAds.forEach(async relatedAd => {
+        const user = await Profile.find(
+          {
+            _id: user_id,
+            "favourite_ads": {
+              $elemMatch: { "ad_id": relatedAd._id }
+            }
+          })
+        if (user.length == 0) {
+          relatedAd.isAdFav = false
+        } else {
+          relatedAd.isAdFav = true
+        }
+      })
+      // mixpanel -- track  get Particular ad ads
+      await track('get related ads', {
+        distinct_id: user_id,
+        message: `viewed related ads for ${category , sub_category}`
+      })
+      return RelatedAds
+    };
 };

@@ -5,13 +5,16 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev":"nodemon index.js"
+    "dev": "nodemon index.js"
   },
   "license": "MIT",
   "dependencies": {
+    "@adminjs/express": "^5.0.1",
+    "@adminjs/mongoose": "^3.0.1",
     "@sentry/browser": "^7.14.1",
     "@sentry/node": "^7.3.1",
     "@sentry/tracing": "^7.14.1",
+    "adminjs": "^6.7.0",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",

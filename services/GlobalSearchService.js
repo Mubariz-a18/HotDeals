@@ -2,11 +2,10 @@
 const Analytics = require("../models/Analytics");
 const { track } = require("./mixpanel-service");
 const Generic = require("../models/Ads/genericSchema");
-const { currentDate } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
 const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
-
+const moment = require('moment');
 module.exports = class GlobalSearchService {
 
     static async createGlobalSearch(body) {
@@ -111,6 +110,7 @@ module.exports = class GlobalSearchService {
     };
     // Api create Analytics keywords
     static async createAnalyticsKeyword(result, queries, user_ID) {
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const { keyword } = queries;
         //check if any analytics already exist with input keywords 
         const alreadyExist = await Analytics.findOne({

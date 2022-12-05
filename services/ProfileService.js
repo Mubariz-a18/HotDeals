@@ -10,6 +10,7 @@ const { createCreditForNewUser } = require("./CreditService");
 module.exports = class ProfileService {
   // DB Services to Create a Profile
   static async createProfile(bodyData, userID, phoneNumber) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     //checking if profile already exist
     let profileDoc = await User.findOne({
       userNumber: phoneNumber,
@@ -82,39 +83,132 @@ module.exports = class ProfileService {
       _id: user_ID,
     });
     if (profileDoc) {
-      const profileData = await Profile.aggregate([
-        {
-          $match: { _id: mongoose.Types.ObjectId(user_ID) },
-        },
-        {
-          $project: {
-            _id: 0,
-            name: 1,
-            "userNumber.text": 1,
-            email: {
-              $cond: { if: { $eq: ["$email.private", false] }, then: "$email.text", else: "" }
-            },
-            city: {
-              $cond: { if: { $eq: ["$city.private", false] }, then: "$city.text", else: "" }
-            },
-            about: {
-              $cond: { if: { $eq: ["$about.private", false] }, then: "$about.text", else: "" }
-            },
-            profile_url:1,
-            user_type:1,
-            followers_count:1,
-            followings_count:1,
-            rate_average:1,
-            rate_count:1
+      const profileData = await Profile.aggregate(
+        [
+          {
+            '$match': {
+              '_id': mongoose.Types.ObjectId(user_ID) 
+            }
+          }, {
+            '$lookup': {
+              'from': 'generics', 
+              'localField': '_id', 
+              'foreignField': 'user_id', 
+              'pipeline': [
+                {
+                  '$match': {
+                    'ad_status': 'Selling'
+                  }
+                }
+              ], 
+              'as': 'Ads'
+            }
+          }, {
+            '$project': {
+              '_id': 1, 
+              'name': 1, 
+              'userNumber.text': 1, 
+              'email': {
+                '$cond': {
+                  'if': {
+                    '$eq': [
+                      '$email.private', false
+                    ]
+                  }, 
+                  'then': '$email.text', 
+                  'else': ''
+                }
+              }, 
+              'city': {
+                '$cond': {
+                  'if': {
+                    '$eq': [
+                      '$city.private', false
+                    ]
+                  }, 
+                  'then': '$city.text', 
+                  'else': ''
+                }
+              }, 
+              'about': {
+                '$cond': {
+                  'if': {
+                    '$eq': [
+                      '$about.private', false
+                    ]
+                  }, 
+                  'then': '$about.text', 
+                  'else': ''
+                }
+              },
+              'profile_url': 1, 
+              'user_type': 1, 
+              'followers_count': 1, 
+              'followings_count': 1, 
+              'rate_average': 1, 
+              'rate_count': 1, 
+              'Ads.title': 1, 
+              'Ads.price': 1, 
+              'Ads.ad_posted_address': 1, 
+              'Ads.isPrime': 1, 
+              'Ads.image_url': 1, 
+              'Ads.created_at': 1, 
+              'Ads.ad_Premium_Date': 1
+            }
           }
-        },
-      ]);
+        ]
+      //   [
+      //   {
+      //     $match: { _id: mongoose.Types.ObjectId(user_ID) },
+      //   },
+      //   {
+      //     '$lookup': {
+      //       'from': 'generics',
+      //       'localField': '_id',
+      //       'foreignField': 'user_id',
+      //       'as': 'sample_result'
+      //     }
+      //   },
+      //   {
+      //     '$unwind': {
+      //       'path': '$sample_result'
+      //     }
+      //   },
+      //   {
+      //     '$addFields': {
+      //       'SellingA': '$sample_result.name',
+      //       'Seller_Id': '$sample_result._id',
+      //     }
+      //   },
+      //   {
+      //     $project: {
+      //       _id: 0,
+      //       name: 1,
+      //       "userNumber.text": 1,
+      //       email: {
+      //         $cond: { if: { $eq: ["$email.private", false] }, then: "$email.text", else: "" }
+      //       },
+      //       city: {
+      //         $cond: { if: { $eq: ["$city.private", false] }, then: "$city.text", else: "" }
+      //       },
+      //       about: {
+      //         $cond: { if: { $eq: ["$about.private", false] }, then: "$about.text", else: "" }
+      //       },
+      //       profile_url:1,
+      //       user_type:1,
+      //       followers_count:1,
+      //       followings_count:1,
+      //       rate_average:1,
+      //       rate_count:1
+      //     }
+      //   },
+      // ]
+      );
       //mixpanel trak search others profile
       await track('User searched  ', {
         distinct_id: user_ID,
       });
-
-      return profileData[0];
+      return profileData;
     } else {
       //mixpanel ttrack failed to fetch user profile
       await track('User searched failed ', {
@@ -172,6 +266,7 @@ module.exports = class ProfileService {
 
   // Updating Profile
   static async updateProfile(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const userProfile = await Profile.findOne({ _id: userId });
     if (!userProfile) {
       await track('Failed to  updated User Profile  ', {

@@ -1,12 +1,15 @@
 const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
-const { DateAfter30Days, currentDate, Free_credit_Expiry, nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
+const {nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
 const credit_value = require("../utils/creditValues");
-
+const moment = require('moment');
 module.exports = class CreditService {
   // create Default Credit for new user 
   static async createCreditForNewUser(user_id) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const Free_credit_Expiry = moment().add(180, 'd').format('YYYY-MM-DD HH:mm:ss');
+    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
     // creating a document
     await Credit.create({
       user_id: user_id,
@@ -37,6 +40,9 @@ module.exports = class CreditService {
   };
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const Free_credit_Expiry = moment().add(180, 'd').format('YYYY-MM-DD HH:mm:ss');
+    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
     // check if user exist
     const user = await User.findOne({ _id: userId });
     // if exist
@@ -98,6 +104,7 @@ module.exports = class CreditService {
   };
   //creditDeduaction function calls when user uploads an Ad
   static async creditDeductFuntion(creditParams) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { isPrime, _id, userId, category } = creditParams;
     // if isPrime is false ad type is free
     if (isPrime == false) {
@@ -116,7 +123,7 @@ module.exports = class CreditService {
           if (freeCrd.count <= 0)     // if any credit count is == 0 update the credit status to "Expired/Empty"
             freeCrd.status = "Empty"
           // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (freeCrd.status !== "Empty" && freeCrd.status !== "Expired" && freeCrd.count !== 0)
+          if (freeCrd.status !== "Empty" && freeCrd.status !== "Expired" && freeCrd.count >= credit_value(category))
             datesToBeChecked.push(freeCrd.credits_expires_on);    // if the check is true push the dates into datestobechecked array
         })
         docs.save();      // SAVE the credit doc
@@ -166,7 +173,7 @@ module.exports = class CreditService {
           if (premiumCrd.count <= 0)       // if any credit count is == 0 update the credit status to "Expired/Empty"
             premiumCrd.status = "Empty"
           // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (premiumCrd.status !== "Empty" && premiumCrd.status !== "Expired" && premiumCrd.count !== 0)
+          if (premiumCrd.status !== "Empty" && premiumCrd.status !== "Expired" && premiumCrd.count >= credit_value(category))
             datesToBeChecked.push(premiumCrd.credits_expires_on)       // if the check is true push the dates into datestobechecked array
         });
         await docs.save();

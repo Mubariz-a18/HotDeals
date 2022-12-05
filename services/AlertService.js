@@ -3,11 +3,15 @@ const Alert = require("../models/alertSchema");
 const { track } = require("./mixpanel-service");
 const { DateAfter15Days, currentDate } = require("../utils/moment");
 const ObjectId = require('mongodb').ObjectId;
+const moment = require('moment');
 
 module.exports = class AlertService {
 
   // Create Alert 
   static async createAlert(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    // date after 15 days
+    const DateAfter15Days = moment().add(15, 'd').format('YYYY-MM-DD HH:mm:ss');
     const {
       name,
       category,
@@ -80,6 +84,7 @@ module.exports = class AlertService {
 
   //Update Alert
   static async updateAlert(bodyData, alert_id, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const {
       name,
       category,

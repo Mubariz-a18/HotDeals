@@ -348,4 +348,47 @@ module.exports = class AdController {
       };
     };
   };
+
+  static async apiGetRelatedAds(req, res, next) {
+    try {
+      // Premium ads are fetched from db and sent to response
+      const getRelatedAds = await AdService.getRelatedAds(req.query,req.user_ID );
+      // Response is sent
+      if (getRelatedAds == null) {
+        // mixpanel track for get premium ads failed
+        await track('viewed Related ads failed', {
+          distinct_id: req.user_ID,
+        })
+        res.status(404).json({
+          message: "ADS_NOT_FOUND"
+        })
+      }
+      if (getRelatedAds.length > 0) {
+        res.status(200).json({
+          PremiumAds: getRelatedAds,
+          TotalPremiumAds: getRelatedAds.length
+        })
+      }
+      if (getRelatedAds.length == 0) {
+        await track('viewed Premium ads failed', {
+          distinct_id: req.user_ID,
+        })
+        res.status(204).json({})
+      }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
 };

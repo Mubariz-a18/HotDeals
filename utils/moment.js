@@ -1,6 +1,6 @@
 const moment = require('moment');
 //current date
-const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 // date sfter 30 days
 const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
 // date after 15 days
@@ -23,21 +23,6 @@ const age_func = (date_of_purchase) => {
 }
 
 const nearestExpiryDateFunction = (arrayOfExpiryDates) => {
-  // const dateToCheckFor = currentDate;
-  // let nearestExpiryDate;
-  // arrayOfExpiryDates.forEach(date => {
-  //   let diff = moment(date).diff(moment(dateToCheckFor), 'days');
-  //   if (diff > 0) {
-  //     if (nearestExpiryDate) {
-  //       if (moment(date).diff(moment(nearestExpiryDate), 'days') < 0) {
-  //         nearestExpiryDate = date;
-  //       }
-  //     } else {
-  //       nearestExpiryDate = date;
-  //     }
-
-  //   }
-  // })
   const nearestExpiryDate = arrayOfExpiryDates.sort()[0];
   return (nearestExpiryDate);
 }
@@ -53,15 +38,15 @@ const my_age = (date_of_birth) => {
 }
 
 module.exports = {
-  currentDate, DateAfter30Days,
-  Ad_Historic_Duration,
-  DOB,
-  DateAfter15Days,
+  // currentDate, DateAfter30Days,
+  // Ad_Historic_Duration,
+  // DOB,
+  // DateAfter15Days,
   age_func,
   nearestExpiryDateFunction,
   durationInDays,
   my_age,
-  Free_credit_Expiry
+  // Free_credit_Expiry
 };
 
 

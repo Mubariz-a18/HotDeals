@@ -3,11 +3,12 @@ const Complaint = require("../models/complaintSchema");
 const ObjectId = require('mongodb').ObjectId;
 const { currentDate } = require('../utils/moment');
 const { track } = require("./mixpanel-service");
-
+const moment = require('moment');
 module.exports = class ComplainService {
 
   // Create Complaint
   static async createComplaint(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { reason, description, attachment, status, ad_id } = bodyData.complaint
     const user = await User.findOne({ _id: userId });
     // if user is verified new complain doc is created 
@@ -77,6 +78,7 @@ module.exports = class ComplainService {
   }
   // update complaint
   static async updateComplain(bodyData, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { reason, description, attachment, status } = bodyData
     const user = await User.findOne({ _id: userId });
     // check if user exists -if not throw error
