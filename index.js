@@ -6,7 +6,6 @@ const app = express();
 
 //Router Imports
 const authRouter = require("./routes/auth.routes");
-// const DashBoardRouter = require('./routes/home.routes')
 const profileRouter = require("./routes/profile.routes");
 const AdRouter = require("./routes/ad.routes");
 const AlertRouter = require("./routes/alert.routes");
@@ -18,7 +17,7 @@ const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
 const cat_subCat_SearchRouter = require('./routes/cat_subCat_search.routes')
 // const {} = require("./CronJob/cronJob");
-
+const AdminRouter = require("./routes/admin.routes")
 
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
@@ -48,6 +47,7 @@ connectDB();
 // Apply the rate limiting middleware to all requests
 // app.use(limiter)
 
+app.use("/admin",AdminRouter)
 //Middlewares
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
@@ -65,7 +65,6 @@ app.use(HelpRouter);
 app.use(CreditRouter);
 app.use(RatingRouter);
 app.use(followUnfollowRouter);
-// app.use(DashBoardRouter);
 app.use(GlobalSearchRouter);
 app.use(cat_subCat_SearchRouter);
 
