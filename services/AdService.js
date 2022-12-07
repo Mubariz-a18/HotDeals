@@ -986,7 +986,6 @@ module.exports = class AdService {
 
   // Get Recent Ads  -- User is authentcated and Ads Are filtered
   static async getRecentAdsService(userId, query) {
-    
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
@@ -1097,7 +1096,7 @@ $skip and limit for pagination
     })
     return getRecentAds;
   };
-
+  //Get Ad details of any ad without location
   static async getMyAdDetails(ad_id, user_id) {
     const userExist = await Profile.findById({ _id: user_id });
     if (!userExist) {
@@ -1151,109 +1150,109 @@ $skip and limit for pagination
     return { myAdDetail, ownerDetails, isAdFav }
   };
 
-    // Get particular Ad Detail with distance and user details
-    static async getRelatedAds( query, user_id) {
-      let category = query.category;
-      let sub_category = query.sub_category;
-      let lng = +query.lng;
-      let lat = +query.lat;
-      let maxDistance = 100000;
-      let pageVal = +query.page;
-      if (pageVal == 0) pageVal = pageVal + 1
-      let limitval = +query.limit || 10;
+  // Get particular Ad Detail with distance and user details
+  static async getRelatedAds(query, user_id) {
+    let category = query.category;
+    let sub_category = query.sub_category;
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = 100000;
+    let pageVal = +query.page;
+    if (pageVal == 0) pageVal = pageVal + 1
+    let limitval = +query.limit || 10;
 
-      const RelatedAds = await Generic.aggregate([
-        {
-          '$geoNear': {
-            'near': {
-              'type': 'Point',
-              'coordinates': [
-                lng, lat
-              ]
-            },
-            'distanceField': 'dist.calculated',
-            'maxDistance': maxDistance,
-            'includeLocs': 'dist.location',
-            'spherical': true
-          }
-        },
-        {
-          '$match': {
-            'ad_status': 'Selling',
-            "$or": [
-              { "category": category },
-              { "sub_category": sub_category }
-            ],
-          }
-        },
-        {
-          $sort: {
-            "created_at": -1,
-            "dist.calculated": 1,
-          }
-        },
-        {
-          $skip: limitval * (pageVal - 1)
-        },
-        {
-          $limit: limitval
-        },
-        {
-          '$project': {
-            '_id': 1,
-            'category': 1,
-            'sub_category': 1,
-            'title': 1,
-            'views': 1,
-            'saved': 1,
-            'price': 1,
-            'image_url': 1,
-            'SelectFields': 1,
-            'ad_posted_address': 1,
-            'special_mention': 1,
-            'description': 1,
-            'ad_status': 1,
-            'ad_type': 1,
-            'created_at': 1,
-            'isPrime': 1,
-            'dist': 1
-          }
+    const RelatedAds = await Generic.aggregate([
+      {
+        '$geoNear': {
+          'near': {
+            'type': 'Point',
+            'coordinates': [
+              lng, lat
+            ]
+          },
+          'distanceField': 'dist.calculated',
+          'maxDistance': maxDistance,
+          'includeLocs': 'dist.location',
+          'spherical': true
         }
-      ])
-      RelatedAds.forEach(async relatedAd => {
-        const user = await Profile.find(
-          {
-            _id: user_id,
-            "favourite_ads": {
-              $elemMatch: { "ad_id": relatedAd._id }
-            }
-          })
-        if (user.length == 0) {
-          relatedAd.isAdFav = false
-        } else {
-          relatedAd.isAdFav = true
+      },
+      {
+        '$match': {
+          'ad_status': 'Selling',
+          "$or": [
+            { "category": category },
+            { "sub_category": sub_category }
+          ],
         }
-      })
-      // mixpanel -- track  get Particular ad ads
-      await track('get related ads', {
-        distinct_id: user_id,
-        message: `viewed related ads for ${category , sub_category}`
-      })
-      return RelatedAds
-    };
-    // Get Ad Status -- from generics check ad_status
-    static async getAdStatus(ad_id){
-      const ad_status = await Generic.findById({_id:ad_id},{
-        _id:0,
-        ad_status:1
-      })
-      if(!ad_status){
-        await track('viewed ads status failed', {
-          distinct_id:ad_id,
-        })
-        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-      }else{
-        return ad_status
+      },
+      {
+        $sort: {
+          "created_at": -1,
+          "dist.calculated": 1,
+        }
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      },
+      {
+        '$project': {
+          '_id': 1,
+          'category': 1,
+          'sub_category': 1,
+          'title': 1,
+          'views': 1,
+          'saved': 1,
+          'price': 1,
+          'image_url': 1,
+          'SelectFields': 1,
+          'ad_posted_address': 1,
+          'special_mention': 1,
+          'description': 1,
+          'ad_status': 1,
+          'ad_type': 1,
+          'created_at': 1,
+          'isPrime': 1,
+          'dist': 1
+        }
       }
+    ])
+    RelatedAds.forEach(async relatedAd => {
+      const user = await Profile.find(
+        {
+          _id: user_id,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": relatedAd._id }
+          }
+        })
+      if (user.length == 0) {
+        relatedAd.isAdFav = false
+      } else {
+        relatedAd.isAdFav = true
+      }
+    })
+    // mixpanel -- track  get Particular ad ads
+    await track('get related ads', {
+      distinct_id: user_id,
+      message: `viewed related ads for ${category, sub_category}`
+    })
+    return RelatedAds
+  };
+  // Get Ad Status -- from generics check ad_status
+  static async getAdStatus(ad_id) {
+    const ad_status = await Generic.findById({ _id: ad_id }, {
+      _id: 0,
+      ad_status: 1
+    })
+    if (!ad_status) {
+      await track('viewed ads status failed', {
+        distinct_id: ad_id,
+      })
+      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+    } else {
+      return ad_status
     }
+  }
 };

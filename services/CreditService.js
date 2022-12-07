@@ -1,6 +1,6 @@
 const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
-const {nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
+const { nearestExpiryDateFunction, durationInDays } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
 const credit_value = require("../utils/creditValues");
 const moment = require('moment');
