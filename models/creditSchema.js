@@ -15,6 +15,12 @@ const creditSchema = mongoose.Schema({
       count: {
         type: Number,
       },
+      category:{
+        type:String
+      },
+      sub_category:{
+        type:String
+      },
       status: {
         type: String,
         enum: ['Available', "Expired", "Empty", "Active"],
@@ -46,6 +52,12 @@ const creditSchema = mongoose.Schema({
     {
       count: {
         type: Number,
+      },
+      category:{
+        type:String
+      },
+      sub_category:{
+        type:String
       },
       status: {
         type: String,
@@ -93,6 +105,9 @@ const creditSchema = mongoose.Schema({
         type: Number
       },
       category: {
+        type: String
+      },
+      sub_category:{
         type: String
       },
       credited_on: {

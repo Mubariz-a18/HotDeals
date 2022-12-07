@@ -111,7 +111,10 @@ module.exports = class CreditService {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId })
       const userDoc = await Profile.findOne({ _id: userId })
-      if (docs.available_free_credits <= 0 && docs.available_free_credits <= credit_value(category) || userDoc.free_credit <= 0) {   //if users available_free_credits == 0 return message "empty_ credits"
+      if (
+        docs.available_free_credits <= credit_value(category) ||
+        userDoc.free_credit <= 0
+      ) {   //if users available_free_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
       //if user available_free_credits < 0
@@ -123,13 +126,20 @@ module.exports = class CreditService {
           if (freeCrd.count <= 0)     // if any credit count is == 0 update the credit status to "Expired/Empty"
             freeCrd.status = "Empty"
           // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (freeCrd.status !== "Empty" && freeCrd.status !== "Expired" && freeCrd.count >= credit_value(category))
+          if (
+            freeCrd.status !== "Empty" &&
+            freeCrd.status !== "Expired" &&
+            freeCrd.count >= credit_value(category)
+          )
             datesToBeChecked.push(freeCrd.credits_expires_on);    // if the check is true push the dates into datestobechecked array
         })
         docs.save();      // SAVE the credit doc
         const date = nearestExpiryDateFunction(datesToBeChecked);     // this function returns nearest expiry date
         // update the credit doc (deduct the count from the  free_credits_info.count)
-        await Credit.findOneAndUpdate({ user_id: userId, 'free_credits_info.credits_expires_on': date }, {
+        await Credit.findOneAndUpdate({
+          user_id: userId,
+          'free_credits_info.credits_expires_on': date
+        }, {
           $inc: { "free_credits_info.$.count": - credit_value(category) },
         }).then(async res => {            //push the credit usage in the credit doc and update the available_free_credits
           await Credit.findOneAndUpdate({ user_id: userId }, {
@@ -160,7 +170,10 @@ module.exports = class CreditService {
       // find the credit doc with users id
       const docs = await Credit.findOne({ user_id: userId });
       const userDoc = await Profile.findOne({ _id: userId })
-      if (docs.available_premium_credits <= 0 || docs.available_premium_credits <= credit_value(category) || userDoc.premium_credit <= 0) {      //if users available_premium_credits == 0 return message "empty_ credits"
+      if (
+        docs.available_premium_credits <= credit_value(category) ||
+        userDoc.premium_credit <= 0
+      ) {      //if users available_premium_credits == 0 return message "empty_ credits"
         return { message: "Empty_Credits" }
       }
       //if user available_premium_credits < 0
@@ -173,13 +186,20 @@ module.exports = class CreditService {
           if (premiumCrd.count <= 0)       // if any credit count is == 0 update the credit status to "Expired/Empty"
             premiumCrd.status = "Empty"
           // check if credit status is not equal to "Expired/Empty" and count is not equal to 0
-          if (premiumCrd.status !== "Empty" && premiumCrd.status !== "Expired" && premiumCrd.count >= credit_value(category))
+          if (
+            premiumCrd.status !== "Empty" &&
+            premiumCrd.status !== "Expired" &&
+            premiumCrd.count >= credit_value(category)
+          )
             datesToBeChecked.push(premiumCrd.credits_expires_on)       // if the check is true push the dates into datestobechecked array
         });
         await docs.save();
         const date = nearestExpiryDateFunction(datesToBeChecked);  // this function returns nearest expiry date
         // update the credit doc (deduct the count from the  premium_credits_info.count)
-        await Credit.findOneAndUpdate({ user_id: userId, 'premium_credits_info.credits_expires_on': date }, {
+        await Credit.findOneAndUpdate({
+          user_id: userId,
+          'premium_credits_info.credits_expires_on': date
+        }, {
           $inc: { "premium_credits_info.$.count": -credit_value(category) },
         })
           .then(async res => {        //push the credit usage in the credit doc and update the available_premium_credits
