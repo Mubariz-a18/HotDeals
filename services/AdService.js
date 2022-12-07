@@ -1158,9 +1158,10 @@ $skip and limit for pagination
       let lng = +query.lng;
       let lat = +query.lat;
       let maxDistance = 100000;
-      if(!category || !sub_category){
-        throw ({ status: 404, message: 'category or sub_category Field is missing' });
-      }
+      let pageVal = +query.page;
+      if (pageVal == 0) pageVal = pageVal + 1
+      let limitval = +query.limit || 10;
+
       const RelatedAds = await Generic.aggregate([
         {
           '$geoNear': {
@@ -1178,9 +1179,11 @@ $skip and limit for pagination
         },
         {
           '$match': {
-            "category":category,
-            "sub_category":sub_category,
-            'ad_status': 'Selling'
+            'ad_status': 'Selling',
+            "$or": [
+              { "category": category },
+              { "sub_category": sub_category }
+            ],
           }
         },
         {
@@ -1188,6 +1191,12 @@ $skip and limit for pagination
             "created_at": -1,
             "dist.calculated": 1,
           }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
         },
         {
           '$project': {
@@ -1232,4 +1241,19 @@ $skip and limit for pagination
       })
       return RelatedAds
     };
+    // Get Ad Status -- from generics check ad_status
+    static async getAdStatus(ad_id){
+      const ad_status = await Generic.findById({_id:ad_id},{
+        _id:0,
+        ad_status:1
+      })
+      if(!ad_status){
+        await track('viewed ads status failed', {
+          distinct_id:ad_id,
+        })
+        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+      }else{
+        return ad_status
+      }
+    }
 };

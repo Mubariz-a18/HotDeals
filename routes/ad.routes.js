@@ -19,5 +19,6 @@ router.post('/api/v1/getMyAdDetail', verifyToken, AdController.apiGetMyAdDetails
 router.get('/api/v1/getPremiumAds', verifyJwtTokenForAds, AdController.apiGetPremiumAds);
 router.get('/api/v1/getRecentAds', verifyJwtTokenForAds, AdController.apiGetRecentAds);
 router.get('/api/v1/getRelatedAd', verifyJwtTokenForAds, AdController.apiGetRelatedAds);
+router.post('/api/v1/checkAdStatus', AdController.apiCheckAdStatus);
 
 module.exports = router;

@@ -365,8 +365,8 @@ module.exports = class AdController {
       }
       if (getRelatedAds.length > 0) {
         res.status(200).json({
-          PremiumAds: getRelatedAds,
-          TotalPremiumAds: getRelatedAds.length
+          Featured_Ads: getRelatedAds,
+          Total_Featured_Ads: getRelatedAds.length
         })
       }
       if (getRelatedAds.length == 0) {
@@ -391,4 +391,37 @@ module.exports = class AdController {
       };
     };
   };
+  // api for checking ad_status
+  static async apiCheckAdStatus(req , res , next){
+    try {
+      const adstatus = await AdService.getAdStatus(req.body.ad_id);
+      // Response is sent
+      if (adstatus == null) {
+        // mixpanel track for get premium ads failed
+        await track('viewed ads status ', {
+          distinct_id: req.body.ad_id,
+        })
+        res.status(404).json({
+          message: "ADS_NOT_FOUND"
+        })
+      }
+      else{
+        res.status(200).send(adstatus)
+      }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  }
 };
