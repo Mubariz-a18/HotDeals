@@ -16,16 +16,19 @@ const creditSchema = mongoose.Schema({
   available_premium_boost_credits: {
     type: Number
   },
+  available_Highlight_credits:{
+    type: Number
+  },
   free_credits_info: [
     {
       count: {
         type: Number,
       },
-      category:{
-        type:String
+      category: {
+        type: String
       },
-      sub_category:{
-        type:String
+      sub_category: {
+        type: String
       },
       status: {
         type: String,
@@ -59,11 +62,11 @@ const creditSchema = mongoose.Schema({
       count: {
         type: Number,
       },
-      category:{
-        type:String
+      category: {
+        type: String
       },
-      sub_category:{
-        type:String
+      sub_category: {
+        type: String
       },
       status: {
         type: String,
@@ -103,11 +106,11 @@ const creditSchema = mongoose.Schema({
       count: {
         type: Number,
       },
-      category:{
-        type:String
+      category: {
+        type: String
       },
-      sub_category:{
-        type:String
+      sub_category: {
+        type: String
       },
       status: {
         type: String,
@@ -119,7 +122,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly","Purchased-Boost"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost"],
         default: "Admin-atLogin"
       },
       transaction_Id: {
@@ -144,11 +147,11 @@ const creditSchema = mongoose.Schema({
       count: {
         type: Number,
       },
-      category:{
-        type:String
+      category: {
+        type: String
       },
-      sub_category:{
-        type:String
+      sub_category: {
+        type: String
       },
       status: {
         type: String,
@@ -160,7 +163,48 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly","Purchased-premium-Boost"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-premium-Boost"],
+        default: "Admin-atLogin"
+      },
+      transaction_Id: {
+        type: String
+      },
+      referral_Id: {
+        type: String,
+      },
+      allocated_on: {
+        type: String
+      },
+      purchaseDate: {
+        type: String
+      },
+      credits_expires_on: {
+        type: String
+      }
+    }
+  ],
+  Highlight_credit_info: [
+    {
+      count: {
+        type: Number,
+      },
+      category: {
+        type: String
+      },
+      sub_category: {
+        type: String
+      },
+      status: {
+        type: String,
+        enum: ['Available', "Expired", "Empty", "Active"],
+        default: "Available"
+      },
+      duration: {
+        type: Number,
+      },
+      allocation: {
+        type: String,
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight"],
         default: "Admin-atLogin"
       },
       transaction_Id: {
@@ -184,7 +228,7 @@ const creditSchema = mongoose.Schema({
     {
       type_of_credit: {
         type: String,
-        enum: ["Free", "Premium","Boost","Premium-Boost"]
+        enum: ["Free", "Premium", "Boost", "Premium-Boost"]
       },
       ad_id: {
         type: mongoose.Schema.Types.ObjectId
@@ -195,10 +239,13 @@ const creditSchema = mongoose.Schema({
       category: {
         type: String
       },
-      sub_category:{
+      sub_category: {
         type: String
       },
-      boost_expiry_date :{
+      boost_expiry_date: {
+        type: String
+      },
+      highlight_expiry_date:{
         type:String
       },
       credited_on: {

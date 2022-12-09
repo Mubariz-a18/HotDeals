@@ -38,7 +38,8 @@ module.exports = class CreditService {
         free_credit: 200,
         premium_credit: 10,
         free_boost_credit: 0,
-        premium_boost_credit: 0
+        premium_boost_credit: 0,
+        highlight_credits:0
       }
     })
   };
@@ -140,6 +141,29 @@ module.exports = class CreditService {
         await Profile.findOneAndUpdate({ _id: userId }, {
           $inc: {
             premium_boost_credit: bodyData.count
+          }
+        })
+        return newCredit;
+      }
+      else if (bodyData.creditType == "Highlight") {
+        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+          $inc: { available_Highlight_credits: bodyData.count },
+          $push: {
+            Highlight_credit_info: {
+              count: bodyData.count,
+              allocation: bodyData.allocation,
+              allocated_on: currentDate,
+              transaction_Id: bodyData.transaction_Id,
+              duration: durationInDays(DateAfter30Days),     // this function return duration in days
+              credits_expires_on: DateAfter30Days,
+              purchaseDate: currentDate
+            }
+          }
+        }, { new: true });
+        // update the users profile total highlight_credits
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            highlight_credits : bodyData.count
           }
         })
         return newCredit;
@@ -290,7 +314,8 @@ module.exports = class CreditService {
         available_free_credits: 1,
         available_premium_credits: 1,
         available_boost_credits: 1,
-        available_premium_boost_credits: 1
+        available_premium_boost_credits: 1,
+        available_Highlight_credits:1
       })
       return CreditDocs
     }
@@ -352,7 +377,7 @@ module.exports = class CreditService {
           await Generic.findByIdAndUpdate({ _id: ad_id }, {
             $set: {
               is_Boosted: true,
-              Boost_Days: 10,
+              Boost_Days:  durationInDays(Boost_Expiry_Date),
               Boosted_Date: currentDate,
               Boost_Expiry_Date: Boost_Expiry_Date
             }
@@ -421,7 +446,7 @@ module.exports = class CreditService {
             await Generic.findByIdAndUpdate({ _id: ad_id }, {
               $set: {
                 is_Boosted: true,
-                Boost_Days: 10,
+                Boost_Days: durationInDays(Boost_Expiry_Date),
                 Boosted_Date: currentDate,
                 Boost_Expiry_Date: Boost_Expiry_Date
               }
@@ -436,5 +461,84 @@ module.exports = class CreditService {
         return { message: "AD_BOOSTED_SUCCESSFULLY" }
       };
     };
+  }
+
+  static async highlight_MyAd(userId,bodyData){
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const highlight_expiry_date = expiry_date_func(5)
+    const { ad_id } = bodyData;
+    const ad = await Generic.findOne({ _id: ad_id });
+    if (
+      !ad || 
+      ad.ad_status !== "Selling" || 
+      ad.is_Highlighted == true || 
+      ad.isPrime == false
+      ) {
+      throw ({ status: 404, message: 'CANNOT_HIGHLIGHT_THIS_AD' });
+    }
+    const { category, sub_category } = ad;
+      const docs = await Credit.findOne({ user_id: userId });
+      const userDoc = await Profile.findOne({ _id: userId });
+      if (
+        docs.available_Highlight_credits <= credit_value(category) ||
+        userDoc.highlight_credits <= 0
+      ) {
+        throw ({ status: 404, message: 'Not_Enough_Credits' });
+      }
+      else {
+        let All_Highlight = docs.Highlight_credit_info;
+        const datesToBeChecked = [];
+
+        All_Highlight.forEach(highlight => {
+          if (highlight.count <= 0)
+            highlight.status = "Empty"
+          if (
+            highlight.status !== "Empty" &&
+            highlight.status !== "Expired" &&
+            highlight.count >= credit_value(category)
+          )
+          datesToBeChecked.push(highlight.credits_expires_on)
+        });
+        await docs.save();
+        const date = nearestExpiryDateFunction(datesToBeChecked);
+
+        await Credit.findOneAndUpdate({
+          user_id: userId,
+          'Highlight_credit_info.credits_expires_on': date
+        }, {
+          $inc: { "Highlight_credit_info.$.count": -credit_value(category) },
+        })
+          .then(async res => {
+            await Credit.findOneAndUpdate({ user_id: userId }, {
+              $inc: { available_Highlight_credits : -credit_value(category) },
+              $push: {
+                credit_usage: {
+                  type_of_credit: "Highlight",
+                  ad_id: ad_id,
+                  count: credit_value(category),
+                  category: category,
+                  sub_category: sub_category,
+                  boost_expiry_date: highlight_expiry_date,
+                  credited_on: currentDate
+                }
+              }
+            });
+            await Generic.findByIdAndUpdate({ _id: ad_id }, {
+              $set: {
+                is_Highlighted: true,
+                Highlight_Days: durationInDays(highlight_expiry_date),
+                Highlighted_Date: currentDate,
+                Highlight_Expiry_Date: highlight_expiry_date
+              }
+            })
+          })
+
+        await Profile.findOneAndUpdate({ _id: userId }, {
+          $inc: {
+            highlight_credits : -credit_value(category)
+          }
+        });
+        return { message: "AD_HIGHLIGHTED_SUCCESSFULLY" }
+      };
   }
 };
