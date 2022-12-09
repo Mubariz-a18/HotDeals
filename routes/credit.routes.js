@@ -9,5 +9,6 @@ const CreditController = require('../controllers/Credit/credit.controller')
 //Credit Route
 router.post('/api/createCredit', verifyToken, CreditController.apiCreateCredit);
 router.get('/api/getMyCredits', verifyToken, CreditController.getMyCreditsInfo);
+router.post('/api/BoostAd', verifyToken, CreditController.apiBoostAd);
 
 module.exports = router;

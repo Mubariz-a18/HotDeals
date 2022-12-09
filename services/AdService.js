@@ -793,7 +793,7 @@ module.exports = class AdService {
   static async getParticularAd(ad_id, query, user_id) {
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = 100000;
+    let maxDistance = +query.maxDistance;
     const AdDetail = await Generic.aggregate([
       {
         '$geoNear': {
@@ -847,6 +847,8 @@ module.exports = class AdService {
       _id: 1,
       name: 1,
       profile_url: 1,
+      is_recommended: 1,
+      is_email_verified: 1,
       created_date: 1
     })
     const user = await Profile.findOne(
@@ -901,6 +903,12 @@ module.exports = class AdService {
           }
         },
         {
+          $match: {
+            isPrime: true,
+            ad_status: "Selling"
+          }
+        },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -937,19 +945,21 @@ module.exports = class AdService {
             'price': 1,
             'image_url': 1,
             'isPrime': 1,
-            "dist": 1
-          }
-        },
-        {
-          $match: {
-            isPrime: true,
-            ad_status: "Selling"
+            "dist": 1,
+            "is_Boosted": 1,
+            "Boosted_Date": 1,
+            "is_Highlighted": 1,
+            "Highlighted_Date": 1,
           }
         },
         {
           $sort: {
+            "is_Highlighted": -1,
+            "Highlighted_Date": -1,
+            "is_Boosted": -1,
+            "Boosted_Date": -1,
             "created_at": -1,
-            "dist.calculated": 1,
+            "dist.calculated": -1,
             "Seller_verified": -1,
             "Seller_recommended": -1
           }
@@ -1014,6 +1024,12 @@ $skip and limit for pagination
           }
         },
         {
+          $match: {
+            isPrime: false,
+            ad_status: "Selling"
+          }
+        },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -1038,6 +1054,18 @@ $skip and limit for pagination
           }
         },
         {
+          $sort: {
+            "is_Highlighted": -1,
+            "Highlighted_Date": -1,
+            "is_Boosted": -1,
+            "Boosted_Date": -1,
+            "created_at": -1,
+            "dist.calculated": -1,
+            "Seller_verified": -1,
+            "Seller_recommended": -1
+          }
+        },
+        {
           '$project': {
             '_id': 1,
             'Seller_Name': 1,
@@ -1051,21 +1079,11 @@ $skip and limit for pagination
             'price': 1,
             'image_url': 1,
             'isPrime': 1,
-            "dist": 1
-          }
-        },
-        {
-          $match: {
-            isPrime: false,
-            ad_status: "Selling"
-          }
-        },
-        {
-          $sort: {
-            "created_at": -1,
-            "dist.calculated": 1,
-            "Seller_verified": -1,
-            "Seller_recommended": -1,
+            "dist": 1,
+            "is_Boosted": 1,
+            "Boosted_Date": 1,
+            "is_Highlighted": 1,
+            "Highlighted_Date": 1
           }
         },
         {
@@ -1096,6 +1114,7 @@ $skip and limit for pagination
     })
     return getRecentAds;
   };
+
   //Get Ad details of any ad without location
   static async getMyAdDetails(ad_id, user_id) {
     const userExist = await Profile.findById({ _id: user_id });
@@ -1177,6 +1196,29 @@ $skip and limit for pagination
         }
       },
       {
+        '$lookup': {
+          'from': 'profiles',
+          'localField': 'user_id',
+          'foreignField': '_id',
+          'as': 'sample_result'
+        }
+      },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': {
+          'Seller_Name': '$sample_result.name',
+          'Seller_Id': '$sample_result._id',
+          'Seller_Joined': '$sample_result.created_date',
+          'Seller_Image': '$sample_result.profile_url',
+          'Seller_verified': '$sample_result.is_email_verified',
+          'Seller_recommended': '$sample_result.is_recommended',
+        }
+      },
+      {
         '$match': {
           'ad_status': 'Selling',
           "$or": [
@@ -1215,7 +1257,13 @@ $skip and limit for pagination
           'ad_type': 1,
           'created_at': 1,
           'isPrime': 1,
-          'dist': 1
+          'dist': 1,
+          'Seller_Name':1,
+          'Seller_Id':1,
+          'Seller_Joined':1,
+          'Seller_Image':1,
+          'Seller_verified':1,
+          'Seller_recommended':1
         }
       }
     ])
@@ -1240,6 +1288,7 @@ $skip and limit for pagination
     })
     return RelatedAds
   };
+
   // Get Ad Status -- from generics check ad_status
   static async getAdStatus(ad_id) {
     const ad_status = await Generic.findById({ _id: ad_id }, {
@@ -1254,5 +1303,5 @@ $skip and limit for pagination
     } else {
       return ad_status
     }
-  }
+  };
 };

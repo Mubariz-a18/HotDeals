@@ -54,6 +54,33 @@ module.exports = class CreditController {
       };
     };
   }
+
+    // Api getmyCreditsInfo 
+    static async apiBoostAd(req, res, next) {
+      try {
+        // return the doc from service 
+        const creditDoc = await CreditService.boost_MyAd(req.user_ID,req.body);
+        // response is sent
+          res.status(200).send({
+            message:creditDoc
+
+          });
+      } catch  (e) {
+        if (!e.status) {
+          res.status(500).json({
+            error: {
+              message: ` something went wrong try again : ${e.message} `
+            }
+          });
+        } else {
+          res.status(e.status).json({
+            error: {
+              message: e.message
+            }
+          });
+        };
+      };
+    }
   
 };
 
