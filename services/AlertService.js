@@ -1,7 +1,6 @@
 const Profile = require("../models/Profile/Profile");
 const Alert = require("../models/alertSchema");
 const { track } = require("./mixpanel-service");
-const { DateAfter15Days, currentDate } = require("../utils/moment");
 const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
 
@@ -62,7 +61,7 @@ module.exports = class AlertService {
       return alertDoc;
     }
   }
-
+  // Get Alert
   static async GetAlert(user_id) {
     const userExist = await Profile.findById({ _id: user_id })
     if (!userExist) {

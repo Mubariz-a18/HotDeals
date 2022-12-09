@@ -37,6 +37,11 @@ const my_age = (date_of_birth) => {
   return age
 }
 
+const expiry_date_func = (days)=>{
+  const expiryDate_String = moment().add(days, 'd').format('YYYY-MM-DD HH:mm:ss');
+  return expiryDate_String
+}
+
 module.exports = {
   // currentDate, DateAfter30Days,
   // Ad_Historic_Duration,
@@ -46,6 +51,7 @@ module.exports = {
   nearestExpiryDateFunction,
   durationInDays,
   my_age,
+  expiry_date_func
   // Free_credit_Expiry
 };
 

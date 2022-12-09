@@ -1,9 +1,9 @@
-// const cron = require('node-cron')
-// const moment = require("moment")
-// const Generic = require('../models/Ads/genericSchema');
-// const Alert = require('../models/alertSchema');
-// const Credit = require('../models/creditSchema');
-// const Profile = require('../models/Profile/Profile');
+const cron = require('node-cron')
+const moment = require("moment")
+const Generic = require('../models/Ads/genericSchema');
+const Alert = require('../models/alertSchema');
+const Credit = require('../models/creditSchema');
+const Profile = require('../models/Profile/Profile');
 // const { 
 //   currentDate, 
 //   Ad_Historic_Duration, 
@@ -41,6 +41,7 @@
 //     }
 //   });
 // });
+
 // //(ScheduleTask_Alert_activation) will update the (activate_status) to "false" if the (alert_Expiry_Date) has past the (current date)  * * 01 * * *  '* * * * * *'
 // const ScheduleTask_Alert_activation = cron.schedule('* * 01 * * *', async () => {
 //   const Alerts = await Alert.find();
@@ -240,6 +241,29 @@
 //     }
 //   })
 // })
+
+// const expiry_boost = cron.schedule("* * * * * *", async () => {
+//     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+//     console.log(currentDate)
+//     const ads = await Generic.find({ is_Boosted: true ,"Boost_Expiry_Date": { $lte: currentDate }})
+    // ads.forEach(async ad => {
+    //     if (currentDate > ad.Boost_Expiry_Date) {
+    //         await Generic.findByIdAndUpdate({ _id: ad._id }, {
+    //             $unset: {
+    //                 Boost_Days: 1,
+    //                 Boost_Expiry_Date: 1,
+    //                 Boosted_Date: 1
+    //             },
+    //             $set: {
+    //                 "is_Boosted": false
+    //             },
+    //         })
+    //     }
+    // })
+// })
+
+
+
 //Starting the schedular
 // ScheduleTask_Ad_Status_Expire.start()
 // ScheduleTask_Display_Historic_Ads.start()
