@@ -67,7 +67,7 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired", "Reposted"],
+        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired", "Reposted", "Suspended"],
         default: "Selling"
     },
     is_Reposted: {

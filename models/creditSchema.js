@@ -228,7 +228,7 @@ const creditSchema = mongoose.Schema({
     {
       type_of_credit: {
         type: String,
-        enum: ["Free", "Premium", "Boost", "Premium-Boost"]
+        enum: ["Free", "Premium", "Boost", "Premium-Boost","Highlight"]
       },
       ad_id: {
         type: mongoose.Schema.Types.ObjectId

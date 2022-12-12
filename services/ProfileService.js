@@ -6,6 +6,7 @@ const { track } = require("./mixpanel-service");
 const { currentDate , my_age} = require("../utils/moment");
 const moment = require('moment');
 const { createCreditForNewUser } = require("./CreditService");
+const { apiCreateReportDoc } = require("./reportService");
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -60,7 +61,7 @@ module.exports = class ProfileService {
         });
         //create a new credit doc for new user
         await createCreditForNewUser(profileDoc1._id)
-
+        await apiCreateReportDoc(userID)
         //mixpanel track for new Profile Created
         await track('New Profile Created ', {
           distinct_id: profileDoc1._id,
@@ -259,6 +260,7 @@ module.exports = class ProfileService {
       await track('Get My Profile ', {
         distinct_id: user_ID,
       });
+      // await apiCreateReportDoc(user_ID)
       return MyProfile
     }
 

@@ -80,7 +80,7 @@ module.exports = class CreditController {
       };
     };
   }
-  
+
   static async apiHighlightAd(req, res, next) {
     try {
       // return the doc from service 
@@ -108,4 +108,3 @@ module.exports = class CreditController {
   }
 
 };
-

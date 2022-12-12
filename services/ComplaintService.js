@@ -1,7 +1,6 @@
 const User = require("../models/Profile/Profile");
 const Complaint = require("../models/complaintSchema");
 const ObjectId = require('mongodb').ObjectId;
-const { currentDate } = require('../utils/moment');
 const { track } = require("./mixpanel-service");
 const moment = require('moment');
 module.exports = class ComplainService {
