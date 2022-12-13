@@ -6,36 +6,41 @@ const reportSchema = mongoose.Schema({
     },
     total_Ads_suspended: {
         type: Number,
-        default:0
+        default: 0
     },
-    yellow_counter: {
-        type: Boolean,
-        default:false
+    flag: {
+        type: String,
+        enum: ["Yellow", "Orange", "Red", "Green"],
+        default: "Green"
     },
-    orange_counter: {
-        type: Boolean,
-        default:false
-    },
-    Red_counter: {
-        type: Boolean,
-        default:false
-    },
+    // Yellow_flag: {
+    //     type: Boolean,
+    //     default:false
+    // },
+    // Orange_flag: {
+    //     type: Boolean,
+    //     default:false
+    // },
+    // Red_flag: {
+    //     type: Boolean,
+    //     default:false
+    // },
     reports_box: [
         {
-            _id:false,
+            _id: false,
             ad_id: {
                 type: mongoose.Types.ObjectId,
             },
             ad_report_counter: {
                 type: Number,
-                default:0
+                default: 0
             },
             report_action_status: {
                 type: Boolean
             },
             reports_list: [
-                {   
-                    _id:false,
+                {
+                    _id: false,
                     reported_user_id: {
                         type: mongoose.Types.ObjectId
                     },

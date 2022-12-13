@@ -20,14 +20,7 @@
 //         //$search inside $ text will search for text in generics collection similar to input given
 //         const { category, sub_category } = query;
 //         if (category && sub_category) {
-//             const cat_ads = await Generic.find({
-//                 $and: [
-//                     { category: category },
-//                     { sub_category: sub_category }
-//                 ]
-//             },
-//                 projection
-//             ).sort({ created_at: -1 })
+
 //             return cat_ads
 //         }
 //         else if (category && !sub_category) {

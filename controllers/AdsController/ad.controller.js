@@ -44,6 +44,7 @@ module.exports = class AdController {
         Deleted: getDocument[0].Deleted,
         Reposted: getDocument[0].Reposted,
         Sold: getDocument[0].Sold,
+        Suspended: getDocument[0].Suspended
       });
     } catch (e) {
       if (!e.status) {
@@ -152,7 +153,8 @@ module.exports = class AdController {
       // Response code is sent 
       res.status(200).send({
         message: "My Favourite Ads ",
-        Get_My_Fav_Ads
+        Get_My_Fav_Ads,
+        Total_Fav_Ads:Get_My_Fav_Ads.length
       })
     } catch (e) {
       if (!e.status) {
@@ -391,6 +393,7 @@ module.exports = class AdController {
       };
     };
   };
+
   // api for checking ad_status
   static async apiCheckAdStatus(req , res , next){
     try {
@@ -424,4 +427,5 @@ module.exports = class AdController {
       };
     };
   }
+  
 };
