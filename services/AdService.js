@@ -163,6 +163,11 @@ module.exports = class AdService {
                 }
               },
               {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
@@ -179,6 +184,11 @@ module.exports = class AdService {
             "Archive": [
               { $match: { ad_status: "Archive" } },
               {
+                $sort: {
+                  ad_Archive_Date: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
@@ -193,6 +203,11 @@ module.exports = class AdService {
             "Drafts": [
               { $match: { ad_status: "Draft" } },
               {
+                $sort: {
+                  ad_Draft_Date: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
@@ -204,6 +219,11 @@ module.exports = class AdService {
             ],
             "Expired": [
               { $match: { ad_status: "Expired" } },
+              {
+                $sort: {
+                  ad_expire_date: -1,
+                }
+              },
               {
                 $project: {
                   _id: 1,
@@ -219,10 +239,15 @@ module.exports = class AdService {
             "Deleted": [
               { $match: { ad_status: "Delete" } },
               {
+                $sort: {
+                  ad_Deleted_Date: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description: 1,
+                  ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
@@ -231,10 +256,15 @@ module.exports = class AdService {
             "Reposted": [
               { $match: { ad_status: "Reposted" } },
               {
+                $sort: {
+                  ad_Reposted_Date: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description: 1,
+                  ad_posted_address: 1,
                   ad_Reposted_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
@@ -243,11 +273,34 @@ module.exports = class AdService {
             "Sold": [
               { $match: { ad_status: "Sold" } },
               {
+                $sort: {
+                  ad_Sold_Date: -1,
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
-                  description: 1,
+                  ad_posted_address: 1,
                   ad_Sold_Date: 1,
+                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                }
+              }
+            ],
+            "Suspended": [
+              { $match: { ad_status: "Suspended" } },
+              {
+                $sort: {
+                  ad_Suspended_Date: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  price: 1,
+                  ad_posted_address: 1,
+                  ad_Suspended_Date: 1,
                   image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -1258,12 +1311,12 @@ $skip and limit for pagination
           'created_at': 1,
           'isPrime': 1,
           'dist': 1,
-          'Seller_Name':1,
-          'Seller_Id':1,
-          'Seller_Joined':1,
-          'Seller_Image':1,
-          'Seller_verified':1,
-          'Seller_recommended':1
+          'Seller_Name': 1,
+          'Seller_Id': 1,
+          'Seller_Joined': 1,
+          'Seller_Image': 1,
+          'Seller_verified': 1,
+          'Seller_recommended': 1
         }
       }
     ])

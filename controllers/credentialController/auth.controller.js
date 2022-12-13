@@ -53,7 +53,8 @@ module.exports = class AuthController {
         if (oldUser) {
           // If user exists
           const userID = oldUser["_id"];
-          const token = createJwtToken(userID, phoneNumber.text);
+          const token =await createJwtToken(userID, phoneNumber.text);
+          console.log(token)
           // save user token
           await track("login successfull", {
             distinct_id: userID,
