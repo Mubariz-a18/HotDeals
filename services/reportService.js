@@ -4,6 +4,7 @@ const moment = require('moment');
 const Report = require("../models/reportSchema");
 const Generic = require("../models/Ads/genericSchema");
 const Reason_points = require("../utils/reason_points");
+const { expiry_date_func } = require("../utils/moment");
 
 
 
@@ -100,7 +101,7 @@ module.exports = class ReportService {
                 })
 
                 if (Update_Action_Flag) {
-                    this.check_ad_suspended(ad_id)
+                    this.check_ad_suspended(ad_id,findAd.user_id)
                 } else {
                 }
                 return Push_Report_If_ReportList_exist
@@ -108,22 +109,25 @@ module.exports = class ReportService {
         }
     }
 
-    static async check_ad_suspended(ad_id) {
+    static async check_ad_suspended(ad_id,user_id) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-        const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
         await Generic.findByIdAndUpdate({ _id: ad_id }, {
             $set: {
                 ad_status: "Suspended",
                 ad_Suspended_Date: currentDate,
-                ad_Historic_Duration_Date: Ad_Historic_Duration
+                ad_Historic_Duration_Date: expiry_date_func(183)
             }
+        },{
+            new:true
         })
         await Report.findOneAndUpdate({
-            user_id: findAd.user_id
+            user_id: user_id
         }, {
             $inc: {
                 "total_Ads_suspended": 1
             },
+        },{
+            new:true
         })
     }
 };
