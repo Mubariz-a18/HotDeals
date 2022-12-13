@@ -130,7 +130,7 @@ const profileSchema = mongoose.Schema({
   premium_boost_credit: {
     type: Number,
   },
-  highlight_credits:{
+  highlight_credits: {
     type: Number,
   },
   premium_ad: [
@@ -166,6 +166,12 @@ const profileSchema = mongoose.Schema({
   fcmToken: {
     type: String,
     default: "",
+  },
+  user_Banned_Flag: {
+    type: Boolean
+  },
+  user_Banned_Times: {
+    type: Number
   },
   created_date: {
     type: String

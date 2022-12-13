@@ -121,6 +121,9 @@ const genericSchema = mongoose.Schema({
     ad_Deleted_Date: {
         type: String
     },
+    ad_Suspended_Date:{
+        type: String
+    },
     ad_Historic_Duration_Date: {
         type: String
     },
