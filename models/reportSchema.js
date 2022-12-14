@@ -13,18 +13,9 @@ const reportSchema = mongoose.Schema({
         enum: ["Yellow", "Orange", "Red", "Green"],
         default: "Green"
     },
-    // Yellow_flag: {
-    //     type: Boolean,
-    //     default:false
-    // },
-    // Orange_flag: {
-    //     type: Boolean,
-    //     default:false
-    // },
-    // Red_flag: {
-    //     type: Boolean,
-    //     default:false
-    // },
+    flag_Date: {
+        type: String,
+    },
     reports_box: [
         {
             _id: false,
@@ -37,6 +28,9 @@ const reportSchema = mongoose.Schema({
             },
             report_action_status: {
                 type: Boolean
+            },
+            report_action_date: {
+                type: String
             },
             reports_list: [
                 {
