@@ -4,6 +4,7 @@ const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
 const Credit = require('../models/creditSchema');
 const Profile = require('../models/Profile/Profile');
+const Report = require('../models/reportSchema');
 // const { 
 //   currentDate, 
 //   Ad_Historic_Duration, 
@@ -246,20 +247,20 @@ const Profile = require('../models/Profile/Profile');
 //     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 //     console.log(currentDate)
 //     const ads = await Generic.find({ is_Boosted: true ,"Boost_Expiry_Date": { $lte: currentDate }})
-    // ads.forEach(async ad => {
-    //     if (currentDate > ad.Boost_Expiry_Date) {
-    //         await Generic.findByIdAndUpdate({ _id: ad._id }, {
-    //             $unset: {
-    //                 Boost_Days: 1,
-    //                 Boost_Expiry_Date: 1,
-    //                 Boosted_Date: 1
-    //             },
-    //             $set: {
-    //                 "is_Boosted": false
-    //             },
-    //         })
-    //     }
-    // })
+// ads.forEach(async ad => {
+//     if (currentDate > ad.Boost_Expiry_Date) {
+//         await Generic.findByIdAndUpdate({ _id: ad._id }, {
+//             $unset: {
+//                 Boost_Days: 1,
+//                 Boost_Expiry_Date: 1,
+//                 Boosted_Date: 1
+//             },
+//             $set: {
+//                 "is_Boosted": false
+//             },
+//         })
+//     }
+// })
 // })
 
 
