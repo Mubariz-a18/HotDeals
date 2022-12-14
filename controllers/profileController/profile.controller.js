@@ -11,7 +11,7 @@ module.exports = class ProfileController {
       );
       //response code is sent
       res.status(200).json({
-        message:"successfully created",
+        message: "successfully created",
         // profileDocument: profileDocument
       })
     } catch (e) {
@@ -33,8 +33,8 @@ module.exports = class ProfileController {
   //API to Get Profile
   static async apiGetOthersProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.getOthersProfile(  req.user_ID,req.body.user_Id);
-        res.status(200).send(profileData);
+      const profileData = await ProfileService.getOthersProfile(req.user_ID, req.body.user_Id);
+      res.status(200).send(profileData);
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -52,16 +52,16 @@ module.exports = class ProfileController {
     };
   }
   // API Get My Profile
-  static async apiGetMyProfile(req,res,next){
-    try{
+  static async apiGetMyProfile(req, res, next) {
+    try {
       const MyProfileData = await ProfileService.getMyProfile(req.user_ID);
-        // response code is send 
-       res.status(200).send({
+      // response code is send 
+      res.status(200).send({
         message: "Get My Profile Success",
-        MyProfileData : MyProfileData
-       });
-            
-    }catch (e) {
+        MyProfileData: MyProfileData
+      });
+
+    } catch (e) {
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -80,11 +80,11 @@ module.exports = class ProfileController {
   // API Update Profile
   static async apiUpdateProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.updateProfile(req.body,req.user_ID);
-        res.send({
-          message:"success updated Profile",
-          ProfileDoc:profileData
-        });
+      const profileData = await ProfileService.updateProfile(req.body, req.user_ID);
+      res.send({
+        message: "success updated Profile",
+        ProfileDoc: profileData
+      });
     } catch (e) {
 
       if (!e.status) {

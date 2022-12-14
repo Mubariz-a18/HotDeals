@@ -10,32 +10,32 @@ const mixpanel = require("mixpanel");
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
-    const { phoneNumber ,smsToken } = req.body;
-      // Creating OTP for phoneNumber
-      if(!phoneNumber.text){
-        res.status(400).json({
-          message: "Phone_Number_Is_Required"
+    const { phoneNumber, smsToken } = req.body;
+    // Creating OTP for phoneNumber
+    if (!phoneNumber.text) {
+      res.status(400).json({
+        message: "Phone_Number_Is_Required"
+      });
+    } else {
+      const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
+      let msgResponse = {};
+
+      msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber, smsToken);
+      if (msgResponse.status === "success") {
+        // mixpanel track - email sent 
+        await track('Otp Sent to Phone number successfully !! ', {
+          phoneNumber: phoneNumber,
+          message: `otp sent to  ${phoneNumber}`
+        })
+        res.json({
+          message: "OTP Sent Successfully",
         });
-      }else{
-        const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
-        let msgResponse = {};
-  
-        msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber , smsToken);
-        if (msgResponse.status === "success") {
-          // mixpanel track - email sent 
-          await track('Otp Sent to Phone number successfully !! ', {
-            phoneNumber: phoneNumber,
-            message: `otp sent to  ${phoneNumber}`
-          })
-          res.json({
-            message: "OTP Sent Successfully",
-          });
-        } else {
-          res.status(400).json({
-            message: msgResponse.data,
-          });
-        }
+      } else {
+        res.status(400).json({
+          message: msgResponse.data,
+        });
       }
+    }
   }
 
   static async apiVerifyOTP(req, res, next) {
@@ -53,51 +53,50 @@ module.exports = class AuthController {
         if (oldUser) {
           // If user exists
           const userID = oldUser["_id"];
-          const token =await createJwtToken(userID, phoneNumber.text);
-          console.log(token)
+          const token = await createJwtToken(userID, phoneNumber.text);
           // save user token
           await track("login successfull", {
             distinct_id: userID,
           })
           return res.status(200).json({
             message: "success",
-            token,          
+            token,
             existingUser: true,
           });
           //return res.send({ token });
-        }else{
-        // If new user, create a user
+        } else {
+          // If new user, create a user
 
-        const user = await User.create({
-          userNumber: phoneNumber.text,
-        });
+          const user = await User.create({
+            userNumber: phoneNumber.text,
+          });
 
-        const token = createJwtToken(user["_doc"]["_id"], phoneNumber.text);
-        // save user token
-        user.token = token;
+          const token = createJwtToken(user["_doc"]["_id"], phoneNumber.text);
+          // save user token
+          user.token = token;
 
-        return res.status(200).json({
-          message: "success",
-          statusCode:200,
-          token,
-          existingUser: false,
-        });
-      }
+          return res.status(200).json({
+            message: "success",
+            statusCode: 200,
+            token,
+            existingUser: false,
+          });
+        }
       }
       return res.status(400).json({
         message: INVALID_OTP_ERR,
-        statusCode:401
+        statusCode: 401
       });
     } catch (error) {
-          await track("login unsuccessfull", {
-            distinct_id: phoneNumber,
-          })
-          return res.status(500).send({
-            error: {
-              message: ` something went wrong try again : ${e.message} `
-            }
-          });
+      await track("login unsuccessfull", {
+        distinct_id: phoneNumber,
+      })
+      return res.status(500).send({
+        error: {
+          message: ` something went wrong try again : ${e.message} `
         }
+      });
+    }
   }
 
   // Sent OTP by email

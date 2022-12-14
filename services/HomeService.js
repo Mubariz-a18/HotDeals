@@ -12,7 +12,6 @@
 //     let maxDistance = +bodyData.maxDistance
 //     let pageVal = page 
 //     let limitval = limit || 40
-//      console.log(pageVal , limitval) 
 //     // Aggregate Generics with  geonear (longitute and latitues are provided in coordinates )
 //     const ads = await generics.aggregate([
 //       [

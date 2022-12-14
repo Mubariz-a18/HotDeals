@@ -173,7 +173,7 @@ const profileSchema = mongoose.Schema({
   user_Banned_Times: {
     type: Number
   },
-  user_Banned_Date:{
+  user_Banned_Date: {
     type: String
   },
   created_date: {

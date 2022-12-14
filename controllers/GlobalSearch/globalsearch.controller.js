@@ -6,7 +6,7 @@ module.exports = class GlobalSearchController {
       // Global search -- ads are fetched and returned from global search service  && analytics are created 
       const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
       await GlobalSearchService.createAnalyticsKeyword(searchResult, req.query, req.user_ID);
-      res.status(200).json({ data: searchResult  , totalAdsSearched : searchResult.length });
+      res.status(200).json({ data: searchResult, totalAdsSearched: searchResult.length });
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

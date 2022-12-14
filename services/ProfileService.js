@@ -7,6 +7,7 @@ const { currentDate , my_age} = require("../utils/moment");
 const moment = require('moment');
 const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
+const { use } = require("../routes/auth.routes");
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
@@ -298,7 +299,7 @@ module.exports = class ProfileService {
               text: bodyData.about.text,
               private: bodyData.about.private
             },
-            // country_code: bodyData.country_code,
+            is_email_verified:  userProfile.email.text !== bodyData.email.text ? false : userProfile.is_email_verified,
             date_of_birth: bodyData.date_of_birth,
             age: my_age(moment(bodyData.date_of_birth)),
             gender: bodyData.gender,
