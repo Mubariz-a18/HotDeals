@@ -218,6 +218,7 @@ module.exports = class AdController {
       })
 
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -331,7 +332,7 @@ module.exports = class AdController {
       res.status(200).send({
         message: "success!",
         AdDetail: myAdDetail,
-        ownerDetails: ownerDetails,
+        Owner: ownerDetails,
         isAdFav: isAdFav
       });
     } catch (e) {
