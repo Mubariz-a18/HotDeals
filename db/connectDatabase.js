@@ -6,8 +6,8 @@ const connectDB = async () => {
       keepAlive: true,
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    }).then(()=>{
-      console.log("database is connected  ",db)
+    }).then(() => {
+      console.log("database is connected  ", db)
     })
     .catch((err) => {
       console.error("Error connecting to mongo", err);

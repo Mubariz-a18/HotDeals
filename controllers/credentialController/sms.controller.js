@@ -17,7 +17,6 @@ module.exports = class SMSController {
    * @param {string} phoneNumber - PhoneNumber to sent the OTP Code.
    */
   static async sendSMSWithExotel(otp, phoneNumber ,smsToken) {
-    console.log(otp,phoneNumber.text);
     const url =
       "https://" +
       EXOTEL_API_KEY +

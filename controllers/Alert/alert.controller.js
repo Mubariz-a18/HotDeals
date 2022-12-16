@@ -8,10 +8,10 @@ module.exports = class AlertController {
       const userId = req.user_ID;
       const body = req.body;
       //  Alert is created and response is sent
-      const alertData = await AlertService.createAlert(body , userId);
+      const alertData = await AlertService.createAlert(body, userId);
       // Response code is sent with alertData 
       res.status(200).json({
-        message:"successfully created",
+        message: "successfully created",
         alertData: alertData
       })
     } catch (e) {
@@ -30,7 +30,7 @@ module.exports = class AlertController {
       };
     };
   };
-  
+
   // Get my alerts  -- Alerts are fetched and returned from alert service
   static async apiGetAlert(req, res, next) {
     try {
@@ -39,7 +39,7 @@ module.exports = class AlertController {
       const alerts = await AlertService.GetAlert(userId);
       // Response code is sent with alertData 
       res.status(200).json({
-        message:"successfully",
+        message: "successfully",
         alertData: alerts
       })
     } catch (e) {
@@ -63,15 +63,15 @@ module.exports = class AlertController {
   static async apiUpdateAlert(req, res, next) {
     try {
       const body = req.body;
-      const {alert_id} = req.body;
+      const { alert_id } = req.body;
       const userId = req.user_ID;
-      const updateAlert = await AlertService.updateAlert(body, alert_id,userId);
-     // Response code is sent with updateAlert
-     res.status(200).json({
-      message:"successfully updated",
-      alertData: updateAlert
-    })
-    }  catch (e) {
+      const updateAlert = await AlertService.updateAlert(body, alert_id, userId);
+      // Response code is sent with updateAlert
+      res.status(200).json({
+        message: "successfully updated",
+        alertData: updateAlert
+      })
+    } catch (e) {
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -96,9 +96,9 @@ module.exports = class AlertController {
       //alert is removed from user profile
       const deleteAlert = await AlertService.deleteAlert(alert_id, userId);
       res.status(200).json({
-        message:deleteAlert,
+        message: deleteAlert,
       });
-    }  catch (e) {
+    } catch (e) {
       if (!e.status) {
         res.status(500).json({
           error: {

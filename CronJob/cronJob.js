@@ -4,6 +4,7 @@ const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
 const Credit = require('../models/creditSchema');
 const Profile = require('../models/Profile/Profile');
+const Report = require('../models/reportSchema');
 // const { 
 //   currentDate, 
 //   Ad_Historic_Duration, 
@@ -119,7 +120,7 @@ const Profile = require('../models/Profile/Profile');
 //     alertNotificationDoc.forEach(e => {
 //       ad_Ids.push(e._id)
 //     })
-//     // console.log(ad_Ids)
+
 //     await Alert.updateOne(
 //       { _id: alert._id},
 //       {
@@ -244,22 +245,21 @@ const Profile = require('../models/Profile/Profile');
 
 // const expiry_boost = cron.schedule("* * * * * *", async () => {
 //     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-//     console.log(currentDate)
 //     const ads = await Generic.find({ is_Boosted: true ,"Boost_Expiry_Date": { $lte: currentDate }})
-    // ads.forEach(async ad => {
-    //     if (currentDate > ad.Boost_Expiry_Date) {
-    //         await Generic.findByIdAndUpdate({ _id: ad._id }, {
-    //             $unset: {
-    //                 Boost_Days: 1,
-    //                 Boost_Expiry_Date: 1,
-    //                 Boosted_Date: 1
-    //             },
-    //             $set: {
-    //                 "is_Boosted": false
-    //             },
-    //         })
-    //     }
-    // })
+// ads.forEach(async ad => {
+//     if (currentDate > ad.Boost_Expiry_Date) {
+//         await Generic.findByIdAndUpdate({ _id: ad._id }, {
+//             $unset: {
+//                 Boost_Days: 1,
+//                 Boost_Expiry_Date: 1,
+//                 Boosted_Date: 1
+//             },
+//             $set: {
+//                 "is_Boosted": false
+//             },
+//         })
+//     }
+// })
 // })
 
 
@@ -272,3 +272,33 @@ const Profile = require('../models/Profile/Profile');
 // Schedule_Task_Monthly_credits.start()
 // Schedule_Task_Credit_Status_Update.start()
 // Schedule_Task_Is_user_Recommended.start()
+
+
+cron.schedule("* * * * * *", async () => {
+    const Reports = await Report.find({ flag: { $ne: "Green" } })
+    const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
+
+    Reports.forEach(async report => {
+        let reported_Date = [];
+        let { reports_box } = report;
+
+        reports_box.forEach(
+            reportList => {
+                reported_Date.push(reportList.report_action_date)
+            }
+        );
+        reported_Date.sort();
+        let last_report_Date = reported_Date.pop()
+        
+        if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended > 0) {
+            await Report.findOneAndUpdate({user_id:report.user_id},{
+                $inc:{
+                    grace_counter:2
+                },
+                $inc:{
+                    total_Ads_suspended:-2
+                }
+            })
+        }
+    })
+});

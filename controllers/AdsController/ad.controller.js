@@ -154,7 +154,7 @@ module.exports = class AdController {
       res.status(200).send({
         message: "My Favourite Ads ",
         Get_My_Fav_Ads,
-        Total_Fav_Ads:Get_My_Fav_Ads.length
+        Total_Fav_Ads: Get_My_Fav_Ads.length
       })
     } catch (e) {
       if (!e.status) {
@@ -218,6 +218,7 @@ module.exports = class AdController {
       })
 
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -331,7 +332,7 @@ module.exports = class AdController {
       res.status(200).send({
         message: "success!",
         AdDetail: myAdDetail,
-        ownerDetails: ownerDetails,
+        Owner: ownerDetails,
         isAdFav: isAdFav
       });
     } catch (e) {
@@ -354,7 +355,7 @@ module.exports = class AdController {
   static async apiGetRelatedAds(req, res, next) {
     try {
       // Premium ads are fetched from db and sent to response
-      const getRelatedAds = await AdService.getRelatedAds(req.query,req.user_ID );
+      const getRelatedAds = await AdService.getRelatedAds(req.query, req.user_ID);
       // Response is sent
       if (getRelatedAds == null) {
         // mixpanel track for get premium ads failed
@@ -395,7 +396,7 @@ module.exports = class AdController {
   };
 
   // api for checking ad_status
-  static async apiCheckAdStatus(req , res , next){
+  static async apiCheckAdStatus(req, res, next) {
     try {
       const adstatus = await AdService.getAdStatus(req.body.ad_id);
       // Response is sent
@@ -408,7 +409,7 @@ module.exports = class AdController {
           message: "ADS_NOT_FOUND"
         })
       }
-      else{
+      else {
         res.status(200).send(adstatus)
       }
     } catch (e) {
@@ -427,5 +428,5 @@ module.exports = class AdController {
       };
     };
   }
-  
+
 };

@@ -674,7 +674,6 @@ module.exports = class AdService {
               { _id: ad_id },
               { $inc: { saved: -1 } }
             )
-            console.log(updatedUser)
             // mixpanel track remove Ad favourite
             await track('Removed Ad from Favourites successfully', {
               distinct_id: userId,

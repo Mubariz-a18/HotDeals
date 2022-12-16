@@ -7,10 +7,10 @@ module.exports = class HelpController {
     try {
       const Help_Doc = await HelpService.createHelp(req.body, req.user_ID);
       res.status(200).json({
-        message:"successfully created",
+        message: "successfully created",
         Help_Doc
-      }) 
-    }  catch (e) {
+      })
+    } catch (e) {
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -32,9 +32,9 @@ module.exports = class HelpController {
     try {
       const deleteHelp_doc = await HelpService.deleteHelp(req.body, req.user_ID);
       res.status(200).json({
-        message:"successfully deleted",
+        message: "successfully deleted",
         deleteHelp_doc
-      }) 
+      })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -53,13 +53,13 @@ module.exports = class HelpController {
   }
 
   // Get Help
-  static async apiGetHelp(req,res,next) {
+  static async apiGetHelp(req, res, next) {
     try {
       const getHelp = await HelpService.getHelp(req.user_ID);
       res.status(200).json({
-        message:"successfully",
+        message: "successfully",
         getHelp
-      }) 
+      })
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

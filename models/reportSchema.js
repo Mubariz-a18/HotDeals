@@ -16,6 +16,9 @@ const reportSchema = mongoose.Schema({
     flag_Date: {
         type: String,
     },
+    grace_counter: {
+        type: String
+    },
     reports_box: [
         {
             _id: false,
