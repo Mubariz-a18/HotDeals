@@ -4,8 +4,6 @@ const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
 const { track } = require("../../services/mixpanel-service");
-const mixpanel = require("mixpanel");
-
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
@@ -63,7 +61,6 @@ module.exports = class AuthController {
             token,
             existingUser: true,
           });
-          //return res.send({ token });
         } else {
           // If new user, create a user
 

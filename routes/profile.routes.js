@@ -9,5 +9,7 @@ router.post("/api/v1/createProfile", verifyToken, ProfileCotroller.apiCreateProf
 router.post("/api/v1/getOthersProfile", verifyToken, ProfileCotroller.apiGetOthersProfile);                  //Get
 router.get("/api/v1/getMyProfile", verifyToken, ProfileCotroller.apiGetMyProfile);               //Get my profile
 router.post('/api/v1/updateProfile', verifyToken, ProfileCotroller.apiUpdateProfile)             //Upddate
+router.get("/api/v1/getMyProfile", verifyToken, ProfileCotroller.apiGetMyProfile);               //Get my profile
+router.get("/api/v1/checkUserProfile", verifyToken, ProfileCotroller.apiCheckUserProfileExist);
 
 module.exports = router;

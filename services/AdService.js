@@ -986,6 +986,7 @@ module.exports = class AdService {
         {
           '$project': {
             '_id': 1,
+            "Seller_Id":1,
             'Seller_Name': 1,
             "Seller_verified": 1,
             "Seller_recommended": 1,
@@ -1120,6 +1121,7 @@ $skip and limit for pagination
         {
           '$project': {
             '_id': 1,
+            "Seller_Id":1,
             'Seller_Name': 1,
             "Seller_verified": 1,
             "Seller_recommended": 1,

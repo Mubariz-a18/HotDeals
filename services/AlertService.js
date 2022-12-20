@@ -61,6 +61,7 @@ module.exports = class AlertService {
       return alertDoc;
     }
   }
+  
   // Get Alert
   static async GetAlert(user_id) {
     const userExist = await Profile.findById({ _id: user_id })

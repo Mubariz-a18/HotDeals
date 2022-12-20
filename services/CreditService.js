@@ -43,6 +43,7 @@ module.exports = class CreditService {
       }
     })
   };
+  
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -174,6 +175,7 @@ module.exports = class CreditService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
   };
+
   //creditDeduaction function calls when user uploads an Ad
   static async creditDeductFuntion(creditParams) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -299,6 +301,7 @@ module.exports = class CreditService {
       };
     };
   };
+
   //Get My Credits function
   static async getMyCreditsInfo(user_id) {
     // check if user exist 
@@ -320,6 +323,7 @@ module.exports = class CreditService {
       return CreditDocs
     }
   };
+
   //boost Ad 
   static async boost_MyAd(userId, bodyData) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -461,8 +465,9 @@ module.exports = class CreditService {
         return { message: "AD_BOOSTED_SUCCESSFULLY" }
       };
     };
-  }
+  };
 
+  //highlight Ad
   static async highlight_MyAd(userId,bodyData){
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const highlight_expiry_date = expiry_date_func(5)
@@ -540,5 +545,5 @@ module.exports = class CreditService {
         });
         return { message: "AD_HIGHLIGHTED_SUCCESSFULLY" }
       };
-  }
+  };
 };

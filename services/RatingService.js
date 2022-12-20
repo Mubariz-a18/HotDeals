@@ -144,6 +144,7 @@ module.exports = class RatingService {
       }
     }
   };
+
   // Get Rating for a user
   static async getRating(bodyData, userId) {
     // check if user exist or not
@@ -166,5 +167,5 @@ module.exports = class RatingService {
         throw ({ status: 404, message: 'RATING_NOT_EXISTS' });
       }
     }
-  }
+  };
 };

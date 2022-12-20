@@ -1,20 +1,28 @@
+const Profile = require("../../models/Profile/Profile");
 const ProfileService = require("../../services/ProfileService");
 
 module.exports = class ProfileController {
   //API to create Profile First Time With The Phone Number
   static async apiCreateProfileWithPhone(req, res, next) {
     try {
-      const profileDocument = await ProfileService.createProfile(
+      const {
+        profileDoc1,
+        message,
+        userProfile,
+        statusCode
+      } = await ProfileService.createProfile(
         req.body,
         req.user_ID,
         req.user_phoneNumber
       );
       //response code is sent
-      res.status(200).json({
-        message: "successfully created",
-        // profileDocument: profileDocument
+      res.status(statusCode).json({
+        message: message,
+        profileDoc1,
+        userProfile
       })
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -30,6 +38,7 @@ module.exports = class ProfileController {
       };
     };
   }
+
   //API to Get Profile
   static async apiGetOthersProfile(req, res, next) {
     try {
@@ -51,6 +60,7 @@ module.exports = class ProfileController {
       };
     };
   }
+
   // API Get My Profile
   static async apiGetMyProfile(req, res, next) {
     try {
@@ -77,6 +87,7 @@ module.exports = class ProfileController {
       };
     };
   }
+
   // API Update Profile
   static async apiUpdateProfile(req, res, next) {
     try {
@@ -86,11 +97,36 @@ module.exports = class ProfileController {
         ProfileDoc: profileData
       });
     } catch (e) {
-
       if (!e.status) {
         res.status(500).json({
           error: {
             message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
+  // Check if user Exist
+  static async apiCheckUserProfileExist(req, res, next) {
+    try {
+      const findUser = await ProfileService.checkUserProfileService(req.user_ID)
+      if (findUser) {
+        res
+          .send({ message: "USER_EXIST" })
+          .status(200)
+      }
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: `something went wrong try again : ${e.message} `
           }
         });
       } else {

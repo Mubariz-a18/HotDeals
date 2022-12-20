@@ -42,7 +42,7 @@ module.exports = class GlobalSearchService {
             distinct_id: createGlobalSearch._id,
             keywords: [category, sub_category, title, description]
         });
-    }
+    };
 
     // api get global search 
     static async getGlobalSearch(queries, user_id) {
@@ -108,6 +108,7 @@ module.exports = class GlobalSearchService {
         return searched_ads
 
     };
+
     // Api create Analytics keywords
     static async createAnalyticsKeyword(result, queries, user_ID) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -182,5 +183,5 @@ module.exports = class GlobalSearchService {
                 return createAnalytics
             }
         }
-    }
+    };
 };
