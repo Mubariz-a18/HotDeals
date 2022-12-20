@@ -18,54 +18,63 @@ module.exports = class ProfileService {
       userNumber: phoneNumber,
     });
     if (profileDoc) {
-      let contactNumber = profileDoc.userNumber;
-      // Creating Profile
-      const profileDoc1 = await Profile.create({
-        _id: userID,
-        name: bodyData.name,
-        userNumber: {
-          text: contactNumber,
-          private: true
-        },
-        email: {
-          text: bodyData.email.text,
-          private: bodyData.email.private
-        },
-        user_type: {
-          text: bodyData.user_type.text,
-          private: bodyData.user_type.private
-        },
-        city: {
-          text: bodyData.city.text,
-          private: bodyData.city.private
-        },
-        country_code: bodyData.country_code,
-        date_of_birth: bodyData.DOB,
-        age: bodyData.age,
-        gender: bodyData.gender,
-        language_preference: bodyData.language_preference,
-        profile_url: bodyData.profile_url,
-        created_date: currentDate,
-        updated_date: currentDate,
-      });
-      // creating a default Rating for new user
-      await Rating.create({
-        user_id: profileDoc1._id,
-      });
-      //create a new credit doc for new user
-      await createCreditForNewUser(profileDoc1._id)
-      //create a new report doc for new user
-      await apiCreateReportDoc(userID)
-      //mixpanel track for new Profile Created
-      await track('New Profile Created ', {
-        distinct_id: profileDoc1._id,
-        $email: profileDoc.email.text
-      });
-      return {
-        profileDoc1,
-        message: "Successfully_Created",
-        statusCode: 200
-      };
+      const userProfile = await Profile.findById({ _id: userID })
+      if (!userProfile) {
+        let contactNumber = profileDoc.userNumber;
+        // Creating Profile
+        const profileDoc1 = await Profile.create({
+          _id: userID,
+          name: bodyData.name,
+          userNumber: {
+            text: contactNumber,
+            private: true
+          },
+          email: {
+            text: bodyData.email.text,
+            private: bodyData.email.private
+          },
+          user_type: {
+            text: bodyData.user_type.text,
+            private: bodyData.user_type.private
+          },
+          city: {
+            text: bodyData.city.text,
+            private: bodyData.city.private
+          },
+          country_code: bodyData.country_code,
+          date_of_birth: bodyData.DOB,
+          age: bodyData.age,
+          gender: bodyData.gender,
+          language_preference: bodyData.language_preference,
+          profile_url: bodyData.profile_url,
+          created_date: currentDate,
+          updated_date: currentDate,
+        });
+        // creating a default Rating for new user
+        await Rating.create({
+          user_id: profileDoc1._id,
+        });
+        //create a new credit doc for new user
+        await createCreditForNewUser(profileDoc1._id)
+        //create a new report doc for new user
+        await apiCreateReportDoc(userID)
+        //mixpanel track for new Profile Created
+        await track('New Profile Created ', {
+          distinct_id: profileDoc1._id,
+          $email: profileDoc.email.text
+        });
+        return {
+          profileDoc1,
+          message: "Successfully_Created",
+          statusCode: 200
+        };
+      } else {
+        return {
+          userProfile,
+          message: 'USER_ALREADY_EXISTS',
+          statusCode: 403
+        };
+      }
     }
   };
 

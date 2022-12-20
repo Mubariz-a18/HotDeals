@@ -512,6 +512,21 @@ module.exports = class AdService {
           )
           return adDoc;
         }
+        else if (bodyData.status == "Selling") {
+          // only after payment is done 
+          const adDoc = await Generic.findByIdAndUpdate(
+            {
+              _id: ad_id
+            },
+            {
+              $set: {
+                ad_status: "Selling",
+              }
+            },
+            { returnOriginal: false, new: true }
+          )
+          return adDoc;
+        }
         else if (bodyData.status == "Reposted") {
           // only after payment is done 
           const adCopy = await Generic.findById({ _id: ad_id });
