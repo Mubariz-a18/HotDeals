@@ -51,7 +51,7 @@ module.exports = class HelpService {
         })
       return helpdoc;
     }
-  }
+  };
 
   // Delete Help
   static async deleteHelp(bodyData, userId) {
@@ -100,7 +100,7 @@ module.exports = class HelpService {
         return deleteHelp;
       }
     }
-  }
+  };
 
   static async getHelp(userId) {
     // create Help doc
@@ -149,5 +149,5 @@ module.exports = class HelpService {
         return helpDocs
       }
     }
-  }
+  };
 };

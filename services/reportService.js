@@ -21,7 +21,7 @@ module.exports = class ReportService {
             })
         } else {
         }
-    }
+    };
 
     static async reportAd(bodyData, user_ID) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -114,7 +114,7 @@ module.exports = class ReportService {
                 }
             }
         }
-    }
+    };
 
     static async check_ad_suspended(ad_id, user_id) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -192,5 +192,5 @@ module.exports = class ReportService {
                 })
             }
         }
-    }
+    };
 };

@@ -122,5 +122,5 @@ module.exports = class OtpService {
     else {
       throw ({ status: 401, message: 'USER_NOT_EXIST' });
     }
-  }
+  };
 };

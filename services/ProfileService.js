@@ -67,7 +67,7 @@ module.exports = class ProfileService {
         statusCode: 200
       };
     }
-  }
+  };
 
   //DB Service to Get Profile By Phone Number
   static async getOthersProfile(user_id, user_ID) {
@@ -212,7 +212,7 @@ module.exports = class ProfileService {
       });
       throw ({ status: 404, message: 'USER_TO_FIND_NOT_EXISTS' });
     }
-  }
+  };
 
   // api get my profile service
   static async getMyProfile(user_ID) {
@@ -259,7 +259,7 @@ module.exports = class ProfileService {
       return MyProfile
     }
 
-  }
+  };
 
   // Updating Profile
   static async updateProfile(bodyData, userId) {
@@ -312,7 +312,7 @@ module.exports = class ProfileService {
       });
       return updateUsr;
     }
-  }
+  };
 
   //checkif userExist
   static async checkUserProfileService(user_ID) {
@@ -323,5 +323,5 @@ module.exports = class ProfileService {
     } else {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
-  }
+  };
 };
