@@ -427,6 +427,34 @@ module.exports = class AdController {
         });
       };
     };
-  }
+  };
+
+    // api for UpdateAd
+    static async apiUpdateAd(req, res, next) {
+      try {
+        const {ad_id} = req.body;
+        const user_id = req.user_ID;
+        const Updated_Ad = await AdService.updateAd( ad_id, req.body, user_id);
+          res.status(200).json({
+            message:"Successfully_Updated",
+            data:Updated_Ad
+          })
+
+      } catch (e) {
+        if (!e.status) {
+          res.status(500).json({
+            error: {
+              message: ` something went wrong try again : ${e.message} `
+            }
+          });
+        } else {
+          res.status(e.status).json({
+            error: {
+              message: e.message
+            }
+          });
+        };
+      };
+    }
 
 };

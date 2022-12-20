@@ -104,8 +104,10 @@ module.exports = class OtpService {
       //if exists update users profile email as well as is_email_verified 
       if (verify_otp) {
         await Profile.findOneAndUpdate({ _id: userId }, {
-          "email.text": email,
-          "is_email_verified": true
+          $set:{
+            "email.text": email,
+            "is_email_verified": true
+          }
         })
         //delete doc
         await OtpModel.deleteOne({ email, otp })
