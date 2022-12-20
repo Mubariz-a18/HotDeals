@@ -38,7 +38,6 @@ module.exports = class AuthController {
 
   static async apiVerifyOTP(req, res, next) {
     const { phoneNumber, otp } = req.body;
-
     try {
       //Verfying again otp collection to check the otp is valid
       const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
@@ -68,10 +67,9 @@ module.exports = class AuthController {
             userNumber: phoneNumber.text,
           });
 
-          const token = createJwtToken(user["_doc"]["_id"], phoneNumber.text);
+          const token = await createJwtToken(user["_doc"]["_id"], phoneNumber.text);
           // save user token
           user.token = token;
-
           return res.status(200).json({
             message: "success",
             statusCode: 200,
