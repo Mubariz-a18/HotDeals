@@ -79,7 +79,8 @@ module.exports = class ProfileService {
   };
 
   //DB Service to Get Profile By Phone Number
-  static async getOthersProfile(user_id, user_ID) {
+  static async getOthersProfile(user_id , user_ID) {
+    // user_id is my id and user_ID is others id 
     const userExist = await Profile.findOne({ _id: user_id })
     if (!userExist) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
@@ -152,6 +153,9 @@ module.exports = class ProfileService {
               'followings_count': 1,
               'rate_average': 1,
               'rate_count': 1,
+              'is_recommended':1,
+              'is_email_verified':1,
+              "Ads._id":1,
               'Ads.title': 1,
               'Ads.price': 1,
               'Ads.ad_posted_address': 1,
@@ -162,53 +166,22 @@ module.exports = class ProfileService {
             }
           }
         ]
-        //   [
-        //   {
-        //     $match: { _id: mongoose.Types.ObjectId(user_ID) },
-        //   },
-        //   {
-        //     '$lookup': {
-        //       'from': 'generics',
-        //       'localField': '_id',
-        //       'foreignField': 'user_id',
-        //       'as': 'sample_result'
-        //     }
-        //   },
-        //   {
-        //     '$unwind': {
-        //       'path': '$sample_result'
-        //     }
-        //   },
-        //   {
-        //     '$addFields': {
-        //       'SellingA': '$sample_result.name',
-        //       'Seller_Id': '$sample_result._id',
-        //     }
-        //   },
-        //   {
-        //     $project: {
-        //       _id: 0,
-        //       name: 1,
-        //       "userNumber.text": 1,
-        //       email: {
-        //         $cond: { if: { $eq: ["$email.private", false] }, then: "$email.text", else: "" }
-        //       },
-        //       city: {
-        //         $cond: { if: { $eq: ["$city.private", false] }, then: "$city.text", else: "" }
-        //       },
-        //       about: {
-        //         $cond: { if: { $eq: ["$about.private", false] }, then: "$about.text", else: "" }
-        //       },
-        //       profile_url:1,
-        //       user_type:1,
-        //       followers_count:1,
-        //       followings_count:1,
-        //       rate_average:1,
-        //       rate_count:1
-        //     }
-        //   },
-        // ]
       );
+      const Ads = profileData[0]["Ads"];
+      Ads.forEach(async ad => {
+        const adDetail = await Profile.find(
+          {
+            _id: user_id,
+            "favourite_ads": {
+              $elemMatch: { "ad_id": ad._id }
+            }
+          })
+        if (adDetail.length == 0) {
+          ad.isAdFav = false
+        } else {
+          ad.isAdFav = true
+        }
+      });
       //mixpanel trak search others profile
       await track('User searched  ', {
         distinct_id: user_ID,

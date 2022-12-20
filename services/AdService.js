@@ -126,6 +126,56 @@ module.exports = class AdService {
       }
     }
   };
+  //Update Ad
+  static async updateAd(ad_id, bodyData, user_id) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
+    const {
+      category,
+      sub_category,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      isPrime,
+      image_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status,
+      is_negotiable,
+      is_ad_posted,
+    } = bodyData
+
+    const updateAd = await Generic.findByIdAndUpdate({ _id: ad_id , user_id: user_id }, {
+      $set: {
+        category,
+        sub_category,
+        description,
+        SelectFields,
+        special_mention,
+        title,
+        price,
+        isPrime,
+        image_url,
+        video_url,
+        ad_present_location,
+        ad_posted_location,
+        ad_posted_address,
+        ad_present_address,
+        ad_status,
+        is_negotiable,
+        is_ad_posted,
+        updated_at: currentDate,
+      }
+    },{
+      new:true
+    });
+    return updateAd
+  };
 
   // Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
   static async getMyAds(userId) {
@@ -1001,7 +1051,7 @@ module.exports = class AdService {
         {
           '$project': {
             '_id': 1,
-            "Seller_Id":1,
+            "Seller_Id": 1,
             'Seller_Name': 1,
             "Seller_verified": 1,
             "Seller_recommended": 1,
@@ -1136,7 +1186,7 @@ $skip and limit for pagination
         {
           '$project': {
             '_id': 1,
-            "Seller_Id":1,
+            "Seller_Id": 1,
             'Seller_Name': 1,
             "Seller_verified": 1,
             "Seller_recommended": 1,

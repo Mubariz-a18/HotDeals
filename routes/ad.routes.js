@@ -8,6 +8,7 @@ const { verifyJwtTokenForAds } = require('../utils/verifyToken');
 
 //Ad Routes
 router.post('/api/createAd', verifyToken, Validator("genericSchemaValidator"), AdController.apiCreateAd);
+router.post('/api/v1/updateAd', verifyToken, AdController.apiUpdateAd);
 router.get('/api/v1/getMyAds', verifyToken, AdController.apiGetMyAds);
 router.get('/api/v1/getMyAdsHistory', verifyToken, AdController.apiGetMyAdsHistory);
 router.post('/api/vi/changeAdStatus', verifyToken, AdController.apiChangeAdStatus);
