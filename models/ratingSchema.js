@@ -6,6 +6,10 @@ const ratingSchema = mongoose.Schema({
     RatingInfo: [{
         _id: false,
         rating: Number,
+        comment:{
+            type:String,
+            default:""
+        },
         rating_given_by: mongoose.Types.ObjectId,
         rating_given_date: String,
         rating_updated_date: String

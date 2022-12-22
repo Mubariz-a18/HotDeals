@@ -113,20 +113,22 @@ const Report = require('../models/reportSchema');
 //               },
 //             }
 //           }
-//         }]
+//         }
+//     ]
 //     )
-
 //     const ad_Ids = []
 //     alertNotificationDoc.forEach(e => {
-//       ad_Ids.push(e._id)
+//         ad_Ids.push(e._id)
+//     })
+    
+//     let abc = await Alert.updateOne(
+//         { _id: alert._id},
+//         {
+//             $addToSet: { "alerted_Ads": ad_Ids }
+//         })
+//     console.log(abc)
 //     })
 
-//     await Alert.updateOne(
-//       { _id: alert._id},
-//       {
-//         $addToSet: { "alerted_Ads": ad_Ids }
-//       })
-//   })
 // });
 // //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
 // const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {

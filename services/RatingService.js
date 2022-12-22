@@ -49,6 +49,7 @@ module.exports = class RatingService {
             RatingInfo: {
               rating_given_by: userId,
               rating: bodyData.RatingInfo.rating,
+              comment:bodyData.RatingInfo.comment,
               rating_given_date: currentDate,
               rating_updated_date: currentDate
             }
@@ -79,6 +80,7 @@ module.exports = class RatingService {
                   RatingInfo: {
                     // average_rating: bodyData.RatingInfo.rating,
                     rating: bodyData.RatingInfo.rating,
+                    comment:bodyData.RatingInfo.comment,
                     rating_given_by: userId,
                     rating_given_date: currentDate,
                     rating_updated_date: currentDate
