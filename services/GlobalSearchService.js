@@ -94,7 +94,7 @@ module.exports = class GlobalSearchService {
         result.forEach(item => {
             GenericAds.push(item.ad_id)
         })
-        const searched_ads = await Generic.find({ _id: GenericAds }, {
+        const searched_ads = await Generic.find({ _id: GenericAds ,ad_status:"Selling"}, {
             title: 1,
             image_url: 1,
             price: 1,
