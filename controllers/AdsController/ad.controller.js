@@ -174,29 +174,29 @@ module.exports = class AdController {
   }
 
   // Delete Ads -- Ads are Deleted  and returned from Adservice to deleteAds
-  static async apiDeleteAds(req, res, next) {
-    try {
-      const ad_id = req.body.ad_id;
-      // Ad is Removed &  response is sent
-      const deletedAd = await AdService.deleteAds(req.user_ID, ad_id);
-      // Reponse code is sent 
-      res.status(200).send({ message: deletedAd })
-    } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
-    };
-  }
+  // static async apiDeleteAds(req, res, next) {
+  //   try {
+  //     const ad_id = req.body.ad_id;
+  //     // Ad is Removed &  response is sent
+  //     const deletedAd = await AdService.deleteAds(req.user_ID, ad_id);
+  //     // Reponse code is sent 
+  //     res.status(200).send({ message: deletedAd })
+  //   } catch (e) {
+  //     if (!e.status) {
+  //       res.status(500).json({
+  //         error: {
+  //           message: ` something went wrong try again : ${e.message} `
+  //         }
+  //       });
+  //     } else {
+  //       res.status(e.status).json({
+  //         error: {
+  //           message: e.message
+  //         }
+  //       });
+  //     };
+  //   };
+  // }
 
   // Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
   static async apiGetParticularAdDetails(req, res, next) {
@@ -354,9 +354,9 @@ module.exports = class AdController {
   static async apiGetRelatedAds(req, res, next) {
     try {
       // Premium ads are fetched from db and sent to response
-      const getRelatedAds = await AdService.getRelatedAds(req.query, req.user_ID);
+      const { RelatedAds, featureAds } = await AdService.getRelatedAds(req.query, req.user_ID);
       // Response is sent
-      if (getRelatedAds == null) {
+      if (RelatedAds == null) {
         // mixpanel track for get premium ads failed
         await track('viewed Related ads failed', {
           distinct_id: req.user_ID,
@@ -365,13 +365,17 @@ module.exports = class AdController {
           message: "ADS_NOT_FOUND"
         })
       }
-      if (getRelatedAds.length > 0) {
-        res.status(200).json({
-          Featured_Ads: getRelatedAds,
-          Total_Featured_Ads: getRelatedAds.length
-        })
+      if (RelatedAds.length > 0) {
+        res.status(200).send(
+          {
+            PremiumAds: RelatedAds[0].PremiumAds,
+            FeatureAds: featureAds,
+            TotalPremiumAds:RelatedAds[0].PremiumAds.length,
+            TotalFeaturedAds:featureAds.length
+          }
+        )
       }
-      if (getRelatedAds.length == 0) {
+      if (RelatedAds.length == 0) {
         await track('viewed Premium ads failed', {
           distinct_id: req.user_ID,
         })
@@ -428,32 +432,32 @@ module.exports = class AdController {
     };
   };
 
-    // api for UpdateAd
-    static async apiUpdateAd(req, res, next) {
-      try {
-        const {ad_id} = req.body;
-        const user_id = req.user_ID;
-        const Updated_Ad = await AdService.updateAd( ad_id, req.body, user_id);
-          res.status(200).json({
-            message:"Successfully_Updated",
-            data:Updated_Ad
-          })
+  // api for UpdateAd
+  static async apiUpdateAd(req, res, next) {
+    try {
+      const { ad_id } = req.body;
+      const user_id = req.user_ID;
+      const Updated_Ad = await AdService.updateAd(ad_id, req.body, user_id);
+      res.status(200).json({
+        message: "Successfully_Updated",
+        data: Updated_Ad
+      })
 
-      } catch (e) {
-        if (!e.status) {
-          res.status(500).json({
-            error: {
-              message: ` something went wrong try again : ${e.message} `
-            }
-          });
-        } else {
-          res.status(e.status).json({
-            error: {
-              message: e.message
-            }
-          });
-        };
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
       };
-    }
+    };
+  }
 
 };
