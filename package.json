@@ -20,7 +20,7 @@
     "googleapis": "^108.0.0",
     "http-errors": "^2.0.0",
     "joi": "^17.6.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "mixpanel": "^0.17.0",
     "moment": "^2.29.4",
     "mongoose": "^6.4.0",

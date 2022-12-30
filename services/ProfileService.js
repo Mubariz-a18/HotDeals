@@ -275,6 +275,7 @@ module.exports = class ProfileService {
               text: bodyData.about.text,
               private: bodyData.about.private
             },
+            cover_photo_url:bodyData.cover_photo_url,
             is_email_verified: userProfile.email.text !== bodyData.email.text ? false : userProfile.is_email_verified,
             date_of_birth: bodyData.date_of_birth,
             age: my_age(moment(bodyData.date_of_birth)),

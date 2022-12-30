@@ -6,6 +6,7 @@ const { age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const moment = require("moment");
+const { featureAdsFunction } = require("../utils/featureAdsUtil");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
@@ -150,7 +151,7 @@ module.exports = class AdService {
       is_ad_posted,
     } = bodyData
 
-    const updateAd = await Generic.findByIdAndUpdate({ _id: ad_id , user_id: user_id }, {
+    const updateAd = await Generic.findByIdAndUpdate({ _id: ad_id, user_id: user_id }, {
       $set: {
         category,
         sub_category,
@@ -171,8 +172,8 @@ module.exports = class AdService {
         is_ad_posted,
         updated_at: currentDate,
       }
-    },{
-      new:true
+    }, {
+      new: true
     });
     return updateAd
   };
@@ -853,58 +854,58 @@ module.exports = class AdService {
   };
 
   // Delete Ads -- User is authentcated and base on the body ad is deleted
-  static async deleteAds(userId, ad_id) {
-    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    // ad history date for 6 months
-    const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
-    // check if user exists
-    const userExist = await Profile.findOne({
-      _id: userId
-    });
-    // checking whether the ad exists or not
-    if (!userExist) {
-      // mix-panel Track for -Failed  Removing Ad
-      await track(' failed to remove  Ad', {
-        distinct_id: userId,
-        ad_id: ad_id,
-        message: ` user_id : ${userId}  does not exist`
-      });
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    else {
-      const findAd = await Generic.findOne({
-        _id: ad_id, user_id: userId
-      });
-      // if ad exist update users profile ( remove ad_id from m_ads)
-      if (findAd) {
-        await Profile.findOneAndUpdate(
-          { _id: userId },
-          { $pull: { my_ads: ad_id } },
-          { new: true }
-        );
-        //updating adstatus to Delete and ad_Delete_Date to current Date
-        findAd.ad_status = "Delete"
-        findAd.ad_Deleted_Date = currentDate
-        findAd.ad_Historic_Duration_Date = Ad_Historic_Duration
-        findAd.save()
-        // mix-panel Track for - Removing Ad
-        await track(' ad removed', {
-          distinct_id: userId,
-          ad_id: ad_id
-        })
-        return "AD_REMOVED_SUCCESSFULLY"
-      }
-      else {
-        // mix-panel Track for -Failed  Removing Ad
-        await track(' failed to remove  Ad', {
-          distinct_id: userId,
-          ad_id: ad_id,
-          message: `ad_id : ${ad_id}  does not exist`
-        });
-        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-      };
-    };
-  };
+  // static async deleteAds(userId, ad_id) {
+  //   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+  //   // ad history date for 6 months
+  //   const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
+  //   // check if user exists
+  //   const userExist = await Profile.findOne({
+  //     _id: userId
+  //   });
+  //   // checking whether the ad exists or not
+  //   if (!userExist) {
+  //     // mix-panel Track for -Failed  Removing Ad
+  //     await track(' failed to remove  Ad', {
+  //       distinct_id: userId,
+  //       ad_id: ad_id,
+  //       message: ` user_id : ${userId}  does not exist`
+  //     });
+  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+  //   }
+  //   else {
+  //     const findAd = await Generic.findOne({
+  //       _id: ad_id, user_id: userId
+  //     });
+  //     // if ad exist update users profile ( remove ad_id from m_ads)
+  //     if (findAd) {
+  //       await Profile.findOneAndUpdate(
+  //         { _id: userId },
+  //         { $pull: { my_ads: ad_id } },
+  //         { new: true }
+  //       );
+  //       //updating adstatus to Delete and ad_Delete_Date to current Date
+  //       findAd.ad_status = "Delete"
+  //       findAd.ad_Deleted_Date = currentDate
+  //       findAd.ad_Historic_Duration_Date = Ad_Historic_Duration
+  //       findAd.save()
+  //       // mix-panel Track for - Removing Ad
+  //       await track(' ad removed', {
+  //         distinct_id: userId,
+  //         ad_id: ad_id
+  //       })
+  //       return "AD_REMOVED_SUCCESSFULLY"
+  //     }
+  //     else {
+  //       // mix-panel Track for -Failed  Removing Ad
+  //       await track(' failed to remove  Ad', {
+  //         distinct_id: userId,
+  //         ad_id: ad_id,
+  //         message: `ad_id : ${ad_id}  does not exist`
+  //       });
+  //       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+  //     };
+  //   };
+  // };
 
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(ad_id, query, user_id) {
@@ -997,7 +998,8 @@ module.exports = class AdService {
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
-    let limitval = +query.limit || 20;
+    let limitval = 10;
+    // let limitval = +query.limit || 20;
     /* 
     $geonear to find all the ads existing near the given coordinates
     $lookup for the relation between the profiles and Generics
@@ -1118,7 +1120,7 @@ module.exports = class AdService {
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
-    let limitval = +query.limit || 20;
+    let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
     /* 
 $geonear to find all the ads existing near the given coordinates
@@ -1130,7 +1132,7 @@ $match for filtering only recent ads
 $sort to sort all the ads by order 
 $skip and limit for pagination
 */
-    const getRecentAds = await Generic.aggregate([
+    let getRecentAds = await Generic.aggregate([
       [
         {
           '$geoNear': {
@@ -1227,11 +1229,16 @@ $skip and limit for pagination
         recentAd.isAdFav = true
       }
     })
+
     //mix panel track get recent ads 
     await track('get recent Ads Successfully', {
       distinct_id: userId
     })
-    return getRecentAds;
+
+    let premiumAds = await this.getPremiumAdsService(userId, query)
+    const featureAds = featureAdsFunction(getRecentAds, premiumAds)
+
+    return featureAds;
   };
 
   //Get Ad details of any ad without location
@@ -1299,7 +1306,7 @@ $skip and limit for pagination
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 10;
 
-    const RelatedAds = await Generic.aggregate([
+    let RelatedAds = await Generic.aggregate([
       {
         '$geoNear': {
           'near': {
@@ -1384,28 +1391,54 @@ $skip and limit for pagination
           'Seller_verified': 1,
           'Seller_recommended': 1
         }
-      }
-    ])
-    RelatedAds.forEach(async relatedAd => {
-      const user = await Profile.find(
-        {
-          _id: user_id,
-          "favourite_ads": {
-            $elemMatch: { "ad_id": relatedAd._id }
-          }
-        })
-      if (user.length == 0) {
-        relatedAd.isAdFav = false
-      } else {
-        relatedAd.isAdFav = true
-      }
-    })
+      },
+      {
+        '$facet': {
+          'PremiumAds': [
+            {
+              '$match': {
+                'isPrime': true
+              }
+            }
+          ],
+          'RecentAds': [
+            {
+              '$match': {
+                'isPrime': false
+              }
+            }
+          ]
+        }
+      },
+    ]);
+
+    const isAdFavFunc = async (AdToCheck) => {
+      AdToCheck.forEach(async relatedAd => {
+        const user = await Profile.find(
+          {
+            _id: user_id,
+            "favourite_ads": {
+              $elemMatch: { "ad_id": relatedAd._id }
+            }
+          })
+        if (user.length == 0) {
+          relatedAd.isAdFav = false
+        } else {
+          relatedAd.isAdFav = true
+        }
+      })
+    }
+
+    await isAdFavFunc(RelatedAds[0].RecentAds)
+    await isAdFavFunc(RelatedAds[0].PremiumAds)
+
+    const featureAds = featureAdsFunction(RelatedAds[0].RecentAds, RelatedAds[0].PremiumAds)
     // mixpanel -- track  get Particular ad ads
     await track('get related ads', {
       distinct_id: user_id,
       message: `viewed related ads for ${category, sub_category}`
-    })
-    return RelatedAds
+    });
+    return { RelatedAds, featureAds }
   };
 
   // Get Ad Status -- from generics check ad_status
