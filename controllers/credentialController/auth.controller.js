@@ -4,6 +4,7 @@ const { createJwtToken } = require("../../utils/generateToken");
 const { INVALID_OTP_ERR } = require("../../error");
 const SMSController = require("./sms.controller");
 const { track } = require("../../services/mixpanel-service");
+const Profile = require("../../models/Profile/Profile");
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
@@ -55,11 +56,23 @@ module.exports = class AuthController {
           await track("login successfull", {
             distinct_id: userID,
           })
-          return res.status(200).json({
-            message: "success",
-            token,
-            existingUser: true,
-          });
+          const UsersProFileExist = await Profile.findById({_id:userID}) 
+          if(UsersProFileExist){
+            return res.status(200).json({
+              message: "success",
+              token,
+              existingUser: true,
+              usersProfileExist:"USERS_PROFILE_EXISTS"
+            });
+          }else{
+            return res.status(200).json({
+              message: "success",
+              token,
+              existingUser: true,
+              usersProfileExist:"USERS_PROFILE_DOESNOT_EXISTS"
+            });
+          }
+
         } else {
           // If new user, create a user
 

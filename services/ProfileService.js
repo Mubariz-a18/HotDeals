@@ -29,19 +29,19 @@ module.exports = class ProfileService {
             text: contactNumber,
             private: true
           },
-          email: {
-            text: bodyData.email.text,
-            private: bodyData.email.private
-          },
+          // email: {
+          //   text: bodyData.email.text,
+          //   private: bodyData.email.private
+          // },
           user_type: {
             text: bodyData.user_type.text,
             private: bodyData.user_type.private
           },
           city: {
-            text: bodyData.city.text,
-            private: bodyData.city.private
+            text: bodyData.city.text || "",
+            // private: bodyData.city.private || true
           },
-          country_code: bodyData.country_code,
+          // country_code: bodyData.country_code,
           date_of_birth: bodyData.DOB,
           age: bodyData.age,
           gender: bodyData.gender,
