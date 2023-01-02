@@ -182,6 +182,7 @@ module.exports = class GlobalSearchService {
         }
     };
 
+    // api Create Analytics for Non Users
     static async createAnalyticsForNonUsers(result ,queries){
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const { keyword } = queries;

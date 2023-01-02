@@ -65,7 +65,6 @@ app.use(RatingRouter);
 app.use(followUnfollowRouter);
 app.use(GlobalSearchRouter);
 app.use(JsonRouter)
-// app.use(cat_subCat_SearchRouter);
 app.use(ReportRouter)
 
 //server listener

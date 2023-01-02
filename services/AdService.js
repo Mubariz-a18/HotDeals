@@ -853,60 +853,6 @@ module.exports = class AdService {
     }
   };
 
-  // Delete Ads -- User is authentcated and base on the body ad is deleted
-  // static async deleteAds(userId, ad_id) {
-  //   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-  //   // ad history date for 6 months
-  //   const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
-  //   // check if user exists
-  //   const userExist = await Profile.findOne({
-  //     _id: userId
-  //   });
-  //   // checking whether the ad exists or not
-  //   if (!userExist) {
-  //     // mix-panel Track for -Failed  Removing Ad
-  //     await track(' failed to remove  Ad', {
-  //       distinct_id: userId,
-  //       ad_id: ad_id,
-  //       message: ` user_id : ${userId}  does not exist`
-  //     });
-  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-  //   }
-  //   else {
-  //     const findAd = await Generic.findOne({
-  //       _id: ad_id, user_id: userId
-  //     });
-  //     // if ad exist update users profile ( remove ad_id from m_ads)
-  //     if (findAd) {
-  //       await Profile.findOneAndUpdate(
-  //         { _id: userId },
-  //         { $pull: { my_ads: ad_id } },
-  //         { new: true }
-  //       );
-  //       //updating adstatus to Delete and ad_Delete_Date to current Date
-  //       findAd.ad_status = "Delete"
-  //       findAd.ad_Deleted_Date = currentDate
-  //       findAd.ad_Historic_Duration_Date = Ad_Historic_Duration
-  //       findAd.save()
-  //       // mix-panel Track for - Removing Ad
-  //       await track(' ad removed', {
-  //         distinct_id: userId,
-  //         ad_id: ad_id
-  //       })
-  //       return "AD_REMOVED_SUCCESSFULLY"
-  //     }
-  //     else {
-  //       // mix-panel Track for -Failed  Removing Ad
-  //       await track(' failed to remove  Ad', {
-  //         distinct_id: userId,
-  //         ad_id: ad_id,
-  //         message: `ad_id : ${ad_id}  does not exist`
-  //       });
-  //       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-  //     };
-  //   };
-  // };
-
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(ad_id, query, user_id) {
     let lng = +query.lng;
@@ -945,6 +891,7 @@ module.exports = class AdService {
           'image_url': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
+          'ad_present_address':1,
           'special_mention': 1,
           'description': 1,
           'ad_status': 1,
