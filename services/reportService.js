@@ -23,6 +23,7 @@ module.exports = class ReportService {
         }
     };
 
+    // Api Report On an Ad
     static async reportAd(bodyData, user_ID) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const { ad_id, reason, description } = bodyData;
@@ -116,6 +117,7 @@ module.exports = class ReportService {
         }
     };
 
+    // Check Ad Suspended
     static async check_ad_suspended(ad_id, user_id) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         await Generic.findByIdAndUpdate({ _id: ad_id }, {
