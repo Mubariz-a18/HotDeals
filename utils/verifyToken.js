@@ -41,7 +41,7 @@ exports.verifyJwtTokenForAds = async (req, res, next) => {
   const token = header.split("Bearer ")[1];
 
   if (!token) {
-    return res.status(403).send("A token is required for authentication");
+    return next();
   }
   try {
     const { user_ID, user_phoneNumber } = jwt.verify(
@@ -51,7 +51,7 @@ exports.verifyJwtTokenForAds = async (req, res, next) => {
     req.user_ID = user_ID;
     req.user_phoneNumber = user_phoneNumber;
   } catch (error) {
-    return res.status(401).send("Invalid Token");
+    return next();
   }
   return next();
 };

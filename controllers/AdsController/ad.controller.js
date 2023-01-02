@@ -214,7 +214,6 @@ module.exports = class AdController {
         AdDetails: AdDetail,
         Owner: ownerDetails,
         isAdFav: isAdFav
-        // owner: owner
       })
 
     } catch (e) {
