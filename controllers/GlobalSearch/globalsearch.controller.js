@@ -4,9 +4,16 @@ module.exports = class GlobalSearchController {
   static async apiGetGlobalSearch(req, res, next) {
     try {
       // Global search -- ads are fetched and returned from global search service  && analytics are created 
-      const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
-      await GlobalSearchService.createAnalyticsKeyword(searchResult, req.query, req.user_ID);
-      res.status(200).json({ data: searchResult, totalAdsSearched: searchResult.length });
+      if (req.user_ID) {
+        const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
+        await GlobalSearchService.createAnalyticsKeyword(searchResult, req.query, req.user_ID);
+        res.status(200).json({ data: searchResult, totalAdsSearched: searchResult.length });
+      } else {
+        const searchResult = await GlobalSearchService.getGlobalSearch(req.query, req.user_ID);
+        await GlobalSearchService.createAnalyticsForNonUsers(searchResult, req.query);
+        res.status(200).json({ data: searchResult, totalAdsSearched: searchResult.length });
+      }
+
     } catch (e) {
       if (!e.status) {
         res.status(500).json({

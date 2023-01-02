@@ -50,10 +50,6 @@ module.exports = class GlobalSearchService {
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
-        const userExist = await Profile.findById({ _id: user_id });
-        if (!userExist) {
-            throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-        }
         //if user exist find ads using $search and $text
         const result = await GlobalSearch.aggregate([
             {
@@ -103,6 +99,7 @@ module.exports = class GlobalSearchService {
         }).sort({ isPrime: -1, created_at: -1 })
         // mix panel track for Global search api
         await track('Global search  success !! ', {
+            distinct_id:user_id,
             keywords: keyword
         });
         return searched_ads
@@ -184,4 +181,29 @@ module.exports = class GlobalSearchService {
             }
         }
     };
+
+    static async createAnalyticsForNonUsers(result ,queries){
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+        const { keyword } = queries;
+        if (result.length == 0) {
+            const createAnalytics = await Analytics.create({
+                keywords: {
+                    createdDate: currentDate,
+                    values: keyword,
+                    result: "Ad not found"
+                }
+            });
+            return createAnalytics
+        }
+        else {
+            const createAnalytics = await Analytics.create({
+                keywords: {
+                    createdDate: currentDate,
+                    values: keyword,
+                    result: "Ad found"
+                }
+            });
+            return createAnalytics
+        }
+    }
 };
