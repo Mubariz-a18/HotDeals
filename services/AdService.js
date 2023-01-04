@@ -805,6 +805,7 @@ module.exports = class AdService {
         }, {
           '$addFields': {
             'saved': '$firstResult.saved',
+            'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
             'category': '$firstResult.category',
             'title': '$firstResult.title',
@@ -832,6 +833,8 @@ module.exports = class AdService {
             'description': 1,
             'ad_status': 1,
             'favourite_ads.ad_Favourite_Date': 1,
+            'saved':1,
+            'views':1
           }
         }
       ]
@@ -889,6 +892,7 @@ module.exports = class AdService {
           'saved': 1,
           'price': 1,
           'image_url': 1,
+          'video_url':1,
           'SelectFields': 1,
           'ad_posted_address': 1,
           'ad_present_address':1,
