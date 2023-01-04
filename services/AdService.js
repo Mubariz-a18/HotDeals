@@ -803,7 +803,7 @@ module.exports = class AdService {
             'preserveNullAndEmptyArrays': true
           }
         }, {
-          '$addFields': {
+          '$addFields': { //new testing
             'saved': '$firstResult.saved',
             'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
