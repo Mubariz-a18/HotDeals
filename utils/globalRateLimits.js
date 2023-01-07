@@ -43,7 +43,7 @@ const globalApiHits = {
     getPremiumAdsHits:10,
     getFeaturedAdsHits:10,
     updateAdHits:1,
-    createAdHits:1,
+    createAdHits:2,
     getMyAdHits:2,
     getFavouriteAdsHits:5,
     changeAdStatusHits:5,
@@ -79,5 +79,6 @@ const globalApiHits = {
 
 
 module.exports = {
-    globalApiHits,globalWindowTime
+    globalApiHits,
+    globalWindowTime
 }

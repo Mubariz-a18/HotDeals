@@ -7,6 +7,7 @@ const { my_age } = require("../utils/moment");
 const moment = require('moment');
 const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
+const { getRating } = require("./RatingService");
 
 
 module.exports = class ProfileService {
@@ -74,7 +75,7 @@ module.exports = class ProfileService {
   };
 
   //DB Service to Get Profile By Phone Number
-  static async getOthersProfile(user_id , user_ID) {
+  static async getOthersProfile(user_id, user_ID) {
     // user_id is my id and user_ID is others id 
     const userExist = await Profile.findOne({ _id: user_id })
     if (!userExist) {
@@ -143,19 +144,22 @@ module.exports = class ProfileService {
                 }
               },
               'profile_url': 1,
+              "thumbnail_url": 1,
+              'cover_photo_url': 1,
               'user_type': 1,
               'followers_count': 1,
               'followings_count': 1,
               'rate_average': 1,
               'rate_count': 1,
-              'is_recommended':1,
-              'is_email_verified':1,
-              "Ads._id":1,
+              'is_recommended': 1,
+              'is_email_verified': 1,
+              "Ads._id": 1,
               'Ads.title': 1,
               'Ads.price': 1,
               'Ads.ad_posted_address': 1,
               'Ads.isPrime': 1,
-              'Ads.image_url': 1,
+              // 'Ads.image_url': 1,
+              "Ads.thumbnail_url": 1,
               'Ads.created_at': 1,
               'Ads.ad_Premium_Date': 1
             }
@@ -177,6 +181,22 @@ module.exports = class ProfileService {
           ad.isAdFav = true
         }
       });
+      const alreadFollowing = userExist.followings.includes(user_ID);
+      if (alreadFollowing) {
+        profileData[0].following = true;
+      } else {
+        profileData[0].following = false;
+      }
+      const RatingDoc = await Rating.find({ user_id: user_ID }, { _id: 0, "RatingInfo": { $elemMatch: { "rating_given_by": user_id } } });
+
+      if (RatingDoc[0].RatingInfo[0]) {
+        profileData[0].rated = true;
+        profileData[0].rating_given = RatingDoc[0].RatingInfo[0].rating
+      } else {
+        profileData[0].rated = false;
+        profileData[0].rating_given = null
+      }
+
       //mixpanel trak search others profile
       await track('User searched  ', {
         distinct_id: user_ID,
@@ -219,7 +239,9 @@ module.exports = class ProfileService {
             user_type: 1,
             about: 1,
             is_email_verified: 1,
-            profile_url: 1,
+            thumbnail_url: 1,
+            // profile_url: 1,
+            cover_photo_url: 1,
             followers: 1,
             followings: 1,
             rate_average: 1,
@@ -270,13 +292,14 @@ module.exports = class ProfileService {
               text: bodyData.about.text,
               private: bodyData.about.private
             },
-            cover_photo_url:bodyData.cover_photo_url,
+            cover_photo_url: bodyData.cover_photo_url,
             is_email_verified: userProfile.email.text !== bodyData.email.text ? false : userProfile.is_email_verified,
             date_of_birth: bodyData.date_of_birth,
             age: my_age(moment(bodyData.date_of_birth)),
             gender: bodyData.gender,
             language_preference: bodyData.language_preference,
             profile_url: bodyData.profile_url,
+            thumbnail_url: bodyData.thumbnail_url,
             updated_date: currentDate
           },
         },

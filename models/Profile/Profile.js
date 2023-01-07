@@ -141,6 +141,9 @@ const profileSchema = mongoose.Schema({
   profile_url: {
     type: String
   },
+  thumbnail_url:{
+    type:String
+  },
   cover_photo_url: {
     type: String
   },

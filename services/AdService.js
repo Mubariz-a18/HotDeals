@@ -7,6 +7,8 @@ const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const moment = require("moment");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
+const GlobalSearch = require("../models/GlobalSearch");
+
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
@@ -101,8 +103,8 @@ module.exports = class AdService {
           await track('Ad creation succeed', {
             category: bodyData.category,
             distinct_id: adDoc._id,
-            $latitude: ad_posted_location.coordinates[1],
-            $longitude: ad_posted_location.coordinates[0],
+            $latitude: ad_posted_location[0].loc.coordinates[1],
+            $longitude: ad_posted_location[0].loc.coordinates[0],
           })
           //save the ad_id in users profile in myads
           await Profile.findByIdAndUpdate({ _id: userId }, {
@@ -130,7 +132,6 @@ module.exports = class AdService {
   //Update Ad
   static async updateAd(ad_id, bodyData, user_id) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
     const {
       category,
       sub_category,
@@ -226,7 +227,8 @@ module.exports = class AdService {
                   saved: 1,
                   views: 1,
                   isPrime: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                   created_at: 1,
                   ad_Premium_Date: 1
                 }
@@ -244,7 +246,8 @@ module.exports = class AdService {
                   _id: 1,
                   title: 1,
                   description: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
                   saved: 1,
                   views: 1,
                   ad_Archive_Date: 1,
@@ -263,7 +266,8 @@ module.exports = class AdService {
                   _id: 1,
                   title: 1,
                   description: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                   ad_Draft_Date: 1,
                 }
               }
@@ -280,7 +284,8 @@ module.exports = class AdService {
                   _id: 1,
                   title: 1,
                   description: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
                   ad_expire_date: 1,
@@ -300,7 +305,8 @@ module.exports = class AdService {
                   title: 1,
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] }
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
               }
             ],
@@ -317,7 +323,8 @@ module.exports = class AdService {
                   title: 1,
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
             ],
@@ -334,7 +341,8 @@ module.exports = class AdService {
                   title: 1,
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
             ],
@@ -352,7 +360,8 @@ module.exports = class AdService {
                   price: 1,
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
-                  image_url: { $arrayElemAt: ["$image_url", 0] },
+                  thumbnail_url:1,
+                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
             ]
@@ -803,7 +812,7 @@ module.exports = class AdService {
             'preserveNullAndEmptyArrays': true
           }
         }, {
-          '$addFields': { //new testing
+          '$addFields': {
             'saved': '$firstResult.saved',
             'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
@@ -826,15 +835,18 @@ module.exports = class AdService {
           '$project': {
             'ad_id': 1,
             '_id': 0,
+            'views': 1,
+            'saved': 1,
             'category': 1,
             'title': 1,
             'price': 1,
-            'image_url': 1,
+            // 'image_url': 1,
+            "thumbnail_url":1,
             'description': 1,
             'ad_status': 1,
             'favourite_ads.ad_Favourite_Date': 1,
-            'saved':1,
-            'views':1
+            'saved': 1,
+            'views': 1
           }
         }
       ]
@@ -892,10 +904,10 @@ module.exports = class AdService {
           'saved': 1,
           'price': 1,
           'image_url': 1,
-          'video_url':1,
+          'video_url': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
-          'ad_present_address':1,
+          'ad_present_address': 1,
           'special_mention': 1,
           'description': 1,
           'ad_status': 1,
@@ -1014,7 +1026,8 @@ module.exports = class AdService {
             'title': 1,
             "created_at": 1,
             'price': 1,
-            'image_url': 1,
+            "thumbnail_url":1,
+            // 'image_url': 1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1149,7 +1162,8 @@ $skip and limit for pagination
             'title': 1,
             "created_at": 1,
             'price': 1,
-            'image_url': 1,
+            "thumbnail_url":1,
+            // 'image_url': 1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1325,11 +1339,12 @@ $skip and limit for pagination
           'views': 1,
           'saved': 1,
           'price': 1,
-          'image_url': 1,
-          'SelectFields': 1,
+          // 'image_url': 1,
+          "thumbnail_url":1,
+          // 'SelectFields': 1,
           'ad_posted_address': 1,
-          'special_mention': 1,
-          'description': 1,
+          // 'special_mention': 1,
+          // 'description': 1,
           'ad_status': 1,
           'ad_type': 1,
           'created_at': 1,
@@ -1398,6 +1413,17 @@ $skip and limit for pagination
       _id: 0,
       ad_status: 1
     })
+
+    const ADS = await Generic.find()
+
+    ADS.forEach(ad=>{
+      GlobalSearch.findOneAndUpdate({ad_id:ad._id},{
+        $set:{
+          ad_posted_location:ad.ad_posted_location
+        }
+      })
+    })
+
     if (!ad_status) {
       await track('viewed ads status failed', {
         distinct_id: ad_id,

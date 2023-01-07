@@ -65,7 +65,7 @@ module.exports = class GlobalSearchService {
                                     },
                                     "radius": maxDistance,
                                 },
-                                "path": "ad_posted_location"
+                                "path": "ad_posted_location.loc"
                             },
                         },
                         "must": {
@@ -92,7 +92,8 @@ module.exports = class GlobalSearchService {
         })
         const searched_ads = await Generic.find({ _id: GenericAds ,ad_status:"Selling"}, {
             title: 1,
-            image_url: 1,
+            thumbnail_url:1,
+            // image_url: 1,
             price: 1,
             created_at: 1,
             isPrime: -1
@@ -103,7 +104,6 @@ module.exports = class GlobalSearchService {
             keywords: keyword
         });
         return searched_ads
-
     };
 
     // Api create Analytics keywords
