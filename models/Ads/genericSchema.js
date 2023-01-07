@@ -49,14 +49,23 @@ const genericSchema = mongoose.Schema({
         type: Array,
         default: [],
     },
+    thumbnail_url:{
+        type:Array,
+        default:[]
+    },
     ad_present_location: {
         type: { type: String },
         coordinates: [],
     },
-    ad_posted_location: {
-        type: { type: String },
-        coordinates: [],
-    },
+    ad_posted_location: [
+        {
+            loc: {
+                type: { type: String },
+                coordinates: [],
+            },
+            _id:false
+        }
+    ],
     ad_posted_address:
     {
         type: String,
@@ -120,7 +129,7 @@ const genericSchema = mongoose.Schema({
     ad_Deleted_Date: {
         type: String
     },
-    ad_Suspended_Date:{
+    ad_Suspended_Date: {
         type: String
     },
     ad_Historic_Duration_Date: {

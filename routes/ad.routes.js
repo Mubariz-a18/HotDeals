@@ -44,21 +44,21 @@ router.post('/api/v1/updateAd',
     rateLimiter(updateAdTime, updateAdHits),
     verifyToken,
     AdController.apiUpdateAd);
-router.get('/api/v1/getMyAds',
-    rateLimiter(getMyAdTime, getMyAdHits),
-    verifyToken,
-    AdController.apiGetMyAds);
+
 router.get('/api/v1/getMyAdsHistory',
     rateLimiter(getMyAdTime, getMyAdHits),
     verifyToken,
     AdController.apiGetMyAdsHistory);
+
 router.post('/api/vi/changeAdStatus',
     rateLimiter(changeAdStatusTime, changeAdStatusHits),
     verifyToken,
     AdController.apiChangeAdStatus);
+
 router.post('/api/v1/favouriteAds',
     rateLimiter(makeAdFavouriteTime,makeAdFavouriteHits), verifyToken,
     AdController.apiFavouriteAds);
+    
 router.get('/api/v1/getFavouriteAds',
     rateLimiter(getFavouriteAdsTime, getFavouriteAdsHits),
     verifyToken,

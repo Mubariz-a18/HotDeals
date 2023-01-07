@@ -173,32 +173,7 @@ module.exports = class AdController {
     };
   }
 
-  // Delete Ads -- Ads are Deleted  and returned from Adservice to deleteAds
-  // static async apiDeleteAds(req, res, next) {
-  //   try {
-  //     const ad_id = req.body.ad_id;
-  //     // Ad is Removed &  response is sent
-  //     const deletedAd = await AdService.deleteAds(req.user_ID, ad_id);
-  //     // Reponse code is sent 
-  //     res.status(200).send({ message: deletedAd })
-  //   } catch (e) {
-  //     if (!e.status) {
-  //       res.status(500).json({
-  //         error: {
-  //           message: ` something went wrong try again : ${e.message} `
-  //         }
-  //       });
-  //     } else {
-  //       res.status(e.status).json({
-  //         error: {
-  //           message: e.message
-  //         }
-  //       });
-  //     };
-  //   };
-  // }
-
-  // Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
+// Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
   static async apiGetParticularAdDetails(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
@@ -215,7 +190,6 @@ module.exports = class AdController {
         Owner: ownerDetails,
         isAdFav: isAdFav
       })
-
     } catch (e) {
       if (!e.status) {
         res.status(500).json({
@@ -294,8 +268,8 @@ module.exports = class AdController {
         })
       }
       if (getRecentAds.length > 0) {
-        res.status(200).json({
-          getRecentAds: getRecentAds,
+        res.status(200).send({
+          FeaturedAds:getRecentAds,
           TotalRecentAds: getRecentAds.length
         })
       }
@@ -319,36 +293,6 @@ module.exports = class AdController {
     };
   };
 
-  // Get Ads -- Ads are Fetched and Returned from Adservice 
-  static async apiGetMyAdDetails(req, res, next) {
-    try {
-      const { ad_id } = req.body;
-      const user_ID = req.user_ID;
-      // My ads are fetched from db abd sent to response
-      const { myAdDetail, ownerDetails, isAdFav } = await AdService.getMyAdDetails(ad_id, user_ID);
-      // Response code is send 
-      res.status(200).send({
-        message: "success!",
-        AdDetail: myAdDetail,
-        Owner: ownerDetails,
-        isAdFav: isAdFav
-      });
-    } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
-    };
-  };
 
   static async apiGetRelatedAds(req, res, next) {
     try {

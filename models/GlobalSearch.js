@@ -8,8 +8,7 @@ const GlobalSearchSchema = mongoose.Schema({
     type: String
   },
   ad_posted_location: {
-    type: { type: String },
-    coordinates: [],
+    type:Array
   },
 });
 
