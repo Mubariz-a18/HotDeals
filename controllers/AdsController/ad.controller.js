@@ -270,7 +270,7 @@ module.exports = class AdController {
       if (getRecentAds.length > 0) {
         res.status(200).send({
           FeaturedAds:getRecentAds,
-          TotalRecentAds: getRecentAds.length
+          TotalFeaturedAds: getRecentAds.length
         })
       }
       if (getRecentAds.length == 0) {
