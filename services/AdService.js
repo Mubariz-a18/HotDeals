@@ -28,20 +28,43 @@ module.exports = class AdService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
-      if (bodyData.ad_id) {
-        Generic.findOneAndUpdate({ _id: bodyData.ad_id },
-          {
-            $set: {
-              ad_status: 'Selling',
-              ad_expire_date: DateAfter30Days,
-              created_at: currentDate,
-              updated_at: currentDate,
-            }
-          })
-      }
       // Generic AdDoc is created 
-      else {
-        const {
+      const {
+        ad_id,
+        parent_id,
+        category,
+        sub_category,
+        field,
+        description,
+        SelectFields,
+        special_mention,
+        title,
+        price,
+        isPrime,
+        image_url,
+        video_url,
+        ad_present_location,
+        ad_posted_location,
+        ad_posted_address,
+        ad_present_address,
+        ad_status,
+        is_negotiable,
+        is_ad_posted,
+      } = bodyData
+      console.log(ad_id)
+      let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
+
+      // create an Ad document in generics collection with body 
+      const creditParams = { isPrime, ad_id, userId, category }
+      const balance = await creditDeductFuntion(creditParams)
+      if (balance.message == "Empty_Credits") {
+        throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+      }
+      else if (balance.message == "Deducted_Successfully") {
+        let adDoc = await Generic.create({
+          _id: ObjectId(ad_id),
+          parent_id,
+          user_id: findUsr._id,
           category,
           sub_category,
           field,
@@ -50,83 +73,51 @@ module.exports = class AdService {
           special_mention,
           title,
           price,
+          product_age: age,
           isPrime,
+          ad_type: isPrime == false ? "Free" : "Premium",
           image_url,
           video_url,
           ad_present_location,
           ad_posted_location,
           ad_posted_address,
           ad_present_address,
+          ad_Premium_Date: isPrime == true ? currentDate : "",
           ad_status,
           is_negotiable,
           is_ad_posted,
-        } = bodyData
-        let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
-
-        // create an Ad document in generics collection with body 
-        const _id = ObjectId()
-        const creditParams = { isPrime, _id, userId, category }
-        const balance = await creditDeductFuntion(creditParams)
-        if (balance.message == "Empty_Credits") {
-          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
-        }
-        else if (balance.message == "Deducted_Successfully") {
-          let adDoc = await Generic.create({
-            _id: _id,
-            user_id: findUsr._id,
-            category,
-            sub_category,
-            field,
-            description,
-            SelectFields,
-            special_mention,
-            title,
-            price,
-            product_age: age,
-            isPrime,
-            ad_type: isPrime == false ? "Free" : "Premium",
-            image_url,
-            video_url,
-            ad_present_location,
-            ad_posted_location,
-            ad_posted_address,
-            ad_present_address,
-            ad_Premium_Date: isPrime == true ? currentDate : "",
-            ad_status,
-            is_negotiable,
-            is_ad_posted,
-            created_at: currentDate,
-            ad_expire_date: DateAfter30Days,
-            updated_at: currentDate,
-          });
-          // mixpanel track -- Ad create 
-          await track('Ad creation succeed', {
-            category: bodyData.category,
-            distinct_id: adDoc._id,
-            $latitude: ad_posted_location[0].loc.coordinates[1],
-            $longitude: ad_posted_location[0].loc.coordinates[0],
-          })
-          //save the ad_id in users profile in myads
-          await Profile.findByIdAndUpdate({ _id: userId }, {
-            $push: {
-              my_ads: ObjectId(adDoc._id)
-            }
-          });
-          const adId = adDoc._id
-          const body = {
-            adId,
-            category,
-            sub_category,
-            title,
-            description,
-            ad_posted_address,
-            ad_posted_location,
-            SelectFields
+          created_at: currentDate,
+          ad_expire_date: DateAfter30Days,
+          updated_at: currentDate,
+        });
+        // mixpanel track -- Ad create 
+        await track('Ad creation succeed', {
+          category: bodyData.category,
+          distinct_id: adDoc._id,
+          $latitude: ad_posted_location.coordinates[1],
+          $longitude: ad_posted_location.coordinates[0]
+        })
+        //save the ad_id in users profile in myads
+        await Profile.findByIdAndUpdate({ _id: userId }, {
+          $push: {
+            my_ads: ObjectId(adDoc._id)
           }
-          await createGlobalSearch(body)
-          return adDoc["_doc"];
+        });
+        const adId = adDoc._id
+        const body = {
+          adId,
+          category,
+          sub_category,
+          title,
+          description,
+          ad_posted_address,
+          ad_posted_location,
+          SelectFields
         }
+        await createGlobalSearch(body)
+        return adDoc["_doc"];
       }
+
     }
   };
   //Update Ad
@@ -222,12 +213,13 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   description: 1,
                   saved: 1,
                   views: 1,
                   isPrime: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   created_at: 1,
                   ad_Premium_Date: 1
@@ -244,10 +236,11 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   description: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   saved: 1,
                   views: 1,
                   ad_Archive_Date: 1,
@@ -264,9 +257,10 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   description: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   ad_Draft_Date: 1,
                 }
@@ -282,9 +276,10 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   description: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
@@ -302,10 +297,11 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] }
                 }
               }
@@ -320,10 +316,11 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -338,10 +335,11 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -356,11 +354,12 @@ module.exports = class AdService {
               {
                 $project: {
                   _id: 1,
+                  parent_id: 1,
                   title: 1,
                   price: 1,
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
-                  thumbnail_url:1,
+                  thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
@@ -816,6 +815,7 @@ module.exports = class AdService {
             'saved': '$firstResult.saved',
             'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
+            'parent_id': "$firstResult.parent_id",
             'category': '$firstResult.category',
             'title': '$firstResult.title',
             'price': '$firstResult.price',
@@ -835,13 +835,14 @@ module.exports = class AdService {
           '$project': {
             'ad_id': 1,
             '_id': 0,
+            "parent_id": 1,
             'views': 1,
             'saved': 1,
             'category': 1,
             'title': 1,
             'price': 1,
             // 'image_url': 1,
-            "thumbnail_url":1,
+            "thumbnail_url": 1,
             'description': 1,
             'ad_status': 1,
             'favourite_ads.ad_Favourite_Date': 1,
@@ -897,6 +898,7 @@ module.exports = class AdService {
       {
         '$project': {
           '_id': 1,
+          'parent_id': 1,
           'category': 1,
           'sub_category': 1,
           'title': 1,
@@ -1016,6 +1018,7 @@ module.exports = class AdService {
         {
           '$project': {
             '_id': 1,
+            'parent_id': 1,
             "Seller_Id": 1,
             'Seller_Name': 1,
             "Seller_verified": 1,
@@ -1026,7 +1029,7 @@ module.exports = class AdService {
             'title': 1,
             "created_at": 1,
             'price': 1,
-            "thumbnail_url":1,
+            "thumbnail_url": 1,
             // 'image_url': 1,
             'isPrime': 1,
             "dist": 1,
@@ -1152,6 +1155,7 @@ $skip and limit for pagination
         {
           '$project': {
             '_id': 1,
+            'parent_id': 1,
             "Seller_Id": 1,
             'Seller_Name': 1,
             "Seller_verified": 1,
@@ -1162,7 +1166,7 @@ $skip and limit for pagination
             'title': 1,
             "created_at": 1,
             'price': 1,
-            "thumbnail_url":1,
+            "thumbnail_url": 1,
             // 'image_url': 1,
             'isPrime': 1,
             "dist": 1,
@@ -1206,59 +1210,59 @@ $skip and limit for pagination
     return featureAds;
   };
 
-  //Get Ad details of any ad without location
-  static async getMyAdDetails(ad_id, user_id) {
-    const userExist = await Profile.findById({ _id: user_id });
-    if (!userExist) {
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    const myAdDetail = await Generic.findOne({ _id: ad_id }, {
-      '_id': 1,
-      "user_id": 1,
-      'category': 1,
-      'sub_category': 1,
-      'title': 1,
-      'views': 1,
-      'saved': 1,
-      'price': 1,
-      'image_url': 1,
-      "video_url": 1,
-      'SelectFields': 1,
-      'special_mention': 1,
-      'description': 1,
-      'ad_status': 1,
-      'ad_type': 1,
-      "ad_posted_address": 1,
-      "ad_present_address": 1,
-      'created_at': 1,
-      'isPrime': 1,
-    });
-    const user = await Profile.findOne(
-      {
-        _id: user_id,
-        "favourite_ads": {
-          $elemMatch: { "ad_id": ad_id }
-        }
-      })
-    let isAdFav
-    if (user) {
-      isAdFav = true
-    } else {
-      isAdFav = false
-    }
-    const ownerDetails = await Profile.findById({ _id: myAdDetail.user_id }, {
-      _id: 1,
-      name: 1,
-      profile_url: 1,
-      created_date: 1
-    })
-    // mixpanel -- track  get Particular ad ads
-    await track('get Particular ad ads', {
-      distinct_id: user_id,
-      message: ` user_id : ${user_id}  viewd ${ad_id}`
-    })
-    return { myAdDetail, ownerDetails, isAdFav }
-  };
+  // //Get Ad details of any ad without location
+  // static async getMyAdDetails(ad_id, user_id) {
+  //   const userExist = await Profile.findById({ _id: user_id });
+  //   if (!userExist) {
+  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+  //   }
+  //   const myAdDetail = await Generic.findOne({ _id: ad_id }, {
+  //     '_id': 1,
+  //     "user_id": 1,
+  //     'category': 1,
+  //     'sub_category': 1,
+  //     'title': 1,
+  //     'views': 1,
+  //     'saved': 1,
+  //     'price': 1,
+  //     'image_url': 1,
+  //     "video_url": 1,
+  //     'SelectFields': 1,
+  //     'special_mention': 1,
+  //     'description': 1,
+  //     'ad_status': 1,
+  //     'ad_type': 1,
+  //     "ad_posted_address": 1,
+  //     "ad_present_address": 1,
+  //     'created_at': 1,
+  //     'isPrime': 1,
+  //   });
+  //   const user = await Profile.findOne(
+  //     {
+  //       _id: user_id,
+  //       "favourite_ads": {
+  //         $elemMatch: { "ad_id": ad_id }
+  //       }
+  //     })
+  //   let isAdFav
+  //   if (user) {
+  //     isAdFav = true
+  //   } else {
+  //     isAdFav = false
+  //   }
+  //   const ownerDetails = await Profile.findById({ _id: myAdDetail.user_id }, {
+  //     _id: 1,
+  //     name: 1,
+  //     profile_url: 1,
+  //     created_date: 1
+  //   })
+  //   // mixpanel -- track  get Particular ad ads
+  //   await track('get Particular ad ads', {
+  //     distinct_id: user_id,
+  //     message: ` user_id : ${user_id}  viewd ${ad_id}`
+  //   })
+  //   return { myAdDetail, ownerDetails, isAdFav }
+  // };
 
   // Get particular Ad Detail with distance and user details
   static async getRelatedAds(query, user_id) {
@@ -1333,6 +1337,7 @@ $skip and limit for pagination
       {
         '$project': {
           '_id': 1,
+          'parent_id': 1,
           'category': 1,
           'sub_category': 1,
           'title': 1,
@@ -1340,11 +1345,8 @@ $skip and limit for pagination
           'saved': 1,
           'price': 1,
           // 'image_url': 1,
-          "thumbnail_url":1,
-          // 'SelectFields': 1,
+          "thumbnail_url": 1,
           'ad_posted_address': 1,
-          // 'special_mention': 1,
-          // 'description': 1,
           'ad_status': 1,
           'ad_type': 1,
           'created_at': 1,
@@ -1411,19 +1413,9 @@ $skip and limit for pagination
   static async getAdStatus(ad_id) {
     const ad_status = await Generic.findById({ _id: ad_id }, {
       _id: 0,
-      ad_status: 1
+      ad_status: 1,
+      parent_id: 1,
     })
-
-    const ADS = await Generic.find()
-
-    ADS.forEach(ad=>{
-      GlobalSearch.findOneAndUpdate({ad_id:ad._id},{
-        $set:{
-          ad_posted_location:ad.ad_posted_location
-        }
-      })
-    })
-
     if (!ad_status) {
       await track('viewed ads status failed', {
         distinct_id: ad_id,

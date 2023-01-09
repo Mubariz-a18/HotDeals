@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const genericSchema = mongoose.Schema({
+    parent_id:{
+        type: mongoose.Types.ObjectId,
+    },
     user_id: {
         type: mongoose.Types.ObjectId,
     },
@@ -57,15 +60,10 @@ const genericSchema = mongoose.Schema({
         type: { type: String },
         coordinates: [],
     },
-    ad_posted_location: [
-        {
-            loc: {
-                type: { type: String },
-                coordinates: [],
-            },
-            _id:false
-        }
-    ],
+    ad_posted_location: {
+        type: { type: String },
+        coordinates: [],
+    },
     ad_posted_address:
     {
         type: String,
