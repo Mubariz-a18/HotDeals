@@ -42,6 +42,7 @@ module.exports = class AdService {
         price,
         isPrime,
         image_url,
+        thumbnail_url,
         video_url,
         ad_present_location,
         ad_posted_location,
@@ -51,17 +52,76 @@ module.exports = class AdService {
         is_negotiable,
         is_ad_posted,
       } = bodyData
-      console.log(ad_id)
       let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
 
       // create an Ad document in generics collection with body 
       const creditParams = { isPrime, ad_id, userId, category }
-      const balance = await creditDeductFuntion(creditParams)
-      if (balance.message == "Empty_Credits") {
-        throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
-      }
-      else if (balance.message == "Deducted_Successfully") {
-        let adDoc = await Generic.create({
+      if(bodyData.ad_status !== "Draft"){
+
+        const balance = await creditDeductFuntion(creditParams)
+        if (balance.message == "Empty_Credits") {
+          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+        }
+        else if (balance.message == "Deducted_Successfully") {
+          let adDoc = await Generic.create({
+            _id: ObjectId(ad_id),
+            parent_id,
+            user_id: findUsr._id,
+            category,
+            sub_category,
+            field,
+            description,
+            SelectFields,
+            special_mention,
+            title,
+            price,
+            product_age: age,
+            isPrime,
+            ad_type: isPrime == false ? "Free" : "Premium",
+            image_url,
+            video_url,
+            thumbnail_url,
+            ad_present_location :ad_present_location || {},
+            ad_posted_location : ad_posted_location || {},
+            ad_posted_address,
+            ad_present_address,
+            ad_Premium_Date: isPrime == true ? currentDate : "",
+            ad_status,
+            is_negotiable,
+            is_ad_posted,
+            created_at: currentDate,
+            ad_expire_date: DateAfter30Days,
+            updated_at: currentDate,
+          });
+          // mixpanel track -- Ad create 
+          await track('Ad creation succeed', {
+            category: bodyData.category,
+            distinct_id: adDoc._id,
+            // $latitude: ad_posted_location.coordinates[1] || {},
+            // $longitude: ad_posted_location.coordinates[0] || {}
+          })
+          //save the ad_id in users profile in myads
+          await Profile.findByIdAndUpdate({ _id: userId }, {
+            $push: {
+              my_ads: ObjectId(adDoc._id)
+            }
+          });
+          const adId = adDoc._id
+          const body = {
+            adId,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            ad_posted_location,
+            SelectFields
+          }
+          await createGlobalSearch(body)
+          return adDoc["_doc"];
+        }
+      }else{
+        const  adDoc = await Generic.create({
           _id: ObjectId(ad_id),
           parent_id,
           user_id: findUsr._id,
@@ -77,9 +137,10 @@ module.exports = class AdService {
           isPrime,
           ad_type: isPrime == false ? "Free" : "Premium",
           image_url,
+          thumbnail_url,
           video_url,
-          ad_present_location,
-          ad_posted_location,
+          ad_present_location :ad_present_location || {},
+          ad_posted_location : ad_posted_location || {},
           ad_posted_address,
           ad_present_address,
           ad_Premium_Date: isPrime == true ? currentDate : "",
@@ -94,15 +155,15 @@ module.exports = class AdService {
         await track('Ad creation succeed', {
           category: bodyData.category,
           distinct_id: adDoc._id,
-          $latitude: ad_posted_location.coordinates[1],
-          $longitude: ad_posted_location.coordinates[0]
+          // $latitude: ad_posted_location.coordinates[1] || {},
+          // $longitude: ad_posted_location.coordinates[0] || {}
         })
         //save the ad_id in users profile in myads
         await Profile.findByIdAndUpdate({ _id: userId }, {
           $push: {
             my_ads: ObjectId(adDoc._id)
           }
-        });
+        }); 
         const adId = adDoc._id
         const body = {
           adId,

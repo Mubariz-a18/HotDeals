@@ -59,10 +59,12 @@ const genericSchema = mongoose.Schema({
     ad_present_location: {
         type: { type: String },
         coordinates: [],
+        default:{}
     },
     ad_posted_location: {
         type: { type: String },
         coordinates: [],
+        default:{}
     },
     ad_posted_address:
     {

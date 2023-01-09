@@ -36,7 +36,7 @@ const {
 
 //Ad Routes
 router.post('/api/createAd',
-    rateLimiter(createAdTime, createAdHits),
+    // rateLimiter(createAdTime, createAdHits),
     verifyToken, Validator("genericSchemaValidator"),
     AdController.apiCreateAd);
 
