@@ -823,7 +823,10 @@ module.exports = class AdService {
             'description': '$firstResult.description',
             'ad_status': '$firstResult.ad_status',
             'ad_promoted': '$firstResult.ad_promoted',
-            'isPrime': '$firstResult.isPrime'
+            'isPrime': '$firstResult.isPrime',
+            'ad_posted_location': "$firstResult.ad_posted_location",
+            'ad_present_location': "$firstResult.ad_present_location",
+            'ad_expire_date': "$firstResult.ad_expire_date"
           }
         },
         {
@@ -841,6 +844,9 @@ module.exports = class AdService {
             'category': 1,
             'title': 1,
             'price': 1,
+            'ad_posted_location': 1,
+            'ad_present_location': 1,
+            'ad_expire_date': 1,
             // 'image_url': 1,
             "thumbnail_url": 1,
             'description': 1,
