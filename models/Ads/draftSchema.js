@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const genericSchema = mongoose.Schema({
+const draftSchema = mongoose.Schema({
     parent_id:{
         type: mongoose.Types.ObjectId,
     },
@@ -59,12 +59,11 @@ const genericSchema = mongoose.Schema({
     ad_present_location: {
         type: { type: String },
         coordinates: [],
-        default:{}
+   
     },
     ad_posted_location: {
         type: { type: String },
         coordinates: [],
-        default:{}
     },
     ad_posted_address:
     {
@@ -172,6 +171,6 @@ const genericSchema = mongoose.Schema({
         type: String
     },
 });
-const Generic = mongoose.model("Generic", genericSchema,);
+const Draft = mongoose.model("Draft", draftSchema,);
 
-module.exports = Generic;
+module.exports = Draft;

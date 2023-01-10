@@ -36,7 +36,7 @@ const {
 
 //Ad Routes
 router.post('/api/createAd',
-    rateLimiter(createAdTime, createAdHits),
+    // rateLimiter(createAdTime, createAdHits),
     verifyToken, Validator("genericSchemaValidator"),
     AdController.apiCreateAd);
 
@@ -44,6 +44,12 @@ router.post('/api/v1/updateAd',
     rateLimiter(updateAdTime, updateAdHits),
     verifyToken,
     AdController.apiUpdateAd);
+
+
+router.get('/api/v1/getMyAds',
+    rateLimiter(getMyAdTime, getMyAdHits),
+    verifyToken,
+    AdController.apiGetMyAds);
 
 router.get('/api/v1/getMyAdsHistory',
     rateLimiter(getMyAdTime, getMyAdHits),
@@ -56,9 +62,9 @@ router.post('/api/vi/changeAdStatus',
     AdController.apiChangeAdStatus);
 
 router.post('/api/v1/favouriteAds',
-    rateLimiter(makeAdFavouriteTime,makeAdFavouriteHits), verifyToken,
+    rateLimiter(makeAdFavouriteTime, makeAdFavouriteHits), verifyToken,
     AdController.apiFavouriteAds);
-    
+
 router.get('/api/v1/getFavouriteAds',
     rateLimiter(getFavouriteAdsTime, getFavouriteAdsHits),
     verifyToken,
@@ -83,4 +89,24 @@ router.post('/api/v1/checkAdStatus',
     rateLimiter(getadStatusTime, getadStatusHits),
     AdController.apiCheckAdStatus);
 
+
+    
+/* 
+Draft Ad Apis Here
+*/
+
+router.post('/api/createDraftAd',
+rateLimiter(createAdTime, createAdHits),
+verifyToken,
+AdController.apiDraftAds);
+
+router.post('/api/getDraftAd',
+rateLimiter(getMyAdTime, getMyAdHits),
+verifyToken,
+AdController.apiGetDraftAd);
+
+router.post('/api/updateDraftAd',
+rateLimiter(createAdTime, createAdHits),
+verifyToken,
+AdController.apiUpdateDraftAds);
 module.exports = router;
