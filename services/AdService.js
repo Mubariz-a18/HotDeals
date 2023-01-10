@@ -8,6 +8,7 @@ const { createGlobalSearch } = require("./GlobalSearchService");
 const moment = require("moment");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
 const GlobalSearch = require("../models/GlobalSearch");
+const Draft = require("../models/Ads/draftSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -56,72 +57,12 @@ module.exports = class AdService {
 
       // create an Ad document in generics collection with body 
       const creditParams = { isPrime, ad_id, userId, category }
-      if(bodyData.ad_status !== "Draft"){
-
-        const balance = await creditDeductFuntion(creditParams)
-        if (balance.message == "Empty_Credits") {
-          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
-        }
-        else if (balance.message == "Deducted_Successfully") {
-          let adDoc = await Generic.create({
-            _id: ObjectId(ad_id),
-            parent_id,
-            user_id: findUsr._id,
-            category,
-            sub_category,
-            field,
-            description,
-            SelectFields,
-            special_mention,
-            title,
-            price,
-            product_age: age,
-            isPrime,
-            ad_type: isPrime == false ? "Free" : "Premium",
-            image_url,
-            video_url,
-            thumbnail_url,
-            ad_present_location :ad_present_location || {},
-            ad_posted_location : ad_posted_location || {},
-            ad_posted_address,
-            ad_present_address,
-            ad_Premium_Date: isPrime == true ? currentDate : "",
-            ad_status,
-            is_negotiable,
-            is_ad_posted,
-            created_at: currentDate,
-            ad_expire_date: DateAfter30Days,
-            updated_at: currentDate,
-          });
-          // mixpanel track -- Ad create 
-          await track('Ad creation succeed', {
-            category: bodyData.category,
-            distinct_id: adDoc._id,
-            // $latitude: ad_posted_location.coordinates[1] || {},
-            // $longitude: ad_posted_location.coordinates[0] || {}
-          })
-          //save the ad_id in users profile in myads
-          await Profile.findByIdAndUpdate({ _id: userId }, {
-            $push: {
-              my_ads: ObjectId(adDoc._id)
-            }
-          });
-          const adId = adDoc._id
-          const body = {
-            adId,
-            category,
-            sub_category,
-            title,
-            description,
-            ad_posted_address,
-            ad_posted_location,
-            SelectFields
-          }
-          await createGlobalSearch(body)
-          return adDoc["_doc"];
-        }
-      }else{
-        const  adDoc = await Generic.create({
+      const balance = await creditDeductFuntion(creditParams)
+      if (balance.message == "Empty_Credits") {
+        throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+      }
+      else if (balance.message == "Deducted_Successfully") {
+        let adDoc = await Generic.create({
           _id: ObjectId(ad_id),
           parent_id,
           user_id: findUsr._id,
@@ -137,10 +78,10 @@ module.exports = class AdService {
           isPrime,
           ad_type: isPrime == false ? "Free" : "Premium",
           image_url,
-          thumbnail_url,
           video_url,
-          ad_present_location :ad_present_location || {},
-          ad_posted_location : ad_posted_location || {},
+          thumbnail_url,
+          ad_present_location: ad_present_location || {},
+          ad_posted_location: ad_posted_location || {},
           ad_posted_address,
           ad_present_address,
           ad_Premium_Date: isPrime == true ? currentDate : "",
@@ -154,16 +95,14 @@ module.exports = class AdService {
         // mixpanel track -- Ad create 
         await track('Ad creation succeed', {
           category: bodyData.category,
-          distinct_id: adDoc._id,
-          // $latitude: ad_posted_location.coordinates[1] || {},
-          // $longitude: ad_posted_location.coordinates[0] || {}
+          distinct_id: adDoc._id
         })
         //save the ad_id in users profile in myads
         await Profile.findByIdAndUpdate({ _id: userId }, {
           $push: {
             my_ads: ObjectId(adDoc._id)
           }
-        }); 
+        });
         const adId = adDoc._id
         const body = {
           adId,
@@ -176,9 +115,9 @@ module.exports = class AdService {
           SelectFields
         }
         await createGlobalSearch(body)
+        await Draft.deleteOne({_id:ad_id});
         return adDoc["_doc"];
       }
-
     }
   };
   //Update Ad
@@ -193,6 +132,7 @@ module.exports = class AdService {
       title,
       price,
       isPrime,
+      thumbnail_url,
       image_url,
       video_url,
       ad_present_location,
@@ -203,7 +143,6 @@ module.exports = class AdService {
       is_negotiable,
       is_ad_posted,
     } = bodyData
-
     const updateAd = await Generic.findByIdAndUpdate({ _id: ad_id, user_id: user_id }, {
       $set: {
         category,
@@ -215,6 +154,7 @@ module.exports = class AdService {
         price,
         isPrime,
         image_url,
+        thumbnail_url,
         video_url,
         ad_present_location,
         ad_posted_location,
@@ -305,25 +245,6 @@ module.exports = class AdService {
                   saved: 1,
                   views: 1,
                   ad_Archive_Date: 1,
-                }
-              }
-            ],
-            "Drafts": [
-              { $match: { ad_status: "Draft" } },
-              {
-                $sort: {
-                  ad_Draft_Date: -1,
-                }
-              },
-              {
-                $project: {
-                  _id: 1,
-                  parent_id: 1,
-                  title: 1,
-                  description: 1,
-                  thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
-                  ad_Draft_Date: 1,
                 }
               }
             ],
@@ -876,6 +797,7 @@ module.exports = class AdService {
             'saved': '$firstResult.saved',
             'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
+            'user_id':'$firstResult.user_id',
             'parent_id': "$firstResult.parent_id",
             'category': '$firstResult.category',
             'title': '$firstResult.title',
@@ -885,8 +807,8 @@ module.exports = class AdService {
             'ad_status': '$firstResult.ad_status',
             'ad_promoted': '$firstResult.ad_promoted',
             'isPrime': '$firstResult.isPrime',
-            'ad_posted_location': "$firstResult.ad_posted_location",
-            'ad_present_location': "$firstResult.ad_present_location",
+            'ad_posted_address': "$firstResult.ad_posted_address",
+            'ad_present_address': "$firstResult.ad_present_address",
             'ad_expire_date': "$firstResult.ad_expire_date"
           }
         },
@@ -898,6 +820,7 @@ module.exports = class AdService {
         {
           '$project': {
             'ad_id': 1,
+            'user_id':1,
             '_id': 0,
             "parent_id": 1,
             'views': 1,
@@ -905,8 +828,8 @@ module.exports = class AdService {
             'category': 1,
             'title': 1,
             'price': 1,
-            'ad_posted_location': 1,
-            'ad_present_location': 1,
+            'ad_posted_address': 1,
+            'ad_present_address': 1,
             'ad_expire_date': 1,
             // 'image_url': 1,
             "thumbnail_url": 1,
@@ -1277,60 +1200,6 @@ $skip and limit for pagination
     return featureAds;
   };
 
-  // //Get Ad details of any ad without location
-  // static async getMyAdDetails(ad_id, user_id) {
-  //   const userExist = await Profile.findById({ _id: user_id });
-  //   if (!userExist) {
-  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-  //   }
-  //   const myAdDetail = await Generic.findOne({ _id: ad_id }, {
-  //     '_id': 1,
-  //     "user_id": 1,
-  //     'category': 1,
-  //     'sub_category': 1,
-  //     'title': 1,
-  //     'views': 1,
-  //     'saved': 1,
-  //     'price': 1,
-  //     'image_url': 1,
-  //     "video_url": 1,
-  //     'SelectFields': 1,
-  //     'special_mention': 1,
-  //     'description': 1,
-  //     'ad_status': 1,
-  //     'ad_type': 1,
-  //     "ad_posted_address": 1,
-  //     "ad_present_address": 1,
-  //     'created_at': 1,
-  //     'isPrime': 1,
-  //   });
-  //   const user = await Profile.findOne(
-  //     {
-  //       _id: user_id,
-  //       "favourite_ads": {
-  //         $elemMatch: { "ad_id": ad_id }
-  //       }
-  //     })
-  //   let isAdFav
-  //   if (user) {
-  //     isAdFav = true
-  //   } else {
-  //     isAdFav = false
-  //   }
-  //   const ownerDetails = await Profile.findById({ _id: myAdDetail.user_id }, {
-  //     _id: 1,
-  //     name: 1,
-  //     profile_url: 1,
-  //     created_date: 1
-  //   })
-  //   // mixpanel -- track  get Particular ad ads
-  //   await track('get Particular ad ads', {
-  //     distinct_id: user_id,
-  //     message: ` user_id : ${user_id}  viewd ${ad_id}`
-  //   })
-  //   return { myAdDetail, ownerDetails, isAdFav }
-  // };
-
   // Get particular Ad Detail with distance and user details
   static async getRelatedAds(query, user_id) {
     let category = query.category;
@@ -1490,6 +1359,148 @@ $skip and limit for pagination
       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
     } else {
       return ad_status
+    }
+  };
+
+
+  /* 
+  DRAFT ADS API SERVICES HERE
+  */
+
+  // Create Draft Ad api
+  static async draftAd(bodyData, userId) {
+    // Generic AdDoc is created 
+    const {
+      ad_id,
+      parent_id,
+      category,
+      sub_category,
+      field,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      isPrime,
+      image_url,
+      thumbnail_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status,
+      is_negotiable
+    } = bodyData
+    let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    let adDoc = await Draft.create({
+      _id: ObjectId(ad_id),
+      parent_id,
+      user_id: ObjectId(userId),
+      category,
+      sub_category,
+      field,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      product_age: age || 0,
+      isPrime,
+      ad_type: isPrime == false ? "Free" : "Premium",
+      image_url,
+      video_url,
+      thumbnail_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status,
+      ad_Draft_Date: currentDate,
+      is_negotiable,
+      created_at:currentDate
+    });
+    // mixpanel track -- Ad create 
+    await track('Ad Draft succeed', {
+      category: bodyData.category,
+      distinct_id: adDoc._id,
+    })
+    //save the ad_id in users profile in myads
+    await Profile.findByIdAndUpdate({ _id: userId }, {
+      $push: {
+        my_ads: ObjectId(adDoc._id)
+      }
+    });
+    return adDoc["_doc"];
+  };
+
+  // Update Any Draft Ad
+  static async updateDraft(bodyData, userId) {
+    const {
+      ad_id,
+      category,
+      sub_category,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      isPrime,
+      thumbnail_url,
+      image_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status,
+      is_negotiable,
+    } = bodyData
+
+    const updateAd = await Draft.findByIdAndUpdate({ _id: ad_id, user_id: userId }, {
+      $set: {
+        category,
+        sub_category,
+        description,
+        SelectFields,
+        special_mention,
+        title,
+        price,
+        isPrime,
+        image_url,
+        video_url,
+        thumbnail_url,
+        ad_present_location,
+        ad_posted_location,
+        ad_posted_address,
+        ad_present_address,
+        ad_status,
+        is_negotiable,
+      }
+    }, {
+      new: true
+    });
+    return updateAd
+  };
+
+  // Get Draft Ad
+  static async getDraftAd(bodyData, userId) {
+    const draftAd = await Draft.findById({ _id: bodyData.ad_id, user_id: userId });
+    if (draftAd) {
+      return draftAd
+    } else {
+      throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+    }
+  };
+
+  // Get All Draft Ads
+  static async getAllDraft(userId){
+    const draftAds = await Draft.find({user_id: userId });
+    if (draftAds) {
+      return draftAds
+    } else {
+      throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
 };

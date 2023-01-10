@@ -13,7 +13,6 @@ module.exports = class AdController {
         Ad: adDocument,
       })
     } catch (e) {
-      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -35,12 +34,13 @@ module.exports = class AdController {
     try {
       // My ads are fetched from db abd sent to response
       const getDocument = await AdService.getMyAds(req.user_ID);
+      const DraftAds = await AdService.getAllDraft(req.user_ID)
       // Response code is send 
       res.status(200).send({
         message: "success!",
         Selling: getDocument[0].Selling,
         Archived: getDocument[0].Archive,
-        Drafts: getDocument[0].Drafts,
+        Drafts: DraftAds,
         Expired: getDocument[0].Expired,
         Deleted: getDocument[0].Deleted,
         Reposted: getDocument[0].Reposted,
@@ -174,7 +174,7 @@ module.exports = class AdController {
     };
   }
 
-// Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
+  // Get Ad details -- Ad is Fetched   and returned from Adservice to getAdDetails
   static async apiGetParticularAdDetails(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
@@ -270,7 +270,7 @@ module.exports = class AdController {
       }
       if (getRecentAds.length > 0) {
         res.status(200).send({
-          FeaturedAds:getRecentAds,
+          FeaturedAds: getRecentAds,
           TotalFeaturedAds: getRecentAds.length
         })
       }
@@ -314,8 +314,8 @@ module.exports = class AdController {
           {
             PremiumAds: RelatedAds[0].PremiumAds,
             FeatureAds: featureAds,
-            TotalPremiumAds:RelatedAds[0].PremiumAds.length,
-            TotalFeaturedAds:featureAds.length
+            TotalPremiumAds: RelatedAds[0].PremiumAds.length,
+            TotalFeaturedAds: featureAds.length
           }
         )
       }
@@ -404,4 +404,86 @@ module.exports = class AdController {
     };
   }
 
+  /* 
+    Draft Ad APIS From Here
+  */
+
+  // CreateDraftAd
+  static async apiDraftAds(req, res, next) {
+    try {
+      const user_id = req.user_ID;
+      const Drafted_Ad = await AdService.draftAd(req.body, user_id);
+      res.status(200).json({
+        message: "Successfully Drafted",
+        data: Drafted_Ad
+      })
+    } catch (e) {
+
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
+  // update DraftApi
+  static async apiUpdateDraftAds(req, res, next) {
+    try {
+      const user_id = req.user_ID;
+      const Drafted_Ad = await AdService.updateDraft(req.body, user_id);
+      res.status(200).json({
+        message: "Successfully Drafted",
+        data: Drafted_Ad
+      })
+    } catch (e) {
+
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
+  // Get One Draft
+  static async apiGetDraftAd(req, res, next) {
+    try {
+      const user_id = req.user_ID;
+      const Drafted_Ad = await AdService.getDraftAd(req.body, user_id);
+      res.status(200).json({
+        data: Drafted_Ad
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  }
 };
