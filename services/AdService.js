@@ -1483,6 +1483,9 @@ $skip and limit for pagination
     }, {
       new: true
     });
+    await track('Update Draft Succeed', {
+      distinct_id: ad_id,
+    })
     return updateAd
   };
 
@@ -1490,6 +1493,9 @@ $skip and limit for pagination
   static async getDraftAd(bodyData, userId) {
     const draftAd = await Draft.findById({ _id: bodyData.ad_id, user_id: userId });
     if (draftAd) {
+      await track('Get Draft event', {
+        distinct_id: ad_id,
+      })
       return draftAd
     } else {
       throw ({ status: 404, message: 'AD_NOT_EXISTS' });
