@@ -115,7 +115,7 @@ module.exports = class AdService {
           SelectFields
         }
         await createGlobalSearch(body)
-        await Draft.deleteOne({_id:ad_id});
+        await Draft.deleteOne({ _id: ad_id });
         return adDoc["_doc"];
       }
     }
@@ -641,36 +641,32 @@ module.exports = class AdService {
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    // check if user exist 
-    const findUser = await Profile.findOne({ _id: userId });
-    //if user doesnt exist throw error 
-    if (!findUser) {
-      await track('failed !! Make Ad favourite ', {
-        distinct_id: userId,
-        ad_id: ad_id,
-        message: ` user_id : ${userId}  does not exist`
+    // Ad is find from Generics collection    if body contains "Favourite"
+    if (bodyData.value == "Favourite") {
+      const findAd = await Generic.findOne({
+        _id: ad_id
       })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    else {
-      // mixpanel Track - when Ad is selected for favourite
-      // Ad is find from Generics collection    if body contains "Favourite"
-      if (bodyData.value == "Favourite") {
-        const findAd = await Generic.findOne({
-          _id: ad_id
+      // if Ad doesnt exists throw error
+      if (!findAd) {
+        // mixpanel track for failed event in make ad favourite
+        await track('failed !! Make Ad favourite ', {
+          distinct_id: userId,
+          ad_id: ad_id,
+          message: ` ad_id : ${ad_id}  does not exist`
         })
-        // if Ad doesnt exists throw error
-        if (!findAd) {
-          // mixpanel track for failed event in make ad favourite
-          await track('failed !! Make Ad favourite ', {
-            distinct_id: userId,
-            ad_id: ad_id,
-            message: ` ad_id : ${ad_id}  does not exist`
-          })
-          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-        }
-        else {
-          // save the ads ino favourite ads list in user profile
+        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+      }
+      else {
+        const isAdFav = await Profile.findOne(
+          {
+            _id: userId,
+            "favourite_ads": {
+              $elemMatch: { "ad_id": ad_id }
+            }
+          });
+          console.log(isAdFav)
+        // save the ads ino favourite ads list in user profile
+        if (isAdFav == null) {
           const updatedUser = await Profile.updateOne(
             { _id: userId },
             {
@@ -693,51 +689,55 @@ module.exports = class AdService {
               ad_id: ad_id
             })
           }
-          return findAd;
+        } else {
+          throw ({ status: 404, message: 'Ad_Already_Favourite' });
         }
+        return findAd;
       }
-      // Ad is find from Generics collection if body contains "UnFavourite"  Ad _id is removed from  user`s profile (faviourite_ads)
-      else if (bodyData.value == "UnFavourite") {
-        const findAd = await Generic.findOne({
-          _id: ad_id
+    }
+    // Ad is find from Generics collection if body contains "UnFavourite"  Ad _id is removed from  user`s profile (faviourite_ads)
+    else if (bodyData.value == "UnFavourite") {
+      const findAd = await Generic.findOne({
+        _id: ad_id
+      })
+      // if Ad doesnt exists throw error
+      if (!findAd) {
+        // mixpanel track for failed event in remove ad from favourite
+        await track('failed !! Make Ad favourite ', {
+          distinct_id: userId,
+          ad_id: ad_id,
+          message: ` ad_id : ${ad_id}  does not exist`
         })
-        // if Ad doesnt exists throw error
-        if (!findAd) {
-          // mixpanel track for failed event in remove ad from favourite
-          await track('failed !! Make Ad favourite ', {
-            distinct_id: userId,
-            ad_id: ad_id,
-            message: ` ad_id : ${ad_id}  does not exist`
-          })
-          throw ({ status: 404, message: 'AD_NOT_EXISTS' });
-        }
-        else {
-          // remove the ads from favourite_ads  list in user profile
-          const updatedUser = await Profile.updateOne(
-            { _id: userId },
-            {
-              $pull: {
-                favourite_ads: {
-                  ad_id: ad_id,
-                }
+        throw ({ status: 404, message: 'AD_NOT_EXISTS' });
+      }
+      else {
+        // remove the ads from favourite_ads  list in user profile
+        const updatedUser = await Profile.updateOne(
+          { _id: userId },
+          {
+            $pull: {
+              favourite_ads: {
+                ad_id: ad_id,
               }
-            },
-            { new: true }
-          );
-          if (updatedUser.modifiedCount > 0) {
-            // decrease the saved count by 1  
-            await Generic.findByIdAndUpdate(
-              { _id: ad_id },
-              { $inc: { saved: -1 } }
-            )
-            // mixpanel track remove Ad favourite
-            await track('Removed Ad from Favourites successfully', {
-              distinct_id: userId,
-              ad_id: ad_id
-            })
-          }
-          return findAd
+            }
+          },
+          { new: true }
+        );
+        if (updatedUser.modifiedCount > 0) {
+          // decrease the saved count by 1  
+          await Generic.findByIdAndUpdate(
+            { _id: ad_id },
+            { $inc: { saved: -1 } }
+          )
+          // mixpanel track remove Ad favourite
+          await track('Removed Ad from Favourites successfully', {
+            distinct_id: userId,
+            ad_id: ad_id
+          })
+        } else {
+          throw ({ status: 404, message: 'Already_Unfavourite' });
         }
+        return findAd
       }
     }
   };
@@ -797,12 +797,13 @@ module.exports = class AdService {
             'saved': '$firstResult.saved',
             'views': '$firstResult.views',
             'ad_id': '$firstResult._id',
-            'user_id':'$firstResult.user_id',
+            'user_id': '$firstResult.user_id',
             'parent_id': "$firstResult.parent_id",
             'category': '$firstResult.category',
             'title': '$firstResult.title',
             'price': '$firstResult.price',
             'image_url': '$firstResult.image_url',
+            'thumbnail_url': "$firstResult.thumbnail_url",
             'description': '$firstResult.description',
             'ad_status': '$firstResult.ad_status',
             'ad_promoted': '$firstResult.ad_promoted',
@@ -820,7 +821,7 @@ module.exports = class AdService {
         {
           '$project': {
             'ad_id': 1,
-            'user_id':1,
+            'user_id': 1,
             '_id': 0,
             "parent_id": 1,
             'views': 1,
@@ -896,6 +897,7 @@ module.exports = class AdService {
           'saved': 1,
           'price': 1,
           'image_url': 1,
+          'thumbnail_url':1,
           'video_url': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
@@ -1419,7 +1421,7 @@ $skip and limit for pagination
       ad_status,
       ad_Draft_Date: currentDate,
       is_negotiable,
-      created_at:currentDate
+      created_at: currentDate
     });
     // mixpanel track -- Ad create 
     await track('Ad Draft succeed', {
@@ -1495,8 +1497,8 @@ $skip and limit for pagination
   };
 
   // Get All Draft Ads
-  static async getAllDraft(userId){
-    const draftAds = await Draft.find({user_id: userId });
+  static async getAllDraft(userId) {
+    const draftAds = await Draft.find({ user_id: userId });
     if (draftAds) {
       return draftAds
     } else {
