@@ -145,7 +145,8 @@ const profileSchema = mongoose.Schema({
     type:String
   },
   cover_photo_url: {
-    type: String
+    type: String,
+    default:""
   },
   followers: Array,
   followers_count: {
