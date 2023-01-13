@@ -43,6 +43,8 @@ module.exports = class ProfileService {
           gender: bodyData.gender,
           language_preference: bodyData.language_preference,
           profile_url: bodyData.profile_url,
+          thumbnail_url:bodyData.thumbnail_url,
+          cover_photo_url:bodyData.cover_photo_url,
           created_date: currentDate,
           updated_date: currentDate,
         });
@@ -240,10 +242,10 @@ module.exports = class ProfileService {
             about: 1,
             is_email_verified: 1,
             thumbnail_url: 1,
-            // profile_url: 1,
+            profile_url: 1,
             cover_photo_url: 1,
-            followers: 1,
-            followings: 1,
+            followers_count: 1,
+            followings_count: 1,
             rate_average: 1,
             rate_count: 1,
             alert: 1
