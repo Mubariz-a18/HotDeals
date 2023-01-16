@@ -1,14 +1,13 @@
+const moment = require("moment");
 const Profile = require("../models/Profile/Profile");
+const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
-const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
+const { track } = require('./mixpanel-service.js');
 const { age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-const moment = require("moment");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const GlobalSearch = require("../models/GlobalSearch");
-const Draft = require("../models/Ads/draftSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -221,6 +220,11 @@ module.exports = class AdService {
                   views: 1,
                   isPrime: 1,
                   thumbnail_url: 1,
+                  ad_posted_address:1,
+                  is_Boosted:1,
+                  Boosted_Date:1,
+                  is_Highlighted:1,
+                  Highlighted_Date:1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   created_at: 1,
                   ad_Premium_Date: 1
