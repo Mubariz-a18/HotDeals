@@ -13,6 +13,7 @@ module.exports = class AdController {
         Ad: adDocument,
       })
     } catch (e) {
+      console.log(e)
       if (!e.status) {
         res.status(500).json({
           error: {
@@ -379,9 +380,9 @@ module.exports = class AdController {
   // api for UpdateAd
   static async apiUpdateAd(req, res, next) {
     try {
-      const { ad_id } = req.body;
+      // const { ad_id } = req.body;
       const user_id = req.user_ID;
-      const Updated_Ad = await AdService.updateAd(ad_id, req.body, user_id);
+      const Updated_Ad = await AdService.updateAd(req.body, user_id);
       res.status(200).json({
         message: "Successfully_Updated",
         data: Updated_Ad

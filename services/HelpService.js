@@ -128,7 +128,7 @@ module.exports = class HelpService {
           $project: {
             title: 1,
             description: 1,
-            attachment: { $arrayElemAt: ["$attachment", 0] },
+            attachment: 1,
             created_Date: 1
           }
         }

@@ -1,10 +1,10 @@
-const cron = require('node-cron')
-const moment = require("moment")
-const Generic = require('../models/Ads/genericSchema');
-const Alert = require('../models/alertSchema');
-const Credit = require('../models/creditSchema');
-const Profile = require('../models/Profile/Profile');
-const Report = require('../models/reportSchema');
+// const cron = require('node-cron')
+// const moment = require("moment")
+// const Generic = require('../models/Ads/genericSchema');
+// const Alert = require('../models/alertSchema');
+// const Credit = require('../models/creditSchema');
+// const Profile = require('../models/Profile/Profile');
+// const Report = require('../models/reportSchema');
 // const { 
 //   currentDate, 
 //   Ad_Historic_Duration, 
@@ -54,17 +54,19 @@ const Report = require('../models/reportSchema');
 //     }
 //   });
 // });
+
+
 //(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
 // const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
 //   const Alerts = await Alert.find({ activate_status: true })
 //   Alerts.forEach(async (alert) => {
-//     const  {
+//     const {
 //       name,
 //       category,
 //       sub_category,
 //       keywords,
 //     } = alert
-//     let price= Number(keywords[1])
+//     let price = Number(keywords[1])
 //     let myFilterArray = keywords.filter(Boolean);
 
 //     const alertNotificationDoc = await Generic.aggregate(
@@ -73,21 +75,21 @@ const Report = require('../models/reportSchema');
 //           $search: {
 //             "index": "generic_search_index",
 //             "compound": {
-//               "filter":{
-//                 "text":{
+//               "filter": {
+//                 "text": {
 //                   "query": "Selling",
 //                   "path": "ad_status"
 //                 }
 //               },
 //               "filter": {
-//                   "text": {
-//                     "query": category,
-//                     "path": "category"
-//                   },
-//                   "text": {
-//                     "query": sub_category,
-//                     "path": "sub_category"
-//                   },
+//                 "text": {
+//                   "query": category,
+//                   "path": "category"
+//                 },
+//                 "text": {
+//                   "query": sub_category,
+//                   "path": "sub_category"
+//                 },
 //               },
 //               "should": {
 //                 "autocomplete": {
@@ -99,37 +101,58 @@ const Report = require('../models/reportSchema');
 //                   "path": "ad_posted_address"
 //                 },
 //               },
-//               "must":{
+//               "must": {
 //                 "range": {
 //                   "path": "price",
-//                   "lte":price
-//                }
+//                   "lte": price
+//                 }
 //               },
-//               "should":{
-//                 "text":{
+//               "should": {
+//                 "text": {
 //                   "query": myFilterArray,
-//                   "path": ["SelectFields.Condition","SelectFields.Brand","SelectFields.Color","SelectFields.Gated Community"]
+//                   "path": ["SelectFields.Condition", "SelectFields.Brand", "SelectFields.Color", "SelectFields.Gated Community", "SelectFields.Device", "description", "special_mention"]
 //                 }
 //               },
 //             }
 //           }
-//         }
-//     ]
-//     )
-//     const ad_Ids = []
-//     alertNotificationDoc.forEach(e => {
-//         ad_Ids.push(e._id)
-//     })
-    
-//     let abc = await Alert.updateOne(
-//         { _id: alert._id},
-//         {
-//             $addToSet: { "alerted_Ads": ad_Ids }
-//         })
-//     console.log(abc)
-//     })
 
+//         },
+//         {
+//           $project: {
+//             '_id': 1,
+//             'parent_id': 1,
+//             "Seller_Id": 1,
+//             'Seller_Name': 1,
+//             "Seller_verified": 1,
+//             "Seller_recommended": 1,
+//             'category': 1,
+//             'sub_category': 1,
+//             'ad_status': 1,
+//             'title': 1,
+//             "created_at": 1,
+//             'price': 1,
+//             "thumbnail_url": 1,
+//             'isPrime': 1,
+//             "dist": 1,
+//             "is_Boosted": 1,
+//             "Boosted_Date": 1,
+//             "is_Highlighted": 1,
+//             "Highlighted_Date": 1
+//           }
+//         }
+//       ]
+//     )
+
+//     alertNotificationDoc.forEach(async (eachAd, i) => {
+//       await Alert.updateOne(
+//         { _id: alert._id },
+//         {
+//           $addToSet: { "alerted_Ads": eachAd }
+//         });
+//     });
+//   })
 // });
+
 // //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
 // const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 //   const Credits = await Credit.find()
@@ -276,31 +299,37 @@ const Report = require('../models/reportSchema');
 // Schedule_Task_Is_user_Recommended.start()
 
 
-cron.schedule("* * * * * *", async () => {
-    const Reports = await Report.find({ flag: { $ne: "Green" } })
-    const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
+// cron.schedule("* * * * * *", async () => {
+//     const Reports = await Report.find({ flag: { $ne: "Green" } })
+//     const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
 
-    Reports.forEach(async report => {
-        let reported_Date = [];
-        let { reports_box } = report;
+//     Reports.forEach(async report => {
+//         let reported_Date = [];
+//         let { reports_box } = report;
 
-        reports_box.forEach(
-            reportList => {
-                reported_Date.push(reportList.report_action_date)
-            }
-        );
-        reported_Date.sort();
-        let last_report_Date = reported_Date.pop()
-        
-        if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended > 0) {
-            await Report.findOneAndUpdate({user_id:report.user_id},{
-                $inc:{
-                    grace_counter:2
-                },
-                $inc:{
-                    total_Ads_suspended:-2
-                }
-            })
-        }
-    })
-});
+//         reports_box.forEach(
+//             reportList => {
+//                 reported_Date.push(reportList.report_action_date)
+//             }
+//         );
+//         reported_Date.sort();
+//         let last_report_Date = reported_Date.pop()
+
+//         if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended > 0) {
+//             await Report.findOneAndUpdate({user_id:report.user_id},{
+//                 $inc:{
+//                     grace_counter:2
+//                 },
+//                 $inc:{
+//                     total_Ads_suspended:-2
+//                 }
+//             })
+//         }
+//     })
+// });
+
+
+
+// module.exports = {
+//   Schedule_Task_Alert_6am_to_10pm
+// }

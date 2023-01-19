@@ -76,7 +76,7 @@ const genericSchema = mongoose.Schema({
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired", "Reposted", "Suspended"]
+        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired", "Reposted", "Suspended" , "Pending"]
     },
     is_Reposted: {
         type: Boolean,
@@ -111,6 +111,12 @@ const genericSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    detection:[
+        {
+          type: Object,
+          default: {}
+        }
+      ],
     ad_Premium_Date: {
         type: String
     },
