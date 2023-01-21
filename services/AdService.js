@@ -9,6 +9,7 @@ const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
 const detectSafeSearch = require("../image.controller");
+const imgCom = require("../imageCompression");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -43,7 +44,7 @@ module.exports = class AdService {
         price,
         isPrime,
         image_url,
-        thumbnail_url,
+        // thumbnail_url,
         video_url,
         ad_present_location,
         ad_posted_location,
@@ -54,6 +55,18 @@ module.exports = class AdService {
         is_ad_posted,
       } = bodyData
 
+      if(image_url.length == 0){
+        throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+      }
+      /*  
+      
+      *************************************************
+      IMAGE COMPRESSION FOR THUMBNAILS
+      *************************************************
+
+
+      */
+      const thumbnail_url = await imgCom(image_url[0]);
       /* 
       
       **********************************************************
@@ -62,6 +75,7 @@ module.exports = class AdService {
       
       */
       const { health, batch } = await detectSafeSearch(image_url)
+
       let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
 
       if (health == "HEALTHY") {
@@ -749,7 +763,6 @@ module.exports = class AdService {
               $elemMatch: { "ad_id": ad_id }
             }
           });
-        console.log(isAdFav)
         // save the ads ino favourite ads list in user profile
         if (isAdFav == null) {
           const updatedUser = await Profile.updateOne(

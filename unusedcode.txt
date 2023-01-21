@@ -1,0 +1,33 @@
+    // request({ url: imageUrl, encoding: null },async function (err, response, data) {
+    //     if (err) {
+    //         console.log(err);
+    //     } else {
+    //         const buffer = sharp(data)
+    //             .resize({ width: 256, height: 256 })
+    //             .toBuffer()
+    //         const bucket = storage.bucket(process.env.STORAGEBUCKET);
+
+    //         const file = bucket.file(thumbnailLocation);
+
+    //         const fileStream = file.createWriteStream();
+
+    //         fileStream.end(buffer);
+
+    //         const firebaseUrl = await GetUrlOfImage()
+
+    //     }
+    // });
+
+
+const { getStorage, ref, deleteObject, getDownloadURL } = require("firebase/storage")
+    
+//       async function GetUrlOfImage(imageFileName) {
+
+//     const storage = getStorage();
+
+//     const pathReference = ref(storage, imageFileName);
+
+//     const imageThumbnailUrl = await getDownloadURL(pathReference)
+
+//     return imageThumbnailUrl
+// }
