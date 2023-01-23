@@ -40,7 +40,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Credits", "Purchased-Boost"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Credits", "By-Admin"],
         default: "Admin-atLogin"
       },
       referral_code: {
@@ -75,7 +75,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-PremiumCredits", "Purchased-PremiumBoost"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-PremiumCredits", "By-Admin"],
         default: "Admin-atLogin"
       },
       referral_code: {
@@ -122,7 +122,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost","By-Admin"],
         default: "Admin-atLogin"
       },
       transaction_Id: {
@@ -155,7 +155,7 @@ const creditSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Empty", "Active"],
+        enum: ['Available', "Expired", "Empty", "Active","By-Admin"],
         default: "Available"
       },
       duration: {
@@ -204,7 +204,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight" , "By-Admin"],
         default: "Admin-atLogin"
       },
       transaction_Id: {

@@ -1,14 +1,15 @@
+const moment = require("moment");
 const Profile = require("../models/Profile/Profile");
+const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
-const { track } = require('../services/mixpanel-service.js');
 const Generic = require("../models/Ads/genericSchema");
+const { track } = require('./mixpanel-service.js');
 const { age_func } = require("../utils/moment");
 const { creditDeductFuntion } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-const moment = require("moment");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const GlobalSearch = require("../models/GlobalSearch");
-const Draft = require("../models/Ads/draftSchema");
+const detectSafeSearch = require("../image.controller");
+const imgCom = require("../imageCompression");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -30,7 +31,7 @@ module.exports = class AdService {
     }
     else {
       // Generic AdDoc is created 
-      const {
+      let {
         ad_id,
         parent_id,
         category,
@@ -43,7 +44,7 @@ module.exports = class AdService {
         price,
         isPrime,
         image_url,
-        thumbnail_url,
+        // thumbnail_url,
         video_url,
         ad_present_location,
         ad_posted_location,
@@ -53,15 +54,107 @@ module.exports = class AdService {
         is_negotiable,
         is_ad_posted,
       } = bodyData
+
+      if (image_url.length == 0) {
+        throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+      }
+      /*  
+      
+      *************************************************
+      IMAGE COMPRESSION FOR THUMBNAILS
+      *************************************************
+
+
+      */
+      const thumbnail_url = await imgCom(image_url[0]);
+      /* 
+      
+      **********************************************************
+      CHECKING IMAGES PROFANITY
+      **********************************************************
+      
+      */
+      const { health, batch } = await detectSafeSearch(image_url)
+
       let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
 
-      // create an Ad document in generics collection with body 
-      const creditParams = { isPrime, ad_id, userId, category }
-      const balance = await creditDeductFuntion(creditParams)
-      if (balance.message == "Empty_Credits") {
-        throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+      if (health == "HEALTHY") {
+
+        // create an Ad document in generics collection with body 
+
+        const creditParams = { isPrime, ad_id, userId, category }
+
+        const balance = await creditDeductFuntion(creditParams)
+
+        if (balance.message == "Empty_Credits") {
+
+          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+        }
+
+        else if (balance.message == "Deducted_Successfully") {
+
+          let adDoc = await Generic.create({
+            _id: ObjectId(ad_id),
+            parent_id,
+            user_id: findUsr._id,
+            category,
+            sub_category,
+            field,
+            description,
+            SelectFields,
+            special_mention,
+            title,
+            price,
+            product_age: age,
+            isPrime,
+            ad_type: isPrime == false ? "Free" : "Premium",
+            image_url,
+            video_url,
+            thumbnail_url,
+            ad_present_location: ad_present_location || {},
+            ad_posted_location: ad_posted_location || {},
+            ad_posted_address,
+            ad_present_address,
+            ad_Premium_Date: isPrime == true ? currentDate : "",
+            ad_status,
+            is_negotiable,
+            is_ad_posted,
+            created_at: currentDate,
+            ad_expire_date: DateAfter30Days,
+            updated_at: currentDate,
+          });
+          // mixpanel track -- Ad create 
+          await track('Ad creation succeed', {
+            category: bodyData.category,
+            distinct_id: adDoc._id
+          })
+          //save the ad_id in users profile in myads
+          await Profile.findByIdAndUpdate({ _id: userId }, {
+            $push: {
+              my_ads: ObjectId(ad_id)
+            }
+          });
+
+          const body = {
+            ad_id,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            ad_posted_location,
+            SelectFields
+          }
+          await createGlobalSearch(body)
+          await Draft.deleteOne({ _id: ad_id });
+          return adDoc["_doc"];
+          // return adDoc
+        }
+
+
       }
-      else if (balance.message == "Deducted_Successfully") {
+
+      else {
         let adDoc = await Generic.create({
           _id: ObjectId(ad_id),
           parent_id,
@@ -85,27 +178,28 @@ module.exports = class AdService {
           ad_posted_address,
           ad_present_address,
           ad_Premium_Date: isPrime == true ? currentDate : "",
-          ad_status,
+          ad_status: "Pending",
           is_negotiable,
           is_ad_posted,
+          detection: batch,
           created_at: currentDate,
           ad_expire_date: DateAfter30Days,
           updated_at: currentDate,
         });
         // mixpanel track -- Ad create 
-        await track('Ad creation succeed', {
+        await track('Ad creation pending', {
           category: bodyData.category,
           distinct_id: adDoc._id
         })
         //save the ad_id in users profile in myads
         await Profile.findByIdAndUpdate({ _id: userId }, {
           $push: {
-            my_ads: ObjectId(adDoc._id)
+            my_ads: ObjectId(ad_id)
           }
         });
-        const adId = adDoc._id
+
         const body = {
-          adId,
+          ad_id,
           category,
           sub_category,
           title,
@@ -116,57 +210,58 @@ module.exports = class AdService {
         }
         await createGlobalSearch(body)
         await Draft.deleteOne({ _id: ad_id });
-        return adDoc["_doc"];
+        return adDoc
       }
     }
   };
   //Update Ad
-  static async updateAd(ad_id, bodyData, user_id) {
+  static async updateAd(bodyData, user_id) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const {
-      category,
-      sub_category,
+      parent_id,
+      // category,
+      // sub_category,
       description,
       SelectFields,
       special_mention,
-      title,
+      // title,
       price,
       isPrime,
       thumbnail_url,
       image_url,
       video_url,
-      ad_present_location,
-      ad_posted_location,
-      ad_posted_address,
-      ad_present_address,
+      // ad_present_location,
+      // ad_posted_location,
+      // ad_posted_address,
+      // ad_present_address,
       ad_status,
       is_negotiable,
-      is_ad_posted,
+      // is_ad_posted,
     } = bodyData
-    const updateAd = await Generic.findByIdAndUpdate({ _id: ad_id, user_id: user_id }, {
+    const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
       $set: {
-        category,
-        sub_category,
+        // category,
+        // sub_category,
         description,
         SelectFields,
         special_mention,
-        title,
+        // title,
         price,
-        isPrime,
+        // isPrime,
         image_url,
         thumbnail_url,
         video_url,
-        ad_present_location,
-        ad_posted_location,
-        ad_posted_address,
-        ad_present_address,
+        // ad_present_location,
+        // ad_posted_location,
+        // ad_posted_address,
+        // ad_present_address,
         ad_status,
         is_negotiable,
-        is_ad_posted,
+        // is_ad_posted,
         updated_at: currentDate,
       }
     }, {
-      new: true
+      new: true,
     });
     return updateAd
   };
@@ -221,6 +316,11 @@ module.exports = class AdService {
                   views: 1,
                   isPrime: 1,
                   thumbnail_url: 1,
+                  ad_posted_address: 1,
+                  is_Boosted: 1,
+                  Boosted_Date: 1,
+                  is_Highlighted: 1,
+                  Highlighted_Date: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   created_at: 1,
                   ad_Premium_Date: 1
@@ -664,7 +764,6 @@ module.exports = class AdService {
               $elemMatch: { "ad_id": ad_id }
             }
           });
-          console.log(isAdFav)
         // save the ads ino favourite ads list in user profile
         if (isAdFav == null) {
           const updatedUser = await Profile.updateOne(
@@ -897,13 +996,16 @@ module.exports = class AdService {
           'saved': 1,
           'price': 1,
           'image_url': 1,
-          'thumbnail_url':1,
+          'thumbnail_url': 1,
           'video_url': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
           'ad_present_address': 1,
+          'ad_present_location': 1,
+          'ad_posted_location': 1,
           'special_mention': 1,
           'description': 1,
+          'is_negotiable': 1,
           'ad_status': 1,
           'ad_type': 1,
           'created_at': 1,

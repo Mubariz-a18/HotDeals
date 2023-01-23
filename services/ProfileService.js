@@ -243,6 +243,7 @@ module.exports = class ProfileService {
             is_email_verified: 1,
             thumbnail_url: 1,
             profile_url: 1,
+            language_preference:1,
             cover_photo_url: 1,
             followers_count: 1,
             followings_count: 1,

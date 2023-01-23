@@ -19,11 +19,13 @@ const alertSchema = mongoose.Schema(
         type: String,
       },
     ],
-    alerted_Ads: [
-      {
-        type: mongoose.Schema.Types.ObjectId
-      }
-    ],
+    alerted_Ads:
+      [
+        {
+          type: Object,
+          default: {}
+        }
+      ],
     location: {
       type: String
     },

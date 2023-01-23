@@ -22,7 +22,7 @@ const otpSchema = Schema({
   expire_at: {
     type: Date,
     default: Date.now(),
-    expires: 120
+    expires: 300
   }
 });
 
