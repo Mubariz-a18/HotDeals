@@ -1,14 +1,17 @@
-// const cron = require('node-cron')
-// const moment = require("moment")
-// const Generic = require('../models/Ads/genericSchema');
-// const Alert = require('../models/alertSchema');
-// const Credit = require('../models/creditSchema');
-// const Profile = require('../models/Profile/Profile');
-// const Report = require('../models/reportSchema');
-// const { 
-//   currentDate, 
-//   Ad_Historic_Duration, 
-//   DateAfter30Days } = require('../utils/moment');
+const cron = require('node-cron')
+const moment = require("moment")
+const Generic = require('../models/Ads/genericSchema');
+const Alert = require('../models/alertSchema');
+const Credit = require('../models/creditSchema');
+const Profile = require('../models/Profile/Profile');
+const Report = require('../models/reportSchema');
+const {
+  currentDate,
+  Ad_Historic_Duration,
+  DateAfter30Days } = require('../utils/moment');
+const app = require('../firebaseAppSetup');
+const { ObjectId } = require('mongodb');
+const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 // // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 // const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
@@ -56,102 +59,116 @@
 // });
 
 
-//(Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
-// const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
-//   const Alerts = await Alert.find({ activate_status: true })
-//   Alerts.forEach(async (alert) => {
-//     const {
-//       name,
-//       category,
-//       sub_category,
-//       keywords,
-//     } = alert
-//     let price = Number(keywords[1])
-//     let myFilterArray = keywords.filter(Boolean);
+// (Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
+  const Alerts = await Alert.find({ activate_status: true })
+  Alerts.forEach(async (alert) => {
+    const {
+      name,
+      category,
+      sub_category,
+      keywords,
+    } = alert
+    let price = Number(keywords[1])
+    let myFilterArray = keywords.filter(Boolean);
 
-//     const alertNotificationDoc = await Generic.aggregate(
-//       [
-//         {
-//           $search: {
-//             "index": "generic_search_index",
-//             "compound": {
-//               "filter": {
-//                 "text": {
-//                   "query": "Selling",
-//                   "path": "ad_status"
-//                 }
-//               },
-//               "filter": {
-//                 "text": {
-//                   "query": category,
-//                   "path": "category"
-//                 },
-//                 "text": {
-//                   "query": sub_category,
-//                   "path": "sub_category"
-//                 },
-//               },
-//               "should": {
-//                 "autocomplete": {
-//                   "query": name,
-//                   "path": "title"
-//                 },
-//                 "autocomplete": {
-//                   "query": keywords[0],
-//                   "path": "ad_posted_address"
-//                 },
-//               },
-//               "must": {
-//                 "range": {
-//                   "path": "price",
-//                   "lte": price
-//                 }
-//               },
-//               "should": {
-//                 "text": {
-//                   "query": myFilterArray,
-//                   "path": ["SelectFields.Condition", "SelectFields.Brand", "SelectFields.Color", "SelectFields.Gated Community", "SelectFields.Device", "description", "special_mention"]
-//                 }
-//               },
-//             }
-//           }
+    const alertNotificationDoc = await Generic.aggregate(
+      [
+        {
+          $search: {
+            "index": "generic_search_index",
 
-//         },
-//         {
-//           $project: {
-//             '_id': 1,
-//             'parent_id': 1,
-//             "Seller_Id": 1,
-//             'Seller_Name': 1,
-//             "Seller_verified": 1,
-//             "Seller_recommended": 1,
-//             'category': 1,
-//             'sub_category': 1,
-//             'ad_status': 1,
-//             'title': 1,
-//             "created_at": 1,
-//             'price': 1,
-//             "thumbnail_url": 1,
-//             'isPrime': 1,
-//             "dist": 1,
-//             "is_Boosted": 1,
-//             "Boosted_Date": 1,
-//             "is_Highlighted": 1,
-//             "Highlighted_Date": 1
-//           }
-//         }
-//       ]
-//     )
+            "compound": {
+              // "filter": {
+              //   "text": {
+              //     "query": "Selling",
+              //     "path": "ad_status"
+              //   }
+              // },
+              "filter": {
+                "text": {
+                  "query": category,
+                  "path": "category"
+                },
+                "text": {
+                  "query": sub_category,
+                  "path": "sub_category"
+                },
+              },
+              "should": {
+                "autocomplete": {
+                  "query": name,
+                  "path": "title"
+                },
+                "autocomplete": {
+                  "query": keywords[0],
+                  "path": "ad_posted_address"
+                },
+              },
+              "must": {
+                "range": {
+                  "path": "price",
+                  "lte": price
+                }
+              },
+              "should": {
+                "text": {
+                  "query": myFilterArray,
+                  "path": ["SelectFields.Condition", "SelectFields.Brand", "SelectFields.Color", "SelectFields.Gated Community", "SelectFields.Device", "description", "special_mention"]
+                }
+              },
+            }
+          }
 
-//     alertNotificationDoc.forEach(async (eachAd, i) => {
-//       await Alert.updateOne(
-//         { _id: alert._id },
-//         {
-//           $addToSet: { "alerted_Ads": eachAd }
-//         });
-//     });
-//   })
-// });
+        },
+        {
+          $match:{
+            ad_status:"Selling"
+          }
+        },
+        {
+          $project: {
+            '_id': 1,
+            'parent_id': 1,
+            "Seller_Id": 1,
+            'Seller_Name': 1,
+            "Seller_verified": 1,
+            "Seller_recommended": 1,
+            'category': 1,
+            'sub_category': 1,
+            'ad_status': 1,
+            'title': 1,
+            "created_at": 1,
+            'price': 1,
+            "thumbnail_url": 1,
+            'isPrime': 1,
+            "dist": 1,
+            "is_Boosted": 1,
+            "Boosted_Date": 1,
+            "is_Highlighted": 1,
+            "Highlighted_Date": 1
+          }
+        }
+      ]
+    )
+    
+    alertNotificationDoc.forEach(async (eachAd, i) => {
+
+      eachAd._id = eachAd._id.toString()
+      eachAd.parent_id = eachAd.parent_id.toString()
+
+      await Alert.updateOne(
+        { _id: alert._id },
+        {
+          $addToSet: { "alerted_Ads": eachAd }
+        });
+      
+      });
+      await db.ref("Alerts").child(alert.user_ID.toString()).child(alert._id.toString()).set(alertNotificationDoc)
+  })
+
+
+});
 
 // //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
 // const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
@@ -330,6 +347,6 @@
 
 
 
-// module.exports = {
-//   Schedule_Task_Alert_6am_to_10pm
-// }
+module.exports = {
+  Schedule_Task_Alert_6am_to_10pm
+}

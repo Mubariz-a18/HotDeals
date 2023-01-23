@@ -11,7 +11,7 @@ module.exports = class GlobalSearchService {
     static async createGlobalSearch(body) {
         //Create new Ad in GlobalSearch Model 
         const {
-            adId,
+            ad_id,
             category,
             sub_category,
             title,
@@ -24,7 +24,7 @@ module.exports = class GlobalSearchService {
             Brand,
             Color } = SelectFields
         const createGlobalSearch = await GlobalSearch.create({
-            ad_id: adId,
+            ad_id: ad_id,
             ad_posted_location: ad_posted_location,
             Keyword: [
                 category,
@@ -86,19 +86,22 @@ module.exports = class GlobalSearchService {
                 }
             }]
         );
+
         let GenericAds = [];
         result.forEach(item => {
             GenericAds.push(item.ad_id)
         })
-        const searched_ads = await Generic.find({ _id: GenericAds ,ad_status:"Selling"}, {
+        const searched_ads = await Generic.find({ _id: GenericAds , ad_status:"Selling"}, {
+            _id:1,
             title: 1,
             thumbnail_url:1,
-            'parent_id': 1,
+            parent_id: 1,
             // image_url: 1,
             price: 1,
             created_at: 1,
             isPrime: -1
         }).sort({ isPrime: -1, created_at: -1 })
+        console.log(searched_ads);
         // mix panel track for Global search api
         await track('Global search  success !! ', {
             distinct_id:user_id,

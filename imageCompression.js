@@ -1,17 +1,9 @@
 const request = require('request-promise-native');
 const sharp = require('sharp');
-const firebase = require("firebase-admin");
-const creds = require("./googleVisionKeys.json");
+const app = require('./firebaseAppSetup');
+
 async function imgCom(imageUrl) {
     try {
-
-        const app = firebase.initializeApp({
-
-            credential: firebase.credential.cert(creds),
-
-            storageBucket: process.env.STORAGEBUCKET
-        });
-
         const storage = app.storage();
 
         const bucket = storage.bucket(process.env.BUCKETNAME);
@@ -30,7 +22,8 @@ async function imgCom(imageUrl) {
 
         // Use sharp to resize the image
         const resizedImage = await sharp(imageData)
-            .resize(800, 600)
+            .rotate()
+            .resize(256, 256)
             .toBuffer();
 
         // Save image to Firebase storage
