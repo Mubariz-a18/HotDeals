@@ -1,23 +1,7 @@
 const request = require('request-promise-native');
 const sharp = require('sharp');
 const firebase = require("firebase-admin");
-const { initializeApp } = require("firebase/app");
-var creds = require("./googleVisionKeys.json");
-const { getStorage, ref, getDownloadURL } = require("firebase/storage");
-
-
-const firebaseConfig = {
-    apiKey: process.env.APIKEY,
-    authDomain: process.env.AUTHDOMAIN,
-    databaseURL: process.env.DATABASEURL,
-    projectId: process.env.PROJECTID,
-    storageBucket: process.env.STORAGEBUCKET,
-    messagingSenderId: process.env.MESSAGINGSENDERID,
-    appId: process.env.APPID,
-    measurementId: process.env.MEASUREMENTID
-};
-
-
+const creds = require("./googleVisionKeys.json");
 async function imgCom(imageUrl) {
     try {
 
@@ -30,11 +14,11 @@ async function imgCom(imageUrl) {
 
         const storage = app.storage();
 
-        const bucket = storage.bucket("true-list.appspot.com")
+        const bucket = storage.bucket(process.env.BUCKETNAME);
 
-        const thumbnailName = `${Math.random().toFixed(16) * 10}.jpg`
+        const thumbnailName = `${Math.random().toFixed(16) * 10}.jpg`;
 
-        const thumbnailLocation = `thumbnails/${thumbnailName}`
+        const thumbnailLocation = `thumbnails/${thumbnailName}`;
 
         // image data
         const imageData = await request({
@@ -52,7 +36,7 @@ async function imgCom(imageUrl) {
         // Save image to Firebase storage
         const file = bucket.file(thumbnailLocation);
 
-        await file.save(await resizedImage, {
+        await file.save(resizedImage, {
             metadata: {
                 contentType: 'image/jpeg'
             }
@@ -60,19 +44,14 @@ async function imgCom(imageUrl) {
 
         // returning url from firebase app
 
-        const firebaseApp = initializeApp(firebaseConfig);
-
-        const firebaseStorage = getStorage(firebaseApp);
-
-        const pathReference = ref(firebaseStorage, thumbnailLocation);
-
-        const imageThumbnailUrl = await getDownloadURL(pathReference)
-
-        return imageThumbnailUrl
+        const imageThumbnailUrl = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491'
+        });
+        return imageThumbnailUrl;
 
     } catch (e) {
-
-        console.log(e)
+        console.log(e);
     }
 
 }

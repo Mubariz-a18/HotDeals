@@ -31,3 +31,59 @@ const { getStorage, ref, deleteObject, getDownloadURL } = require("firebase/stor
 
 //     return imageThumbnailUrl
 // }
+
+
+// async function deleteFileFromStorage(image) {
+//     const desertRef = ref(storage, `${image}`)
+//     deleteObject(desertRef).then(() => {
+
+//     }).catch(e => {
+//         console.log(e)
+//     })
+// }
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const storage = getStorage(app);
+
+
+
+// const { initializeApp } = require("firebase/app");
+// const { getStorage, ref, deleteObject } = require("firebase/storage")
+
+// // TODO: Add SDKs for Firebase products that you want to use
+
+
+// const { getStorage, ref, getDownloadURL } = require("firebase/storage");
+// const { initializeApp } = require("firebase/app");
+
+
+// const firebaseConfig = {
+//     apiKey: process.env.APIKEY,
+//     authDomain: process.env.AUTHDOMAIN,
+//     databaseURL: process.env.DATABASEURL,
+//     projectId: process.env.PROJECTID,
+//     storageBucket: process.env.STORAGEBUCKET,
+//     messagingSenderId: process.env.MESSAGINGSENDERID,
+//     appId: process.env.APPID,
+//     measurementId: process.env.MEASUREMENTID
+// };
+
+// const imageThumbnailUrlfunc = async (thumbnailLocation) => {
+
+//     const firebaseApp = initializeApp(firebaseConfig);
+
+//     const firebaseStorage = getStorage(firebaseApp);
+
+//     const pathReference = ref(firebaseStorage, thumbnailLocation);
+
+//     const imageThumbnailUrl = await getDownloadURL(pathReference)
+
+//     return imageThumbnailUrl
+// }
+
+
+
+
+
+
+// module.exports = { imageThumbnailUrlfunc }

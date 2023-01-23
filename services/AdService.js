@@ -55,7 +55,7 @@ module.exports = class AdService {
         is_ad_posted,
       } = bodyData
 
-      if(image_url.length == 0){
+      if (image_url.length == 0) {
         throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
       }
       /*  
@@ -123,33 +123,34 @@ module.exports = class AdService {
             ad_expire_date: DateAfter30Days,
             updated_at: currentDate,
           });
-          return adDoc
-        }
-        // mixpanel track -- Ad create 
-        await track('Ad creation succeed', {
-          category: bodyData.category,
-          distinct_id: adDoc._id
-        })
-        //save the ad_id in users profile in myads
-        await Profile.findByIdAndUpdate({ _id: userId }, {
-          $push: {
-            my_ads: ObjectId(ad_id)
-          }
-        });
+          // mixpanel track -- Ad create 
+          await track('Ad creation succeed', {
+            category: bodyData.category,
+            distinct_id: adDoc._id
+          })
+          //save the ad_id in users profile in myads
+          await Profile.findByIdAndUpdate({ _id: userId }, {
+            $push: {
+              my_ads: ObjectId(ad_id)
+            }
+          });
 
-        const body = {
-          ad_id,
-          category,
-          sub_category,
-          title,
-          description,
-          ad_posted_address,
-          ad_posted_location,
-          SelectFields
+          const body = {
+            ad_id,
+            category,
+            sub_category,
+            title,
+            description,
+            ad_posted_address,
+            ad_posted_location,
+            SelectFields
+          }
+          await createGlobalSearch(body)
+          await Draft.deleteOne({ _id: ad_id });
+          return adDoc["_doc"];
+          // return adDoc
         }
-        await createGlobalSearch(body)
-        await Draft.deleteOne({ _id: ad_id });
-        return adDoc["_doc"];
+
 
       }
 
