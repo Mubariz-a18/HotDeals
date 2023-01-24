@@ -10,6 +10,7 @@ const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
 const detectSafeSearch = require("../image.controller");
 const imgCom = require("../imageCompression");
+const cloudMessage = require("../cloudMessaging");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -145,8 +146,25 @@ module.exports = class AdService {
             ad_posted_location,
             SelectFields
           }
+
           await createGlobalSearch(body)
+
+          /* 
+ 
+          Cloud Notification To firebase
+ 
+          */
+          const messageBody = {
+            title: "Your Ad Is Successfully Posted !!",
+            body: "Click here to check ...",
+            data: { _id: ad_id },
+            type: "Info"
+          }
+
+          await cloudMessage(userId.toString(), messageBody);
+
           await Draft.deleteOne({ _id: ad_id });
+
           return adDoc["_doc"];
           // return adDoc
         }
@@ -208,8 +226,25 @@ module.exports = class AdService {
           ad_posted_location,
           SelectFields
         }
-        await createGlobalSearch(body)
+        
+        await createGlobalSearch(body);
+
+        /* 
+ 
+        Cloud Notification To firebase
+ 
+        */
+        const messageBody = {
+          title: "Your Ad Is Pending !!",
+          body: "Click here to check ...",
+          data: { _id: ad_id },
+          type: "Info"
+        }
+
+        await cloudMessage(userId.toString(), messageBody);
+
         await Draft.deleteOne({ _id: ad_id });
+
         return adDoc
       }
     }
@@ -263,6 +298,19 @@ module.exports = class AdService {
     }, {
       new: true,
     });
+    /* 
+    
+    Cloud Notification To firebase
+    
+    */
+    const messageBody = {
+      title: "Your Ad Is Successfully Updated !!",
+      body: "Click here to check ...",
+      data: { _id: parent_id },
+      type: "Info"
+    }
+
+    await cloudMessage(user_id.toString(), messageBody);
     return updateAd
   };
 
