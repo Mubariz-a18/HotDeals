@@ -8,4 +8,18 @@ const app = firebase.initializeApp({
     storageBucket: process.env.STORAGEBUCKET
 });
 
-module.exports = app
+const getUserFromFireBase = async (userId) => {
+
+    const db = app.database(process.env.DATABASEURL);
+
+    const userRef = db.ref(`Users/${userId}`);
+
+    const snapshot = await userRef.once('value')
+
+    const userData = await snapshot.val();
+
+    return userData
+
+}
+
+module.exports = { app, getUserFromFireBase }

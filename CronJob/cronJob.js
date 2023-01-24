@@ -9,8 +9,9 @@ const {
   currentDate,
   Ad_Historic_Duration,
   DateAfter30Days } = require('../utils/moment');
-const app = require('../firebaseAppSetup');
+const { app } = require('../firebaseAppSetup');
 const { ObjectId } = require('mongodb');
+const cloudMessage = require('../cloudMessaging');
 const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 // // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
@@ -60,7 +61,7 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 
 // (Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () => {
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
@@ -79,12 +80,6 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () =>
             "index": "generic_search_index",
 
             "compound": {
-              // "filter": {
-              //   "text": {
-              //     "query": "Selling",
-              //     "path": "ad_status"
-              //   }
-              // },
               "filter": {
                 "text": {
                   "query": category,
@@ -122,8 +117,8 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () =>
 
         },
         {
-          $match:{
-            ad_status:"Selling"
+          $match: {
+            ad_status: "Selling"
           }
         },
         {
@@ -151,7 +146,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () =>
         }
       ]
     )
-    
+
     alertNotificationDoc.forEach(async (eachAd, i) => {
 
       eachAd._id = eachAd._id.toString()
@@ -162,9 +157,24 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('* * * * * *', async () =>
         {
           $addToSet: { "alerted_Ads": eachAd }
         });
-      
-      });
-      await db.ref("Alerts").child(alert.user_ID.toString()).child(alert._id.toString()).set(alertNotificationDoc)
+
+    });
+    await db.ref("Alerts").child(alert.user_ID.toString()).child(alert._id.toString()).set(alertNotificationDoc);
+
+    /* 
+ 
+    Cloud Notification To firebase
+ 
+    */
+
+    const messageBody = {
+      title: "Potential Ads For Your Ad Alert !!",
+      body: "Click here to check ...",
+      data: { alert_id: alert._id },
+      type: "Alert"
+    }
+
+    await cloudMessage(alert.user_ID.toString(), messageBody);
   })
 
 

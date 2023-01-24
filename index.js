@@ -25,6 +25,7 @@ const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
+const cloudMessage = require("./cloudMessaging");
 connectDB();
 
 app.set('trust proxy', 1)
