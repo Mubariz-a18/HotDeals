@@ -11,6 +11,7 @@ const { featureAdsFunction } = require("../utils/featureAdsUtil");
 const detectSafeSearch = require("../image.controller");
 const imgCom = require("../imageCompression");
 const cloudMessage = require("../cloudMessaging");
+const navigateToTabs = require("../utils/navigationTabs");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -157,7 +158,10 @@ module.exports = class AdService {
           const messageBody = {
             title: "Your Ad Is Successfully Posted !!",
             body: "Click here to check ...",
-            data: { _id: ad_id },
+            data: { 
+              id: ad_id, 
+              navigateTo:navigateToTabs.particularAd
+             },
             type: "Info"
           }
 
@@ -237,7 +241,7 @@ module.exports = class AdService {
         const messageBody = {
           title: "Your Ad Is Pending !!",
           body: "Click here to check ...",
-          data: { _id: ad_id },
+          data: { id: ad_id , navigateTo : navigateToTabs.myads },
           type: "Info"
         }
 
@@ -306,7 +310,7 @@ module.exports = class AdService {
     const messageBody = {
       title: "Your Ad Is Successfully Updated !!",
       body: "Click here to check ...",
-      data: { _id: parent_id },
+      data: { _id: parent_id ,  navigateTo : navigateToTabs.particularAd  },
       type: "Info"
     }
 

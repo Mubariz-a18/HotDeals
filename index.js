@@ -15,7 +15,7 @@ const CreditRouter = require("./routes/credit.routes");
 const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
-const { } = require("./CronJob/cronJob");
+const {  } = require("./CronJob/cronJob");
 const ReportRouter = require("./routes/report.routes");
 const JsonRouter = require('./routes/jsonData.routes')
 //Middlewares
@@ -25,7 +25,6 @@ const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
-const cloudMessage = require("./cloudMessaging");
 connectDB();
 
 app.set('trust proxy', 1)

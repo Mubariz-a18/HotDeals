@@ -3,7 +3,8 @@ const Alert = require("../models/alertSchema");
 const { track } = require("./mixpanel-service");
 const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
-
+const { app } = require("../firebaseAppSetup");
+const db = app.database(process.env.DATABASEURL)
 module.exports = class AlertService {
 
   // Create Alert 
@@ -50,6 +51,24 @@ module.exports = class AlertService {
           },
         },
       });
+
+      /* 
+      realTime DB
+      */
+
+      db.ref("Alerts")
+      .child(userId.toString())
+      .child("user_alerts")
+      .child(alertDoc._id.toString())
+      .set({
+        name:name,
+        category:category,
+        sub_category:sub_category,
+        keywords:keywords,
+        created_At : moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.ms'),
+        seenByUser : true
+      });
+
       // mixpanel track for create alert succesfully
       await track('create alert Successfully', {
         distinct_id: userId,

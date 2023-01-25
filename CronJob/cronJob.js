@@ -12,6 +12,7 @@ const {
 const { app } = require('../firebaseAppSetup');
 const { ObjectId } = require('mongodb');
 const cloudMessage = require('../cloudMessaging');
+const navigateToTabs = require('../utils/navigationTabs');
 const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 // // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
@@ -60,8 +61,8 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 // });
 
 
-// (Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async () => {
+// (Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'   '0 * * * * *'
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,20,22 * * *' , async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
@@ -159,25 +160,101 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
         });
 
     });
-    await db.ref("Alerts").child(alert.user_ID.toString()).child(alert._id.toString()).set(alertNotificationDoc);
+
+    
+    console.log(alertNotificationDoc)
+  
+
+    const alertRef = db.ref(`Alerts/${alert.user_ID.toString()}/alert_ads/${alert._id.toString()}`);
+
+    const snapshot = await alertRef.once('value')
+
+    const alertData = await snapshot.val();
+
+    if (alertData !== null) {
+
+      const arrayOfadIds = []
+
+      alertData.forEach(element => {
+
+        arrayOfadIds.push(element._id)
+
+      });
+
+      let flag = true;
+
+      alertNotificationDoc.forEach(alert => {
+
+        if (!arrayOfadIds.includes(alert._id)) {
+
+          flag = false
+
+        }
+      })
+      if (flag == false) {
+
+        db.ref("Alerts")
+          .child(alert.user_ID.toString())
+          .child("user_alerts")
+          .child(alert._id.toString())
+          .update({
+            seenByUser: false
+          });
+
+        /* 
+ 
+          Cloud Notification To firebase
+ 
+        */
+
+        const messageBody = {
+          title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
+          body: "Click here to check ...",
+          data: {
+            id: alert._id,
+            navigateTo: navigateToTabs.alert
+          },
+          type: "Alert"
+        }
+
+        await cloudMessage(alert.user_ID.toString(), messageBody);
+
+      }
+
+    } else {
+      db.ref("Alerts")
+      .child(alert.user_ID.toString())
+      .child("user_alerts")
+      .child(alert._id.toString())
+      .update({
+        seenByUser: false
+      });
 
     /* 
- 
-    Cloud Notification To firebase
- 
+
+      Cloud Notification To firebase
+
     */
 
     const messageBody = {
-      title: "Potential Ads For Your Ad Alert !!",
+      title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
       body: "Click here to check ...",
-      data: { alert_id: alert._id },
+      data: {
+        id: alert._id,
+        navigateTo: navigateToTabs.alert
+      },
       type: "Alert"
     }
 
     await cloudMessage(alert.user_ID.toString(), messageBody);
+    }
+
+    db.ref("Alerts")
+      .child(alert.user_ID.toString())
+      .child("alert_ads")
+      .child(alert._id.toString())
+      .set(alertNotificationDoc)
   })
-
-
 });
 
 // //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
@@ -357,6 +434,8 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 0 6-22 * * *', async ()
 
 
 
+
+
 module.exports = {
-  Schedule_Task_Alert_6am_to_10pm
+  Schedule_Task_Alert_6am_to_10pm 
 }
