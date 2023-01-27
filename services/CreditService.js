@@ -1,6 +1,5 @@
 const User = require("../models/Profile/Profile");
 const Credit = require("../models/creditSchema");
-const ObjectId = require('mongodb').ObjectId;
 const { nearestExpiryDateFunction, durationInDays, expiry_date_func } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
 const credit_value = require("../utils/creditValues");
@@ -9,171 +8,184 @@ const Generic = require("../models/Ads/genericSchema");
 module.exports = class CreditService {
   // create Default Credit for new user 
   static async createCreditForNewUser(user_id) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
     const Free_credit_Expiry = expiry_date_func(180);
-    const DateAfter30Days = expiry_date_func(30);
+
     // creating a document
+
     await Credit.create({
+
       user_id: user_id,
       available_free_credits: 200,
       available_premium_credits: 10,
       free_credits_info: {
+
         count: 200,
         allocation: "Admin-atLogin",
         allocated_on: currentDate,
         duration: durationInDays(Free_credit_Expiry),
         credits_expires_on: Free_credit_Expiry
-      },
-      premium_credits_info: {
-        count: 10,
-        allocation: "Admin-atLogin",
-        allocated_on: currentDate,
-        duration: durationInDays(DateAfter30Days),
-        credits_expires_on: DateAfter30Days
+
       }
+
     });
+
     // updating the user profile with default values
+
     await Profile.findOneAndUpdate({ _id: user_id }, {
+
       $set: {
+
         free_credit: 200,
-        premium_credit: 10,
-        free_boost_credit: 0,
+        General_credit:0,
+        premium_credit: 0,
+        general_Boost_credit: 0,
         premium_boost_credit: 0,
-        highlight_credits:0
+        highlight_credit: 0
+
       }
+
     })
   };
-  
+
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const Free_credit_Expiry = moment().add(180, 'd').format('YYYY-MM-DD HH:mm:ss');
-    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
-    // check if user exist
-    const user = await User.findOne({ _id: userId });
-    // if exist
-    if (user) {
-      // check if the credit type is free
-      if (bodyData.creditType == "Free") {
-        // if credit type from body is free push credit into free_credit_info
-        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
-          $inc: { available_free_credits: bodyData.count },
-          $push: {
-            free_credits_info: {
-              count: bodyData.count,
-              allocation: bodyData.allocation,
-              allocated_on: currentDate,
-              duration: durationInDays(Free_credit_Expiry),
-              credits_expires_on: Free_credit_Expiry
-            }
-          }
-        },
-          {
-            new: true
-          }
-        )
-        //update user profile total credits
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            free_credit: bodyData.count
-          }
-        })
-        return newCredit;
-        //else if credit type is Premium push the credit into premium_credit_info
-      } else if (bodyData.creditType == "Premium") {
-        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
-          $inc: { available_premium_credits: bodyData.count },
-          $push: {
-            premium_credits_info: {
-              count: bodyData.count,
-              allocation: bodyData.allocation,
-              allocated_on: currentDate,
-              duration: durationInDays(DateAfter30Days),     // this function return duration in days
-              credits_expires_on: DateAfter30Days,
-              purchaseDate: currentDate
-            }
-          }
-        }, { new: true });
-        // update the users profile total Premium Credit
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            premium_credit: bodyData.count
-          }
-        })
-        return newCredit;
-      } else if (bodyData.creditType == "Boost") {
-        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
-          $inc: { available_boost_credits: bodyData.count },
-          $push: {
-            boost_credits_info: {
-              count: bodyData.count,
-              allocation: bodyData.allocation,
-              allocated_on: currentDate,
-              transaction_Id: bodyData.transaction_Id,
-              duration: durationInDays(DateAfter30Days),     // this function return duration in days
-              credits_expires_on: DateAfter30Days,
-              purchaseDate: currentDate
-            }
-          }
-        }, { new: true });
-        // update the users profile total free_boost_credit
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            free_boost_credit: bodyData.count
-          }
-        })
-        return newCredit;
-      } else if (bodyData.creditType == "PremiumBoost") {
-        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
-          $inc: { available_premium_boost_credits: bodyData.count },
-          $push: {
-            premium_boost_credits_info: {
-              count: bodyData.count,
-              allocation: bodyData.allocation,
-              allocated_on: currentDate,
-              transaction_Id: bodyData.transaction_Id,
-              duration: durationInDays(DateAfter30Days),     // this function return duration in days
-              credits_expires_on: DateAfter30Days,
-              purchaseDate: currentDate
-            }
-          }
-        }, { new: true });
-        // update the users profile total free_boost_credit
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            premium_boost_credit: bodyData.count
-          }
-        })
-        return newCredit;
+
+    const  {
+
+      credit_type,
+      count,
+      category,
+      duration,
+      transaction_Id
+
+    } = bodyData;
+
+    const push = {
+
+      paid_credits_info: {
+
+        count: count,
+        credit_type: credit_type,
+        duration: duration,
+        credits_expires_on: expiry_date_func(+duration),
+        category: category,
+        transaction_Id: transaction_Id,
+        purchaseDate: currentDate
+
       }
-      else if (bodyData.creditType == "Highlight") {
-        const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
-          $inc: { available_Highlight_credits: bodyData.count },
-          $push: {
-            Highlight_credit_info: {
-              count: bodyData.count,
-              allocation: bodyData.allocation,
-              allocated_on: currentDate,
-              transaction_Id: bodyData.transaction_Id,
-              duration: durationInDays(DateAfter30Days),     // this function return duration in days
-              credits_expires_on: DateAfter30Days,
-              purchaseDate: currentDate
-            }
-          }
-        }, { new: true });
-        // update the users profile total highlight_credits
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            highlight_credits : bodyData.count
-          }
-        })
-        return newCredit;
+  }
+
+    if (credit_type == "Premium") {
+
+      const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+        $inc: { available_premium_credits: count },
+
+        $push:push
+
+      }, {
+        new: true
       }
+      );
+
+      // update the users profile total Premium Credit
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          premium_credit: count
+        }
+      });
+
+      return newCredit;
+
+    } else if (credit_type == "General") {
+
+      const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+        $inc: { available_general_credits : count },
+        $push:push
+        
+      }, {
+        new: true
+      });
+
+      // update the users profile total general_credit
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          general_credit : count
+        }
+      });
+
+      return newCredit;
     }
-    // if user not exists throw error
-    else {
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    
+    else if (credit_type == "General-Boost") {
+
+      const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+        $inc: { available_general_boost_credits: count },
+
+        $push:push
+
+      }, {
+        new: true
+      });
+
+      // update the users profile total general_boost_credit
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          general_boost_credit: count
+        }
+      });
+
+      return newCredit;
+
+    } else if (credit_type == "Premium-Boost") {
+
+      const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+        $inc: { available_premium_boost_credits : count },
+
+         $push:push
+
+      }, { 
+        new: true 
+      });
+
+      // update the users profile total premium_boost_credit
+
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          premium_boost_credit: count
+        }
+      });
+
+      return newCredit;
+
     }
+    else if (credit_type == "HighLight") {
+
+      const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+        $inc: { available_highlight_credits : count },
+
+        $push:push
+
+      }, { new: true });
+      // update the users profile total highlight_credits
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          highlight_credit : count
+        }
+      });
+
+      return newCredit;
+    }
+
   };
 
   //creditDeduaction function calls when user uploads an Ad
@@ -318,7 +330,7 @@ module.exports = class CreditService {
         available_premium_credits: 1,
         available_boost_credits: 1,
         available_premium_boost_credits: 1,
-        available_Highlight_credits:1
+        available_Highlight_credits: 1
       })
       return CreditDocs
     }
@@ -381,7 +393,7 @@ module.exports = class CreditService {
           await Generic.findByIdAndUpdate({ _id: ad_id }, {
             $set: {
               is_Boosted: true,
-              Boost_Days:  durationInDays(Boost_Expiry_Date),
+              Boost_Days: durationInDays(Boost_Expiry_Date),
               Boosted_Date: currentDate,
               Boost_Expiry_Date: Boost_Expiry_Date
             }
@@ -468,82 +480,82 @@ module.exports = class CreditService {
   };
 
   //highlight Ad
-  static async highlight_MyAd(userId,bodyData){
+  static async highlight_MyAd(userId, bodyData) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const highlight_expiry_date = expiry_date_func(5)
     const { ad_id } = bodyData;
     const ad = await Generic.findOne({ _id: ad_id });
     if (
-      !ad || 
-      ad.ad_status !== "Selling" || 
-      ad.is_Highlighted == true || 
+      !ad ||
+      ad.ad_status !== "Selling" ||
+      ad.is_Highlighted == true ||
       ad.isPrime == false
-      ) {
+    ) {
       throw ({ status: 404, message: 'CANNOT_HIGHLIGHT_THIS_AD' });
     }
     const { category, sub_category } = ad;
-      const docs = await Credit.findOne({ user_id: userId });
-      const userDoc = await Profile.findOne({ _id: userId });
-      if (
-        docs.available_Highlight_credits <= credit_value(category) ||
-        userDoc.highlight_credits <= 0
-      ) {
-        throw ({ status: 404, message: 'Not_Enough_Credits' });
-      }
-      else {
-        let All_Highlight = docs.Highlight_credit_info;
-        const datesToBeChecked = [];
+    const docs = await Credit.findOne({ user_id: userId });
+    const userDoc = await Profile.findOne({ _id: userId });
+    if (
+      docs.available_Highlight_credits <= credit_value(category) ||
+      userDoc.highlight_credits <= 0
+    ) {
+      throw ({ status: 404, message: 'Not_Enough_Credits' });
+    }
+    else {
+      let All_Highlight = docs.Highlight_credit_info;
+      const datesToBeChecked = [];
 
-        All_Highlight.forEach(highlight => {
-          if (highlight.count <= 0)
-            highlight.status = "Empty"
-          if (
-            highlight.status !== "Empty" &&
-            highlight.status !== "Expired" &&
-            highlight.count >= credit_value(category)
-          )
+      All_Highlight.forEach(highlight => {
+        if (highlight.count <= 0)
+          highlight.status = "Empty"
+        if (
+          highlight.status !== "Empty" &&
+          highlight.status !== "Expired" &&
+          highlight.count >= credit_value(category)
+        )
           datesToBeChecked.push(highlight.credits_expires_on)
-        });
-        await docs.save();
-        const date = nearestExpiryDateFunction(datesToBeChecked);
+      });
+      await docs.save();
+      const date = nearestExpiryDateFunction(datesToBeChecked);
 
-        await Credit.findOneAndUpdate({
-          user_id: userId,
-          'Highlight_credit_info.credits_expires_on': date
-        }, {
-          $inc: { "Highlight_credit_info.$.count": -credit_value(category) },
-        })
-          .then(async res => {
-            await Credit.findOneAndUpdate({ user_id: userId }, {
-              $inc: { available_Highlight_credits : -credit_value(category) },
-              $push: {
-                credit_usage: {
-                  type_of_credit: "Highlight",
-                  ad_id: ad_id,
-                  count: credit_value(category),
-                  category: category,
-                  sub_category: sub_category,
-                  boost_expiry_date: highlight_expiry_date,
-                  credited_on: currentDate
-                }
+      await Credit.findOneAndUpdate({
+        user_id: userId,
+        'Highlight_credit_info.credits_expires_on': date
+      }, {
+        $inc: { "Highlight_credit_info.$.count": -credit_value(category) },
+      })
+        .then(async res => {
+          await Credit.findOneAndUpdate({ user_id: userId }, {
+            $inc: { available_Highlight_credits: -credit_value(category) },
+            $push: {
+              credit_usage: {
+                type_of_credit: "Highlight",
+                ad_id: ad_id,
+                count: credit_value(category),
+                category: category,
+                sub_category: sub_category,
+                boost_expiry_date: highlight_expiry_date,
+                credited_on: currentDate
               }
-            });
-            await Generic.findByIdAndUpdate({ _id: ad_id }, {
-              $set: {
-                is_Highlighted: true,
-                Highlight_Days: durationInDays(highlight_expiry_date),
-                Highlighted_Date: currentDate,
-                Highlight_Expiry_Date: highlight_expiry_date
-              }
-            })
+            }
+          });
+          await Generic.findByIdAndUpdate({ _id: ad_id }, {
+            $set: {
+              is_Highlighted: true,
+              Highlight_Days: durationInDays(highlight_expiry_date),
+              Highlighted_Date: currentDate,
+              Highlight_Expiry_Date: highlight_expiry_date
+            }
           })
+        })
 
-        await Profile.findOneAndUpdate({ _id: userId }, {
-          $inc: {
-            highlight_credits : -credit_value(category)
-          }
-        });
-        return { message: "AD_HIGHLIGHTED_SUCCESSFULLY" }
-      };
+      await Profile.findOneAndUpdate({ _id: userId }, {
+        $inc: {
+          highlight_credits: -credit_value(category)
+        }
+      });
+      return { message: "AD_HIGHLIGHTED_SUCCESSFULLY" }
+    };
   };
 };

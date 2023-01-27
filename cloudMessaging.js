@@ -2,6 +2,7 @@ const { app, getUserFromFireBase } = require("./firebaseAppSetup");
 const moment = require("moment")
 
 const messaging = app.messaging();
+
 const db = app.database(process.env.DATABASEURL)
 
 const cloudMessage = async (userId, messageData) => {
@@ -18,6 +19,7 @@ const cloudMessage = async (userId, messageData) => {
     const userData = await getUserFromFireBase(userId);
 
     const deviceTokens = [];
+
     if(userData.activeDevices){
         
         Object.keys(userData.activeDevices).forEach(function (key) {
@@ -34,10 +36,13 @@ const cloudMessage = async (userId, messageData) => {
     const message = {
 
         tokens: deviceTokens,
+
         notification: {
             title: title,
             body: body
-        }
+        },
+
+        data:data
     };
 
     const messageSent = await messaging.sendMulticast(message);

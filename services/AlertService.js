@@ -150,17 +150,7 @@ module.exports = class AlertService {
 
   // Delete Alert
   static async deleteAlert(alert_id, userId) {
-    //if user is authorized alert is removed from profile.alert[]
-    const user = await Profile.findOne({ _id: userId });
-    if (!user) {
-      // mixpanel track for failed to delete alert
-      await track('failed to delete alert ', {
-        distinct_id: alert_id,
-        message: `user : ${userId}  does not exist`
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    else {
+
       // remove alert id from user profile
       await Profile.findOneAndUpdate(
         { _id: userId },
@@ -173,6 +163,7 @@ module.exports = class AlertService {
         },
         { new: true }
       );
+
       await Alert.findOneAndUpdate({ _id: alert_id }, {
         $set: {
           activate_status: false
@@ -195,8 +186,8 @@ module.exports = class AlertService {
       await track('delete alert ', {
         distinct_id: alert_id,
         message: `${alert_id} deleted successfully`
-      })
-      return "successfully deleted"
-    }
+      });
+
+      return "successfully deleted";
   }
 };

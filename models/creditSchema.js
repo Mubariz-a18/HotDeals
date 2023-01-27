@@ -7,10 +7,13 @@ const creditSchema = mongoose.Schema({
   available_free_credits: {
     type: Number
   },
+  available_general_credits: {
+    type: Number
+  },
   available_premium_credits: {
     type: Number
   },
-  available_boost_credits: {
+  available_general_boost_credits: {
     type: Number
   },
   available_premium_boost_credits: {
@@ -24,15 +27,14 @@ const creditSchema = mongoose.Schema({
       count: {
         type: Number,
       },
-      category: {
-        type: String
-      },
-      sub_category: {
-        type: String
-      },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Empty", "Active"],
+        enum: [
+          'Available',
+          "Expired",
+          "Empty",
+          "Active"
+        ],
         default: "Available"
       },
       duration: {
@@ -40,15 +42,20 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Credits", "By-Admin"],
+        enum: [
+          "Admin-atLogin",
+          "Referral",
+          "Admin-Monthly",
+          "By-Admin"
+        ],
         default: "Admin-atLogin"
       },
-      referral_code: {
-        type: String,
-      },
-      referral_Id: {
-        type: String,
-      },
+      // referral_code: {
+      //   type: String,
+      // },
+      // referral_Id: {
+      //   type: String,
+      // },
       allocated_on: {
         type: String
       },
@@ -57,7 +64,7 @@ const creditSchema = mongoose.Schema({
       }
     }
   ],
-  premium_credits_info: [
+  paid_credits_info: [
     {
       count: {
         type: Number,
@@ -65,21 +72,26 @@ const creditSchema = mongoose.Schema({
       category: {
         type: String
       },
-      sub_category: {
-        type: String
-      },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Empty", "Active"],
+        enum: [
+          'Available',
+          "Expired",
+          "Empty",
+          "Active"
+        ],
         default: "Available"
       },
-      allocation: {
+      credit_type: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-PremiumCredits", "By-Admin"],
-        default: "Admin-atLogin"
-      },
-      referral_code: {
-        type: String,
+        enum: [
+          "General",
+          "Premium",
+          "General-Boost",
+          "Premium-Boost",
+          "HighLight"
+        ],
+        default: "General"
       },
       duration: {
         type: Number,
@@ -93,142 +105,147 @@ const creditSchema = mongoose.Schema({
       activationDate: {
         type: String
       },
-      allocated_on: {
-        type: String
-      },
       credits_expires_on: {
         type: String
       }
     }
   ],
-  boost_credits_info: [
-    {
-      count: {
-        type: Number,
-      },
-      category: {
-        type: String
-      },
-      sub_category: {
-        type: String
-      },
-      status: {
-        type: String,
-        enum: ['Available', "Expired", "Empty", "Active"],
-        default: "Available"
-      },
-      duration: {
-        type: Number,
-      },
-      allocation: {
-        type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost", "By-Admin"],
-        default: "Admin-atLogin"
-      },
-      transaction_Id: {
-        type: String
-      },
-      referral_Id: {
-        type: String,
-      },
-      allocated_on: {
-        type: String
-      },
-      purchaseDate: {
-        type: String
-      },
-      credits_expires_on: {
-        type: String
-      }
-    }
-  ],
-  premium_boost_credits_info: [
-    {
-      count: {
-        type: Number,
-      },
-      category: {
-        type: String
-      },
-      sub_category: {
-        type: String
-      },
-      status: {
-        type: String,
-        enum: ['Available', "Expired", "Empty", "Active", "By-Admin"],
-        default: "Available"
-      },
-      duration: {
-        type: Number,
-      },
-      allocation: {
-        type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-premium-Boost"],
-        default: "Admin-atLogin"
-      },
-      transaction_Id: {
-        type: String
-      },
-      referral_Id: {
-        type: String,
-      },
-      allocated_on: {
-        type: String
-      },
-      purchaseDate: {
-        type: String
-      },
-      credits_expires_on: {
-        type: String
-      }
-    }
-  ],
-  Highlight_credit_info: [
-    {
-      count: {
-        type: Number,
-      },
-      category: {
-        type: String
-      },
-      sub_category: {
-        type: String
-      },
-      status: {
-        type: String,
-        enum: ['Available', "Expired", "Empty", "Active"],
-        default: "Available"
-      },
-      duration: {
-        type: Number,
-      },
-      allocation: {
-        type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight", "By-Admin"],
-        default: "Admin-atLogin"
-      },
-      transaction_Id: {
-        type: String
-      },
-      referral_Id: {
-        type: String,
-      },
-      allocated_on: {
-        type: String
-      },
-      purchaseDate: {
-        type: String
-      },
-      credits_expires_on: {
-        type: String
-      }
-    }
-  ],
+  // boost_credits_info: [
+  //   {
+  //     count: {
+  //       type: Number,
+  //     },
+  //     category: {
+  //       type: String
+  //     },
+  //     sub_category: {
+  //       type: String
+  //     },
+  //     status: {
+  //       type: String,
+  //       enum: ['Available', "Expired", "Empty", "Active"],
+  //       default: "Available"
+  //     },
+  //     duration: {
+  //       type: Number,
+  //     },
+  //     allocation: {
+  //       type: String,
+  //       enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost", "By-Admin"],
+  //       default: "Admin-atLogin"
+  //     },
+  //     transaction_Id: {
+  //       type: String
+  //     },
+  //     referral_Id: {
+  //       type: String,
+  //     },
+  //     allocated_on: {
+  //       type: String
+  //     },
+  //     purchaseDate: {
+  //       type: String
+  //     },
+  //     credits_expires_on: {
+  //       type: String
+  //     }
+  //   }
+  // ],
+  // premium_boost_credits_info: [
+  //   {
+  //     count: {
+  //       type: Number,
+  //     },
+  //     category: {
+  //       type: String
+  //     },
+  //     sub_category: {
+  //       type: String
+  //     },
+  //     status: {
+  //       type: String,
+  //       enum: ['Available', "Expired", "Empty", "Active", "By-Admin"],
+  //       default: "Available"
+  //     },
+  //     duration: {
+  //       type: Number,
+  //     },
+  //     allocation: {
+  //       type: String,
+  //       enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-premium-Boost"],
+  //       default: "Admin-atLogin"
+  //     },
+  //     transaction_Id: {
+  //       type: String
+  //     },
+  //     referral_Id: {
+  //       type: String,
+  //     },
+  //     allocated_on: {
+  //       type: String
+  //     },
+  //     purchaseDate: {
+  //       type: String
+  //     },
+  //     credits_expires_on: {
+  //       type: String
+  //     }
+  //   }
+  // ],
+  // Highlight_credit_info: [
+  //   {
+  //     count: {
+  //       type: Number,
+  //     },
+  //     category: {
+  //       type: String
+  //     },
+  //     sub_category: {
+  //       type: String
+  //     },
+  //     status: {
+  //       type: String,
+  //       enum: ['Available', "Expired", "Empty", "Active"],
+  //       default: "Available"
+  //     },
+  //     duration: {
+  //       type: Number,
+  //     },
+  //     allocation: {
+  //       type: String,
+  //       enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight", "By-Admin"],
+  //       default: "Admin-atLogin"
+  //     },
+  //     transaction_Id: {
+  //       type: String
+  //     },
+  //     referral_Id: {
+  //       type: String,
+  //     },
+  //     allocated_on: {
+  //       type: String
+  //     },
+  //     purchaseDate: {
+  //       type: String
+  //     },
+  //     credits_expires_on: {
+  //       type: String
+  //     }
+  //   }
+  // ],
+
   credit_usage: [
     {
       type_of_credit: {
         type: String,
-        enum: ["Free", "Premium", "Boost", "Premium-Boost", "Highlight"]
+        enum: [
+          "Free",
+          "Premium",
+          "General-Boost",
+          "Premium-Boost",
+          "Premium-Pro",
+          "General"
+        ]
       },
       ad_id: {
         type: mongoose.Schema.Types.ObjectId
@@ -242,12 +259,17 @@ const creditSchema = mongoose.Schema({
       sub_category: {
         type: String
       },
-      boost_expiry_date: {
+
+      General_Boost_expiry_date: {
         type: String
       },
-      highlight_expiry_date: {
+      Premium_Pro_expiry_date: {
         type: String
       },
+      Premium_Boost_expiry_date: {
+        type: String
+      },
+      
       credited_on: {
         type: String
       }
