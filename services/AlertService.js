@@ -3,7 +3,8 @@ const Alert = require("../models/alertSchema");
 const { track } = require("./mixpanel-service");
 const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
-
+const { app } = require("../firebaseAppSetup");
+const db = app.database(process.env.DATABASEURL)
 module.exports = class AlertService {
 
   // Create Alert 
@@ -50,6 +51,24 @@ module.exports = class AlertService {
           },
         },
       });
+
+      /* 
+      realTime DB
+      */
+
+      db.ref("Alerts")
+        .child(userId.toString())
+        .child("user_alerts")
+        .child(alertDoc._id.toString())
+        .set({
+          name: name,
+          category: category,
+          sub_category: sub_category,
+          keywords: keywords,
+          created_At: moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.ms'),
+          seenByUser: true
+        });
+
       // mixpanel track for create alert succesfully
       await track('create alert Successfully', {
         distinct_id: userId,
@@ -61,7 +80,7 @@ module.exports = class AlertService {
       return alertDoc;
     }
   }
-  
+
   // Get Alert
   static async GetAlert(user_id) {
     const userExist = await Profile.findById({ _id: user_id })
@@ -159,6 +178,19 @@ module.exports = class AlertService {
           activate_status: false
         }
       })
+
+      await db.ref("Alerts")
+        .child(userId.toString())
+        .child("alert_ads")
+        .child(alert_id.toString())
+        .remove();
+
+      await db.ref("Alerts")
+        .child(userId.toString())
+        .child("user_alerts")
+        .child(alert_id.toString())
+        .remove();
+
       // mixpanel - delete alert from user alert feild
       await track('delete alert ', {
         distinct_id: alert_id,

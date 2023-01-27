@@ -16,7 +16,7 @@ const creditSchema = mongoose.Schema({
   available_premium_boost_credits: {
     type: Number
   },
-  available_Highlight_credits:{
+  available_Highlight_credits: {
     type: Number
   },
   free_credits_info: [
@@ -122,7 +122,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost","By-Admin"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchased-Boost", "By-Admin"],
         default: "Admin-atLogin"
       },
       transaction_Id: {
@@ -155,7 +155,7 @@ const creditSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['Available', "Expired", "Empty", "Active","By-Admin"],
+        enum: ['Available', "Expired", "Empty", "Active", "By-Admin"],
         default: "Available"
       },
       duration: {
@@ -204,7 +204,7 @@ const creditSchema = mongoose.Schema({
       },
       allocation: {
         type: String,
-        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight" , "By-Admin"],
+        enum: ["Admin-atLogin", "Referral", "Admin-Monthly", "Purchase_Highlight", "By-Admin"],
         default: "Admin-atLogin"
       },
       transaction_Id: {
@@ -228,7 +228,7 @@ const creditSchema = mongoose.Schema({
     {
       type_of_credit: {
         type: String,
-        enum: ["Free", "Premium", "Boost", "Premium-Boost","Highlight"]
+        enum: ["Free", "Premium", "Boost", "Premium-Boost", "Highlight"]
       },
       ad_id: {
         type: mongoose.Schema.Types.ObjectId
@@ -245,8 +245,8 @@ const creditSchema = mongoose.Schema({
       boost_expiry_date: {
         type: String
       },
-      highlight_expiry_date:{
-        type:String
+      highlight_expiry_date: {
+        type: String
       },
       credited_on: {
         type: String

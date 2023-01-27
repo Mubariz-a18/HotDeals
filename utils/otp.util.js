@@ -10,3 +10,19 @@ exports.generateOTP = (otp_length) => {
   }
   return OTP;
 };
+
+exports.referral_code_generator = (userName) => {
+  // Get the first two letters of the username
+  const firstTwoLetters = userName.slice(0, 2);
+
+  // Generate a random four-character hexadecimal value
+  var hexValue = Math.floor(Math.random() * 0x1000000).toString(16);
+  while (hexValue.length < 4) {
+    hexValue = "0" + hexValue;
+  }
+
+  // Concatenate the first two letters of the username and the hex value
+  var code = firstTwoLetters + hexValue;
+
+  return code;
+}

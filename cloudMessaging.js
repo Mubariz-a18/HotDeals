@@ -19,6 +19,7 @@ const cloudMessage = async (userId, messageData) => {
 
     const deviceTokens = [];
     if(userData.activeDevices){
+        
         Object.keys(userData.activeDevices).forEach(function (key) {
 
             deviceTokens.push(userData.activeDevices[key].deviceToken);
@@ -52,6 +53,7 @@ const cloudMessage = async (userId, messageData) => {
                 "content": body,
                 "createdAt": currentDate,
                 "data": data,
+                'seenByUser': false,
                 "type": type
             }
 

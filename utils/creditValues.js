@@ -11,23 +11,23 @@ const credit_value = (category) => {
         case "Kitchen Appliances":
             return 3;
         case "Fashions":
-            return 3;
+            return 2;
         case "Sports":
-            return 3;
+            return 2;
         case "Arts & Antiques":
             return 5;
         case "Furniture":
-            return 3;
+            return 2;
         case "Musical Instruments":
-            return 3;
+            return 5;
         case "Books, Papers & Posters":
-            return 3;
+            return 2;
         case "Services":
             return 5;
         case "Machines":
-            return 3;
+            return 5;
         case "Memberships and Tickets":
-            return 3;
+            return 5;
         case "Business for sale & Investments":
             return 5;
         case "Pets":
