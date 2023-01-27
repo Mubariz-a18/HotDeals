@@ -159,7 +159,7 @@ module.exports = class AdService {
             title: "Your Ad Is Successfully Posted !!",
             body: "Click here to check ...",
             data: { 
-              id: ad_id, 
+              id: ad_id.toString(), 
               navigateTo:navigateToTabs.particularAd
              },
             type: "Info"
@@ -170,7 +170,7 @@ module.exports = class AdService {
           await Draft.deleteOne({ _id: ad_id });
 
           return adDoc["_doc"];
-          // return adDoc
+
         }
 
 
@@ -241,7 +241,7 @@ module.exports = class AdService {
         const messageBody = {
           title: "Your Ad Is Pending !!",
           body: "Click here to check ...",
-          data: { id: ad_id , navigateTo : navigateToTabs.myads },
+          data: { id: ad_id.toString() , navigateTo : navigateToTabs.myads },
           type: "Info"
         }
 
@@ -258,45 +258,27 @@ module.exports = class AdService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const {
       parent_id,
-      // category,
-      // sub_category,
       description,
       SelectFields,
       special_mention,
-      // title,
       price,
-      isPrime,
       thumbnail_url,
       image_url,
       video_url,
-      // ad_present_location,
-      // ad_posted_location,
-      // ad_posted_address,
-      // ad_present_address,
       ad_status,
       is_negotiable,
-      // is_ad_posted,
     } = bodyData
     const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
       $set: {
-        // category,
-        // sub_category,
         description,
         SelectFields,
         special_mention,
-        // title,
         price,
-        // isPrime,
         image_url,
         thumbnail_url,
         video_url,
-        // ad_present_location,
-        // ad_posted_location,
-        // ad_posted_address,
-        // ad_present_address,
         ad_status,
         is_negotiable,
-        // is_ad_posted,
         updated_at: currentDate,
       }
     }, {
@@ -310,7 +292,7 @@ module.exports = class AdService {
     const messageBody = {
       title: "Your Ad Is Successfully Updated !!",
       body: "Click here to check ...",
-      data: { _id: parent_id ,  navigateTo : navigateToTabs.particularAd  },
+      data: { _id: parent_id.toString() ,  navigateTo : navigateToTabs.particularAd  },
       type: "Info"
     }
 

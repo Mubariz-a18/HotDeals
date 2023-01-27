@@ -121,16 +121,19 @@ const profileSchema = mongoose.Schema({
   free_credit: {
     type: Number,
   },
+  general_credit:{
+    type: Number,
+  },
   premium_credit: {
     type: Number,
   },
-  free_boost_credit: {
+  general_boost_credit: {
     type: Number,
   },
   premium_boost_credit: {
     type: Number,
   },
-  highlight_credits: {
+  highlight_credit: {
     type: Number,
   },
   premium_ad: [

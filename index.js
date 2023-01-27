@@ -15,9 +15,10 @@ const CreditRouter = require("./routes/credit.routes");
 const RatingRouter = require("./routes/rating.routes");
 const followUnfollowRouter = require('./routes/follow_unfollow.routes');
 const GlobalSearchRouter = require('./routes/global_search.routes');
-const { sendAlert } = require("./CronJob/cronJob");
+const { } = require("./CronJob/cronJob");
 const ReportRouter = require("./routes/report.routes");
-const JsonRouter = require('./routes/jsonData.routes')
+const JsonRouter = require('./routes/jsonData.routes');
+const ReferCodeRouter = require("./routes/referral.routes")
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -47,8 +48,9 @@ app.use(CreditRouter);
 app.use(RatingRouter);
 app.use(followUnfollowRouter);
 app.use(GlobalSearchRouter);
-app.use(JsonRouter)
-app.use(ReportRouter)
+app.use(JsonRouter);
+app.use(ReportRouter);
+app.use(ReferCodeRouter)
 
 //server listener
 app.listen(PORT, () => {
