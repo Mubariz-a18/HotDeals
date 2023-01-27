@@ -1,29 +1,38 @@
 const mongoose = require("mongoose");
+const moment = require('moment');
 const User = require("../models/Profile/User");
 const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
+const Referral = require("../models/referelSchema");
 const { track } = require("./mixpanel-service");
 const { my_age } = require("../utils/moment");
-const moment = require('moment');
 const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
-const { getRating } = require("./RatingService");
+const { referral_code_generator } = require("../utils/otp.util");
 
 
 module.exports = class ProfileService {
   // DB Services to Create a Profile
   static async createProfile(bodyData, userID, phoneNumber) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
     //checking if profile already exist
     let profileDoc = await User.findOne({
       userNumber: phoneNumber,
     });
+
     if (profileDoc) {
+
       const userProfile = await Profile.findById({ _id: userID })
+
       if (!userProfile) {
+
         let contactNumber = profileDoc.userNumber;
+
         // Creating Profile
         const profileDoc1 = await Profile.create({
+
           _id: userID,
           name: bodyData.name,
           userNumber: {
@@ -37,43 +46,58 @@ module.exports = class ProfileService {
           city: {
             text: bodyData.city.text || "",
           },
-
           date_of_birth: bodyData.DOB,
           age: bodyData.age,
           gender: bodyData.gender,
           language_preference: bodyData.language_preference,
           profile_url: bodyData.profile_url,
-          thumbnail_url:bodyData.thumbnail_url,
-          cover_photo_url:bodyData.cover_photo_url,
+          thumbnail_url: bodyData.thumbnail_url,
+          cover_photo_url: bodyData.cover_photo_url,
           created_date: currentDate,
-          updated_date: currentDate,
+          updated_date: currentDate
+
         });
+        // Create a new referralCode doc
+
+        await Referral.create({
+          user_id: userID,
+          referral_code: referral_code_generator(bodyData.name),
+        });
+
         // creating a default Rating for new user
         await Rating.create({
           user_id: profileDoc1._id,
         });
+
         //create a new credit doc for new user
-        await createCreditForNewUser(profileDoc1._id)
+        await createCreditForNewUser(profileDoc1._id);
+
         //create a new report doc for new user
-        await apiCreateReportDoc(userID)
+        await apiCreateReportDoc(userID);
+
         //mixpanel track for new Profile Created
         await track('New Profile Created ', {
           distinct_id: profileDoc1._id,
           $email: profileDoc.email.text
         });
+
         return {
           profileDoc1,
           message: "Successfully_Created",
           statusCode: 200
         };
+
       } else {
+
         return {
+
           userProfile,
           message: 'USER_ALREADY_EXISTS',
           statusCode: 403
+
         };
-      }
-    }
+      };
+    };
   };
 
   //DB Service to Get Profile By Phone Number
@@ -243,7 +267,7 @@ module.exports = class ProfileService {
             is_email_verified: 1,
             thumbnail_url: 1,
             profile_url: 1,
-            language_preference:1,
+            language_preference: 1,
             cover_photo_url: 1,
             followers_count: 1,
             followings_count: 1,

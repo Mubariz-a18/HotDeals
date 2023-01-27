@@ -61,7 +61,7 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 // });
 
 
-// (Schedule_Task_Alert_6am_to_10pm)                  '0 0 6-22 * * *'     '* * * * * *'   '0 * * * * *'
+// (Schedule_Task_Alert_6am_to_10pm)                   '0 06,08,10,12,14,16,18,20,22 * * *'     '* * * * * *'   '0 * * * * *'
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,20,22 * * *' , async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
@@ -162,9 +162,6 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
     });
 
     
-    console.log(alertNotificationDoc)
-  
-
     const alertRef = db.ref(`Alerts/${alert.user_ID.toString()}/alert_ads/${alert._id.toString()}`);
 
     const snapshot = await alertRef.once('value')
@@ -211,7 +208,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
           title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
           body: "Click here to check ...",
           data: {
-            id: alert._id,
+            id: alert._id.toString(),
             navigateTo: navigateToTabs.alert
           },
           type: "Alert"
@@ -222,31 +219,33 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
       }
 
     } else {
-      db.ref("Alerts")
-      .child(alert.user_ID.toString())
-      .child("user_alerts")
-      .child(alert._id.toString())
-      .update({
-        seenByUser: false
-      });
+      if(alertNotificationDoc.length !== 0){
+        db.ref("Alerts")
+        .child(alert.user_ID.toString())
+        .child("user_alerts")
+        .child(alert._id.toString())
+        .update({
+          seenByUser: false
+        });
+  
+      /* 
+  
+        Cloud Notification To firebase
+  
+      */
+      const messageBody = {
+        title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
+        body: "Click here to check ...",
+        data: {
+          id: alert._id,
+          navigateTo: navigateToTabs.alert
+        },
+        type: "Alert"
+      }
+  
+      await cloudMessage(alert.user_ID.toString(), messageBody);
+      }
 
-    /* 
-
-      Cloud Notification To firebase
-
-    */
-
-    const messageBody = {
-      title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
-      body: "Click here to check ...",
-      data: {
-        id: alert._id,
-        navigateTo: navigateToTabs.alert
-      },
-      type: "Alert"
-    }
-
-    await cloudMessage(alert.user_ID.toString(), messageBody);
     }
 
     db.ref("Alerts")
@@ -433,7 +432,19 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
 // });
 
 
+// async function sendAlert(){
+//   const messageBody = {
+//     title: `Potential Ads For Your ${"test"} Ad Alert !!`,
+//     body: "Click here to check ...",
+//     data: {
+//       id: "sefegdfgdfbdfbfgbhfg",
+//       navigateTo: navigateToTabs.alert
+//     },
+//     type: "Alert"
+//   }
 
+//   await cloudMessage('63c0fb5999db943aba6baa7e', messageBody);
+// }
 
 
 module.exports = {
