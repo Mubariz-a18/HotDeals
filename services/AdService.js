@@ -84,16 +84,16 @@ module.exports = class AdService {
 
         // create an Ad document in generics collection with body 
 
-        const creditParams = { isPrime, ad_id, userId, category }
+        // const creditParams = { isPrime, ad_id, userId, category }
 
-        const balance = await creditDeductFuntion(creditParams)
+        // const balance = await creditDeductFuntion(creditParams)
 
-        if (balance.message == "Empty_Credits") {
+        // if (balance.message == "Empty_Credits") {
 
-          throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
-        }
+        //   throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
+        // }
 
-        else if (balance.message == "Deducted_Successfully") {
+        // else if (balance.message == "Deducted_Successfully") {
 
           let adDoc = await Generic.create({
             _id: ObjectId(ad_id),
@@ -171,7 +171,7 @@ module.exports = class AdService {
 
           return adDoc["_doc"];
 
-        }
+        // }
 
 
       }

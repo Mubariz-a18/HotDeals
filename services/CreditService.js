@@ -39,7 +39,7 @@ module.exports = class CreditService {
       $set: {
 
         free_credit: 200,
-        General_credit:0,
+        General_credit: 0,
         premium_credit: 0,
         general_Boost_credit: 0,
         premium_boost_credit: 0,
@@ -55,7 +55,7 @@ module.exports = class CreditService {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-    const  {
+    const {
 
       credit_type,
       count,
@@ -78,7 +78,7 @@ module.exports = class CreditService {
         purchaseDate: currentDate
 
       }
-  }
+    }
 
     if (credit_type == "Premium") {
 
@@ -86,7 +86,7 @@ module.exports = class CreditService {
 
         $inc: { available_premium_credits: count },
 
-        $push:push
+        $push: push
 
       }, {
         new: true
@@ -106,9 +106,9 @@ module.exports = class CreditService {
 
       const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
 
-        $inc: { available_general_credits : count },
-        $push:push
-        
+        $inc: { available_general_credits: count },
+        $push: push
+
       }, {
         new: true
       });
@@ -116,20 +116,20 @@ module.exports = class CreditService {
       // update the users profile total general_credit
       await Profile.findOneAndUpdate({ _id: userId }, {
         $inc: {
-          general_credit : count
+          general_credit: count
         }
       });
 
       return newCredit;
     }
-    
+
     else if (credit_type == "General-Boost") {
 
       const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
 
         $inc: { available_general_boost_credits: count },
 
-        $push:push
+        $push: push
 
       }, {
         new: true
@@ -148,12 +148,12 @@ module.exports = class CreditService {
 
       const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
 
-        $inc: { available_premium_boost_credits : count },
+        $inc: { available_premium_boost_credits: count },
 
-         $push:push
+        $push: push
 
-      }, { 
-        new: true 
+      }, {
+        new: true
       });
 
       // update the users profile total premium_boost_credit
@@ -171,24 +171,56 @@ module.exports = class CreditService {
 
       const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
 
-        $inc: { available_highlight_credits : count },
+        $inc: { available_highlight_credits: count },
 
-        $push:push
+        $push: push
 
       }, { new: true });
       // update the users profile total highlight_credits
       await Profile.findOneAndUpdate({ _id: userId }, {
         $inc: {
-          highlight_credit : count
+          highlight_credit: count
         }
       });
 
       return newCredit;
     }
 
+
+    // only for testing here
+
+    // else if (credit_type == "Free") {
+
+    //   const newCredit = await Credit.findOneAndUpdate({ user_id: userId }, {
+
+    //     $inc: { available_free_credits : count },
+
+    //     $push:{
+    //       "free_credits_info":{
+    //         "count":500,
+    //         "duration":"60",
+    //         "status":"Available",
+    //         "allocation":"Admin-Monthly",
+    //         "allocated_on":currentDate,
+    //         credits_expires_on:expiry_date_func(30)
+    //       }
+    //     }
+
+    //   }, { new: true });
+    //   // update the users profile total highlight_credits
+    //   await Profile.findOneAndUpdate({ _id: userId }, {
+    //     $inc: {
+    //       free_credit : count
+    //     }
+    //   });
+
+    //   return newCredit;
+    // }
+
   };
 
   //creditDeduaction function calls when user uploads an Ad
+
   static async creditDeductFuntion(creditParams) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { isPrime, _id, userId, category } = creditParams;
@@ -313,6 +345,90 @@ module.exports = class CreditService {
       };
     };
   };
+
+  static checkCrd(category, arrayOfAds) {
+    let TotalToCut = 0
+    arrayOfAds.forEach(ad => {
+      TotalToCut = TotalToCut + credit_value(category, arrayOfAds.isPrime)
+    })
+  }
+
+  static async CreditCheckFunction(bodyData, user_Id) {
+
+    // Checking Credits availablity in Free Credits
+
+    const CreditDocument = await Credit.findOne({ user_id: user_Id });
+
+    const userDoc = await Profile.findOne({ _id: user_Id });
+
+    const numberOfAds = bodyData.Ads;
+
+    const Free_Credit_Container = CreditDocument.free_credits_info;
+
+    const Paid_Credit_Container = CreditDocument.paid_credits_info;
+
+    let Total_Free_Credits = CreditDocument.available_free_credits;
+
+    let Total_Premium_Credits = CreditDocument.available_premium_credits;
+
+    const TotalToCut = this.checkCrd(bodyData.category,numberOfAds);
+
+    if(Total_Free_Credits - TotalToCut < 0){
+      const total_to_cut = this.checkCrd(bodyData)
+    }else{
+      "AD_CAN_BE_POSTED"
+    }
+
+
+
+
+    // let credvalue = credit_value(category, isPrime)
+
+
+    // if (CreditDocument.available_free_credits <= credvalue && userDoc.free_credit <= credvalue) {
+
+    //   const Paid_Credit_Container = CreditDocument.paid_credits_info;
+
+    //   if (Paid_Credit_Container == undefined) {
+
+    //     throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' });
+
+    //   } else {
+
+    //     Paid_Credit_Container.forEach(PaidCredit => {
+
+    //       if (PaidCredit.category == category && PaidCredit.status == "Available" && PaidCredit.credit_type == credit_type && PaidCredit.count >= count) {
+
+    //         return "READY_TO_POST_THE_AD"
+
+    //       } else {
+
+    //         throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' });
+
+    //       }
+    //     })
+    //   }
+
+    // } else {
+
+    //   const Free_Credit_Container = CreditDocument.free_credits_info;
+
+    //   Free_Credit_Container.forEach(FreeCredit => {
+
+    //     if (FreeCredit.status == "Available" && FreeCredit.count >= credvalue) {
+
+    //       return "READY_TO_POST_THE_AD"
+
+    //     } else {
+
+    //       throw ({ status: 404, message: 'NOT_ENOUGH_CREDITS' });
+
+    //     }
+    //   })
+
+    // }
+  }
+
 
   //Get My Credits function
   static async getMyCreditsInfo(user_id) {

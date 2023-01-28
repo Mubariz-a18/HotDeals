@@ -50,12 +50,6 @@ const creditSchema = mongoose.Schema({
         ],
         default: "Admin-atLogin"
       },
-      // referral_code: {
-      //   type: String,
-      // },
-      // referral_Id: {
-      //   type: String,
-      // },
       allocated_on: {
         type: String
       },
@@ -64,6 +58,7 @@ const creditSchema = mongoose.Schema({
       }
     }
   ],
+
   paid_credits_info: [
     {
       count: {
@@ -269,7 +264,7 @@ const creditSchema = mongoose.Schema({
       Premium_Boost_expiry_date: {
         type: String
       },
-      
+
       credited_on: {
         type: String
       }
