@@ -11,4 +11,12 @@ module.exports = class JsonDataService {
         const JsonData = collection.findOne();
         return JsonData
     }
+
+    static async getCreditsJson() {
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('Jsoncredits');
+        const JsonData = collection.findOne();
+        return JsonData
+    }
 };

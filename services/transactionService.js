@@ -26,7 +26,7 @@ module.exports = class TransactionService {
         const TransactionOrder = await Transaction.create({
             _id: receipt_id,
             user_id: user_ID,
-            amount: bodyData.amount ,
+            amount: bodyData.amount,
             status: "Pending",
             order_id: order.id.toString(),
             payment_initate_date: currentDate
@@ -35,6 +35,67 @@ module.exports = class TransactionService {
         return TransactionOrder
 
     };
+
+    static async saveTrasactionService(bodyData) {
+
+        const orderId = bodyData.orderId;
+
+        if(bodyData.status === "Failed"){
+
+            await Transaction.findOneAndUpdate(
+
+                { order_id: orderId }, {
+
+                $set: {
+
+                    status: "Failed",
+                    payment_completion_date: currentDate
+
+                }
+            });
+            throw ({ status: 403, message: "UNAUTHORIZED" });
+        }
+
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+        const crypto = require("crypto");
+
+        const key_secret = process.env.key_secret;
+
+
+
+        const paymentId = bodyData.paymentId
+
+        const paymentSignature = bodyData.paymentSignature;
+
+
+        const text = orderId + "|" + paymentId;
+
+        const generatedSignature = crypto
+            .createHmac("sha256", key_secret)
+            .update(text)
+            .digest("hex");
+
+        if (generatedSignature === paymentSignature) {
+
+            await Transaction.findOneAndUpdate(
+                { order_id: orderId }, {
+                $set: {
+                    status: "Successfull",
+                    payment_completion_date: currentDate
+                }
+            });
+
+            return "Signature verified"
+        } else {
+            await Transaction.findOneAndUpdate(
+                { order_id: orderId }, {
+                $set: {
+                    status: "Failed",
+                    payment_completion_date: currentDate
+                }
+            });
+            throw ({ status: 403, message: "UNAUTHORIZED" });
+        }
+    };
 }
-
-

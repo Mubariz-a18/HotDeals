@@ -5,7 +5,7 @@ const ObjectId = require('mongodb').ObjectId;
 const Generic = require("../models/Ads/genericSchema");
 const { track } = require('./mixpanel-service.js');
 const { age_func } = require("../utils/moment");
-const { creditDeductFuntion } = require("./CreditService");
+const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
 const detectSafeSearch = require("../image.controller");
@@ -82,94 +82,92 @@ module.exports = class AdService {
 
       if (health == "HEALTHY") {
 
-        // create an Ad document in generics collection with body 
+        const creditDuctConfig = {
+          category: category,
+          AdsArray: bodyData.AdsArray
+        }
+        const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
+        if (message === "NOT_ENOUGH_CREDITS") {
 
-        // const creditParams = { isPrime, ad_id, userId, category }
+          throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
+          
+        }
 
-        // const balance = await creditDeductFuntion(creditParams)
-
-        // if (balance.message == "Empty_Credits") {
-
-        //   throw ({ status: 401, message: 'NOT_ENOUGH_CREDITS' })
-        // }
-
-        // else if (balance.message == "Deducted_Successfully") {
-
-          let adDoc = await Generic.create({
-            _id: ObjectId(ad_id),
-            parent_id,
-            user_id: findUsr._id,
-            category,
-            sub_category,
-            field,
-            description,
-            SelectFields,
-            special_mention,
-            title,
-            price,
-            product_age: age,
-            isPrime,
-            ad_type: isPrime == false ? "Free" : "Premium",
-            image_url,
-            video_url,
-            thumbnail_url,
-            ad_present_location: ad_present_location || {},
-            ad_posted_location: ad_posted_location || {},
-            ad_posted_address,
-            ad_present_address,
-            ad_Premium_Date: isPrime == true ? currentDate : "",
-            ad_status,
-            is_negotiable,
-            is_ad_posted,
-            created_at: currentDate,
-            ad_expire_date: DateAfter30Days,
-            updated_at: currentDate,
-          });
-          // mixpanel track -- Ad create 
-          await track('Ad creation succeed', {
-            category: bodyData.category,
-            distinct_id: adDoc._id
-          })
-          //save the ad_id in users profile in myads
-          await Profile.findByIdAndUpdate({ _id: userId }, {
-            $push: {
-              my_ads: ObjectId(ad_id)
-            }
-          });
-
-          const body = {
-            ad_id,
-            category,
-            sub_category,
-            title,
-            description,
-            ad_posted_address,
-            ad_posted_location,
-            SelectFields
+        let adDoc = await Generic.create({
+          _id: ObjectId(ad_id),
+          parent_id,
+          user_id: findUsr._id,
+          category,
+          sub_category,
+          field,
+          description,
+          SelectFields,
+          special_mention,
+          title,
+          price,
+          product_age: age,
+          isPrime,
+          ad_type: isPrime == false ? "Free" : "Premium",
+          image_url,
+          video_url,
+          thumbnail_url,
+          ad_present_location: ad_present_location || {},
+          ad_posted_location: ad_posted_location || {},
+          ad_posted_address,
+          ad_present_address,
+          ad_Premium_Date: isPrime == true ? currentDate : "",
+          ad_status,
+          is_negotiable,
+          is_ad_posted,
+          created_at: currentDate,
+          ad_expire_date: DateAfter30Days,
+          updated_at: currentDate,
+        });
+        // mixpanel track -- Ad create 
+        await track('Ad creation succeed', {
+          category: bodyData.category,
+          distinct_id: adDoc._id
+        })
+        //save the ad_id in users profile in myads
+        await Profile.findByIdAndUpdate({ _id: userId }, {
+          $push: {
+            my_ads: ObjectId(ad_id)
           }
+        });
 
-          await createGlobalSearch(body)
+        const body = {
+          ad_id,
+          category,
+          sub_category,
+          title,
+          description,
+          ad_posted_address,
+          ad_posted_location,
+          SelectFields
+        }
 
-          /* 
+        await createGlobalSearch(body)
+
+        /* 
  
-          Cloud Notification To firebase
+        Cloud Notification To firebase
  
-          */
-          const messageBody = {
-            title: "Your Ad Is Successfully Posted !!",
-            body: "Click here to check ...",
-            data: { 
-              id: ad_id.toString(), 
-              navigateTo:navigateToTabs.particularAd
-             },
-            type: "Info"
-          }
+        */
+        const messageBody = {
+          title: "Your Ad Is Successfully Posted !!",
+          body: "Click here to check ...",
+          data: {
+            id: ad_id.toString(),
+            navigateTo: navigateToTabs.particularAd
+          },
+          type: "Info"
+        }
 
-          await cloudMessage(userId.toString(), messageBody);
+        await cloudMessage(userId.toString(), messageBody);
 
-          await Draft.deleteOne({ _id: ad_id });
+        await Draft.deleteOne({ _id: ad_id });
 
-          return adDoc["_doc"];
+        return adDoc["_doc"];
 
         // }
 
@@ -230,7 +228,7 @@ module.exports = class AdService {
           ad_posted_location,
           SelectFields
         }
-        
+
         await createGlobalSearch(body);
 
         /* 
@@ -241,7 +239,7 @@ module.exports = class AdService {
         const messageBody = {
           title: "Your Ad Is Pending !!",
           body: "Click here to check ...",
-          data: { id: ad_id.toString() , navigateTo : navigateToTabs.myads },
+          data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
           type: "Info"
         }
 
@@ -292,7 +290,7 @@ module.exports = class AdService {
     const messageBody = {
       title: "Your Ad Is Successfully Updated !!",
       body: "Click here to check ...",
-      data: { _id: parent_id.toString() ,  navigateTo : navigateToTabs.particularAd  },
+      data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
       type: "Info"
     }
 
