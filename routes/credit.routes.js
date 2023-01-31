@@ -27,6 +27,13 @@ router.get('/api/getMyCredits',
     rateLimiter(getMycreditsTime, getMyCreditsHits),
     verifyToken,
     CreditController.getMyCreditsInfo);
+
+    router.post('/api/checkCredits',
+    rateLimiter(getMycreditsTime, getMyCreditsHits),
+    verifyToken,
+    CreditController.apicheckCredits);
+
+
 router.post('/api/BoostAd',
     rateLimiter(boostAdTime, boostAdHits),
     verifyToken,

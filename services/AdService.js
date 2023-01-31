@@ -377,6 +377,7 @@ module.exports = class AdService {
                   _id: 1,
                   parent_id: 1,
                   title: 1,
+                  category:1,
                   description: 1,
                   saved: 1,
                   views: 1,
