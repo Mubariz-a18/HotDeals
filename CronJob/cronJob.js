@@ -8,7 +8,8 @@ const Report = require('../models/reportSchema');
 const {
   currentDate,
   Ad_Historic_Duration,
-  DateAfter30Days } = require('../utils/moment');
+  DateAfter30Days,
+  expiry_date_func } = require('../utils/moment');
 const { app } = require('../firebaseAppSetup');
 const { ObjectId } = require('mongodb');
 const cloudMessage = require('../cloudMessaging');
@@ -62,7 +63,7 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 
 // (Schedule_Task_Alert_6am_to_10pm)                   '0 06,08,10,12,14,16,18,20,22 * * *'     '* * * * * *'   '0 * * * * *'
-const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,20,22 * * *' , async () => {
+const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
     const {
@@ -161,7 +162,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
 
     });
 
-    
+
     const alertRef = db.ref(`Alerts/${alert.user_ID.toString()}/alert_ads/${alert._id.toString()}`);
 
     const snapshot = await alertRef.once('value')
@@ -219,31 +220,31 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
       }
 
     } else {
-      if(alertNotificationDoc.length !== 0){
+      if (alertNotificationDoc.length !== 0) {
         db.ref("Alerts")
-        .child(alert.user_ID.toString())
-        .child("user_alerts")
-        .child(alert._id.toString())
-        .update({
-          seenByUser: false
-        });
-  
-      /* 
-  
-        Cloud Notification To firebase
-  
-      */
-      const messageBody = {
-        title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
-        body: "Click here to check ...",
-        data: {
-          id: alert._id.toString(),
-          navigateTo: navigateToTabs.alert
-        },
-        type: "Alert"
-      }
-  
-      await cloudMessage(alert.user_ID.toString(), messageBody);
+          .child(alert.user_ID.toString())
+          .child("user_alerts")
+          .child(alert._id.toString())
+          .update({
+            seenByUser: false
+          });
+
+        /* 
+    
+          Cloud Notification To firebase
+    
+        */
+        const messageBody = {
+          title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
+          body: "Click here to check ...",
+          data: {
+            id: alert._id.toString(),
+            navigateTo: navigateToTabs.alert
+          },
+          type: "Alert"
+        }
+
+        await cloudMessage(alert.user_ID.toString(), messageBody);
       }
 
     }
@@ -256,42 +257,41 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
   })
 });
 
-// //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
-// const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
-//   const Credits = await Credit.find()
-//   Credits.forEach(async creditDoc => {
-//     await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
-//       $inc: { available_free_credits: 100 ,  available_premium_credits:10 },
-//       $push: {
-//         free_credits_info: {
-//           count: 100,
-//           allocation: "Admin-Monthly",
-//           status:"Available",
-//           allocated_on: currentDate,
-//           duration: moment(DateAfter30Days).diff(currentDate, "days"),
-//           credits_expires_on: DateAfter30Days
-//         }
-//       },
-//       $push: {
-//         premium_credits_info: {
-//           count: 10,
-//           allocation: "Admin-Monthly",
-//           status:"Available",
-//           allocated_on: currentDate,
-//           duration: moment(DateAfter30Days).diff(currentDate, "days"),
-//           credits_expires_on: DateAfter30Days
-//         }
-//       }
-//     }, { new: true })
-//     await Profile.findOneAndUpdate({ _id: creditDoc.user_id }, {
-//       $inc: {
-//         free_credit: 100,
-//         premium_credit: 10
-//       }
-//     })
-//   })
-// });
-// // (Schedule_Task_Credit_Status_Update) will change the status to expire if the credit expiry date exceeds the curent date
+
+//(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
+const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
+
+  const Credits = await Credit.find({});
+
+  Credits.forEach(async creditDoc => {
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+    await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
+
+      $inc: { total_universal_credits: 100 },
+
+      $push: {
+
+        universal_credit_bundles:
+        {
+
+          number_of_credit: 100,
+          source_of_credit: "Admin-Monthly",
+          credit_status: "Active",
+          credit_created_date: currentDate,
+          credit_duration: 30,
+          credits_expires_on: expiry_date_func(30)
+
+        }
+      }
+    }, { new: true });
+  })
+});
+
+
+
+// (Schedule_Task_Credit_Status_Update) will change the status to expire if the credit expiry date exceeds the curent date
 // const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () => {
 //   const credits = await Credit.find();
 
@@ -447,6 +447,27 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule( '0 06,08,10,12,14,16,18,2
 // }
 
 
+
+const creditExpire = cron.schedule("0 0 0 * * *", async () => {
+
+  const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+  const Credits = await Credit.updateMany({
+
+    "universal_credit_bundles.credit_expiry_date": { $lte: currentDate }
+
+  }, {
+    $set: {
+
+      "universal_credit_bundles.$.credit_status": "Expired"
+
+    }
+  },{new:true});
+});
+
+
 module.exports = {
-  Schedule_Task_Alert_6am_to_10pm 
+  Schedule_Task_Alert_6am_to_10pm,
+  // Schedule_Task_Monthly_credits,
+  // creditExpire
 }

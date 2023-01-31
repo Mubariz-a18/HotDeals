@@ -18,5 +18,15 @@ const credit_value = {
     "Jobs":3
 }
 
+const boost_vales = {
+    General_Boost :{
+        Days7:1,
+        Days14:2
+    },
+    Premium_Boost :{
+        Days7:2,
+        Days14:4
+    }
+}
 
-module.exports = credit_value
+module.exports = {credit_value,boost_vales}

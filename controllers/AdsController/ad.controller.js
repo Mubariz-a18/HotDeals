@@ -1,4 +1,5 @@
 const AdService = require("../../services/AdService");
+const CreditService = require("../../services/CreditService");
 const { track } = require("../../services/mixpanel-service");
 
 module.exports = class AdController {
@@ -384,6 +385,32 @@ module.exports = class AdController {
       const Updated_Ad = await AdService.updateAd(req.body, user_id);
       res.status(200).json({
         message: "Successfully_Updated",
+        data: Updated_Ad
+      })
+
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  }
+
+  static async apiMakeAdPremuium(req,res,next){
+    try {
+      // const { ad_id } = req.body;
+      const user_id = req.user_ID;
+      const Updated_Ad = await CreditService.MakeAdPremium(user_id ,req.body);
+      res.status(200).json({
         data: Updated_Ad
       })
 

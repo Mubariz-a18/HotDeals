@@ -17,7 +17,7 @@ const creditSchema = mongoose.Schema({
         enum: [
           "Paid",
           "Admin-Login",
-          "Monthly",
+          "Admin-Monthly",
           "Refferal",
           "By-Admin"
         ]
