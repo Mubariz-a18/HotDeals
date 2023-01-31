@@ -1,6 +1,8 @@
 const Referral = require("../models/referelSchema");
 const { createCredit } = require("./CreditService");
 const moment = require('moment');
+const Credit = require("../models/creditSchema");
+const { expiry_date_func } = require("../utils/moment");
 
 
 
@@ -31,12 +33,30 @@ module.exports = class ReferCodeService {
                     }
                 }
             )
-            const body = {
-                creditType:"Free",
-                count:50,
-                allocation :"Referral"
-            }
-            await createCredit(body,user_ID)
+
+            const push = {
+
+                universal_credit_bundles: {
+        
+                  number_of_credit: 50,
+                  source_of_credit: "Refferal",
+                  credit_status: "Active",
+                  credit_duration: 60,
+                  credit_expiry_date: expiry_date_func(60),
+                  credit_created_date: currentDate
+        
+                }
+              }
+
+            const Referred_Credit_Doc = await Credit.findOneAndUpdate({ user_id: user_ID }, {
+
+                $inc: { total_universal_credits: 50 },
+        
+                $push: push
+        
+              }, {
+                new: true
+              })
 
             return "SUCCESSFULLY_REDEEMED_THE_REFERRALCODE"
         }

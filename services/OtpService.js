@@ -14,15 +14,23 @@ module.exports = class OtpService {
     });
     //if  number is already present return otpDoc  
     if (otpDoc) {
-      return otpDoc;
-    }
-    else {
+      await OtpModel.deleteOne(
+        { phoneNumber: phoneNumber }
+      )
+      const otp = generateOTP(6);
+
+      return await OtpModel.create({
+        otp,
+        phoneNumber,
+      });
+
+    } else {
       const otp = generateOTP(6);
       return await OtpModel.create({
         otp,
         phoneNumber,
       });
-    };
+    }
   };
 
   //Verify Otp and Delete Document 
@@ -104,7 +112,7 @@ module.exports = class OtpService {
       //if exists update users profile email as well as is_email_verified 
       if (verify_otp) {
         await Profile.findOneAndUpdate({ _id: userId }, {
-          $set:{
+          $set: {
             "email.text": email,
             "is_email_verified": true
           }

@@ -4,7 +4,7 @@ const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
 const Generic = require("../models/Ads/genericSchema");
 const { track } = require('./mixpanel-service.js');
-const { age_func } = require("../utils/moment");
+const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
@@ -12,6 +12,8 @@ const detectSafeSearch = require("../image.controller");
 const imgCom = require("../imageCompression");
 const cloudMessage = require("../cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
+const Referral = require("../models/referelSchema");
+const Credit = require("../models/creditSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -90,7 +92,7 @@ module.exports = class AdService {
         if (message === "NOT_ENOUGH_CREDITS") {
 
           throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
-          
+
         }
 
         let adDoc = await Generic.create({
@@ -129,11 +131,11 @@ module.exports = class AdService {
           distinct_id: adDoc._id
         })
         //save the ad_id in users profile in myads
-        await Profile.findByIdAndUpdate({ _id: userId }, {
+        const UpdatedUser = await Profile.findByIdAndUpdate({ _id: userId }, {
           $push: {
             my_ads: ObjectId(ad_id)
           }
-        });
+        }, { new: true, returnDocument: "after" });
 
         const body = {
           ad_id,
@@ -147,7 +149,39 @@ module.exports = class AdService {
         }
 
         await createGlobalSearch(body)
+        
+        if (UpdatedUser.my_ads.length == 1) {
 
+          const reffered_by_user = await Referral.findOne({ is_used: true, used_by: ObjectId(userId) })
+          if (reffered_by_user) {
+
+            const push = {
+
+              universal_credit_bundles: {
+
+                number_of_credit: 50,
+                source_of_credit: "Refferal",
+                credit_status: "Active",
+                credit_duration: 60,
+                credit_expiry_date: expiry_date_func(60),
+                credit_created_date: currentDate
+
+              }
+            }
+
+            await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
+
+              $inc: { total_universal_credits: 50 },
+
+              $push: push
+
+            }, {
+              new: true
+            })
+          }
+        } else {
+
+        }
         /* 
  
         Cloud Notification To firebase

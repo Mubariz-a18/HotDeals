@@ -37,6 +37,12 @@ const cloudMessage = async (userId, messageData) => {
 
         tokens: deviceTokens,
 
+        android: {
+            notification: {
+                clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+            },
+        },
+        
         notification: {
             title: title,
             body: body
