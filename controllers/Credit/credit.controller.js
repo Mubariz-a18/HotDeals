@@ -106,4 +106,29 @@ module.exports = class CreditController {
     };
   }
 
+  static async apicheckCredits(req, res, next) {
+    try {
+      // create credit doc returned from service
+      const creditDoc = await CreditService.CreditCheckFunction(req.body, req.user_ID);
+      // response is sent
+      res.status(200).send({
+        data: creditDoc,
+      })
+    } catch (e) {
+      if (!e.status) {
+        res.status(500).json({
+          error: {
+            message: ` something went wrong try again : ${e.message} `
+          }
+        });
+      } else {
+        res.status(e.status).json({
+          error: {
+            message: e.message
+          }
+        });
+      };
+    };
+  };
+
 };
