@@ -5,8 +5,10 @@ module.exports = class JsonDataController {
   static async apiGetJson(req, res, next) {
     try {
       const JsonData = await JsonDataService.getJsonData();
+      const CreditJson = await JsonDataService.getCreditsJson()
       res.status(200).send({
-        JsonData
+        JsonData,
+        CreditJson:CreditJson
       })
     } catch (e) {
       if (!e.status) {

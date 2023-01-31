@@ -6,7 +6,7 @@ const Profile = require("../models/Profile/Profile");
 const Referral = require("../models/referelSchema");
 const { track } = require("./mixpanel-service");
 const { my_age } = require("../utils/moment");
-const { createCreditForNewUser } = require("./CreditService");
+const { createCreditForNewUser, CreditCheckFunction, creditDeductionFunction } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
 const { referral_code_generator } = require("../utils/otp.util");
 const { ObjectId } = require("mongodb");
@@ -287,7 +287,6 @@ module.exports = class ProfileService {
         distinct_id: user_ID,
       });
       
-      console.log(MyProfile)
       return {MyProfile,referral_code}
     }
 

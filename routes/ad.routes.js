@@ -45,6 +45,10 @@ router.post('/api/v1/updateAd',
     verifyToken,
     AdController.apiUpdateAd);
 
+router.post('/api/v1/makeAdPremium',
+    rateLimiter(updateAdTime, updateAdHits),
+    verifyToken,
+    AdController.apiMakeAdPremuium);
 
 router.get('/api/v1/getMyAds',
     rateLimiter(getMyAdTime, getMyAdHits),
@@ -90,23 +94,23 @@ router.post('/api/v1/checkAdStatus',
     AdController.apiCheckAdStatus);
 
 
-    
+
 /* 
 Draft Ad Apis Here
 */
 
 router.post('/api/createDraftAd',
-rateLimiter(createAdTime, createAdHits),
-verifyToken,
-AdController.apiDraftAds);
+    rateLimiter(createAdTime, createAdHits),
+    verifyToken,
+    AdController.apiDraftAds);
 
 router.post('/api/getDraftAd',
-rateLimiter(getMyAdTime, getMyAdHits),
-verifyToken,
-AdController.apiGetDraftAd);
+    rateLimiter(getMyAdTime, getMyAdHits),
+    verifyToken,
+    AdController.apiGetDraftAd);
 
 router.post('/api/updateDraftAd',
-rateLimiter(createAdTime, createAdHits),
-verifyToken,
-AdController.apiUpdateDraftAds);
+    rateLimiter(createAdTime, createAdHits),
+    verifyToken,
+    AdController.apiUpdateDraftAds);
 module.exports = router;

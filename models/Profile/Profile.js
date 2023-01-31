@@ -118,22 +118,7 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  free_credit: {
-    type: Number,
-  },
-  general_credit:{
-    type: Number,
-  },
-  premium_credit: {
-    type: Number,
-  },
-  general_boost_credit: {
-    type: Number,
-  },
-  premium_boost_credit: {
-    type: Number,
-  },
-  highlight_credit: {
+  availble_credit:{
     type: Number,
   },
   premium_ad: [

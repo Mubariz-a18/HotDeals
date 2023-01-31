@@ -1,43 +1,32 @@
-const credit_value = (category) => {
-    switch (category) {
-        case "Properties":
-            return 5;
-        case "Vehicles":
-            return 5;
-        case "Electronics":
-            return 3;
-        case "Home Appliances":
-            return 3;
-        case "Kitchen Appliances":
-            return 3;
-        case "Fashions":
-            return 2;
-        case "Sports":
-            return 2;
-        case "Arts & Antiques":
-            return 5;
-        case "Furniture":
-            return 2;
-        case "Musical Instruments":
-            return 5;
-        case "Books, Papers & Posters":
-            return 2;
-        case "Services":
-            return 5;
-        case "Machines":
-            return 5;
-        case "Memberships and Tickets":
-            return 5;
-        case "Business for sale & Investments":
-            return 5;
-        case "Pets":
-            return 2;
-        case "Jobs":
-            return 3;
-        default:
-            return 0;
+const credit_value = {
+    "Vehicles":5,
+    "Properties":5,
+    "Electronics":3,
+    "Home Appliances":3,
+    "Kitchen Appliance":3,
+    "Fashions":2,
+    "Sports":2,
+    "Arts & Antiques":5,
+    "Furniture":2,
+    "Musical Instruments":5,
+    "Books, Papers & Posters":2,
+    "Services":5,
+    "Machines":5,
+    "Memberships and Tickets":5,
+    "Business for sale & Investments":5,
+    "Pets":2,
+    "Jobs":3
+}
+
+const boost_vales = {
+    General_Boost :{
+        Days7:1,
+        Days14:2
+    },
+    Premium_Boost :{
+        Days7:2,
+        Days14:4
     }
 }
 
-
-module.exports = credit_value
+module.exports = {credit_value,boost_vales}
