@@ -1554,7 +1554,6 @@ $skip and limit for pagination
       price,
       isPrime,
       image_url,
-      thumbnail_url,
       video_url,
       ad_present_location,
       ad_posted_location,
@@ -1563,6 +1562,22 @@ $skip and limit for pagination
       ad_status,
       is_negotiable
     } = bodyData
+
+    if (image_url.length == 0) {
+      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+    }
+    
+    /*  
+    
+    *************************************************
+    IMAGE COMPRESSION FOR THUMBNAILS
+    *************************************************
+
+
+    */
+    const thumbnail_url = await imgCom(image_url[0]);
+    
+
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     let adDoc = await Draft.create({

@@ -16,13 +16,11 @@ exports.referral_code_generator = (userName) => {
   const firstTwoLetters = userName.slice(0, 2);
 
   // Generate a random four-character hexadecimal value
-  var hexValue = Math.floor(Math.random() * 0x1000000).toString(16);
-  while (hexValue.length < 4) {
-    hexValue = "0" + hexValue;
-  }
+
+  let hexValue = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase();
 
   // Concatenate the first two letters of the username and the hex value
-  var code = firstTwoLetters + hexValue;
+  var code = firstTwoLetters.toUpperCase() + hexValue;
 
   return code;
 }

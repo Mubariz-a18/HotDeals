@@ -61,7 +61,7 @@ module.exports = class ProfileService {
         // Create a new referralCode doc
 
         await Referral.create({
-          user_id: profileDoc1._id,
+          user_Id: profileDoc1._id,
           referral_code: referral_code_generator(bodyData.name),
         });
 
