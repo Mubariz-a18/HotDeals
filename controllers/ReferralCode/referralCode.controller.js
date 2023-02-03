@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler.js");
 const ReferCodeService = require("../../services/referCodeService.js");
 
 
@@ -10,19 +11,7 @@ module.exports = class ReferralCodeController {
         message
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 };

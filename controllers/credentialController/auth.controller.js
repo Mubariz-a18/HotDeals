@@ -6,6 +6,7 @@ const SMSController = require("./sms.controller");
 const { track } = require("../../services/mixpanel-service");
 const Profile = require("../../models/Profile/Profile");
 const { ObjectId } = require("mongodb");
+const errorHandler = require("../../middlewares/errorHandler");
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
@@ -128,19 +129,7 @@ module.exports = class AuthController {
         message: EmailOtpDoc
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e,res)
     };
   };
 
@@ -156,19 +145,7 @@ module.exports = class AuthController {
       })
     }
     catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e,res)
     };
   };
 }

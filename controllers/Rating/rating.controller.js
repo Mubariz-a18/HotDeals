@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const RatingService = require("../../services/RatingService");
 module.exports = class RatingController {
   // api creating rating Doc
@@ -10,19 +11,7 @@ module.exports = class RatingController {
         RatingDoc: RatingDoc
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
   // Api getrating
@@ -35,19 +24,7 @@ module.exports = class RatingController {
         Rating: RatingDoc
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 };

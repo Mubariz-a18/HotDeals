@@ -1,3 +1,4 @@
+const errorHandler = require('../../middlewares/errorHandler');
 const GlobalSearchService = require('../../services/GlobalSearchService');
 module.exports = class GlobalSearchController {
   // api get global search
@@ -15,19 +16,7 @@ module.exports = class GlobalSearchController {
       }
 
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again :try giving other keywords ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 }

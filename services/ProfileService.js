@@ -343,7 +343,10 @@ module.exports = class ProfileService {
         distinct_id: userId,
         $email: bodyData.email
       });
-      return updateUsr;
+      const referral_code = await Referral.findOne({
+        user_Id:ObjectId(userId)
+      });
+      return {updateUsr,referral_code};
     }
   };
 

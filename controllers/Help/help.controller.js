@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const HelpService = require("../../services/HelpService");
 
 module.exports = class HelpController {
@@ -11,19 +12,7 @@ module.exports = class HelpController {
         Help_Doc
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e,res)
     };
   }
 
@@ -36,19 +25,7 @@ module.exports = class HelpController {
         deleteHelp_doc
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+     errorHandler(e,res)
     };
   }
 
