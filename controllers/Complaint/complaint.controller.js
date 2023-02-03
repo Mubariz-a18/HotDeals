@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const ComplaintService = require("../../services/ComplaintService");
 
 module.exports = class ComplainController {
@@ -11,19 +12,7 @@ module.exports = class ComplainController {
         complaintData
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
   //Update Complain
@@ -35,19 +24,7 @@ module.exports = class ComplainController {
         updatedComplain
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 };

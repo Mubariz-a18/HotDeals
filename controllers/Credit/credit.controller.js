@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const CreditService = require("../../services/CreditService");
 
 module.exports = class CreditController {
@@ -12,19 +13,7 @@ module.exports = class CreditController {
         data: creditDoc,
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
   // Api getmyCreditsInfo 
@@ -38,19 +27,7 @@ module.exports = class CreditController {
         data: creditDoc,
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
@@ -64,45 +41,21 @@ module.exports = class CreditController {
 
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
   static async apiHighlightAd(req, res, next) {
     try {
       // return the doc from service 
-      const creditDoc = await CreditService.highlight_MyAd(req.user_ID, req.body);
+      const creditDoc = await CreditService.HighLight_MyAd(req.user_ID, req.body);
       // response is sent
       res.status(200).send({
         message: creditDoc
 
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
@@ -115,19 +68,7 @@ module.exports = class CreditController {
         data: creditDoc,
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 

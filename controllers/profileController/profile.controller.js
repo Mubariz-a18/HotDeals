@@ -1,4 +1,4 @@
-const Profile = require("../../models/Profile/Profile");
+const errorHandler = require("../../middlewares/errorHandler");
 const ProfileService = require("../../services/ProfileService");
 
 module.exports = class ProfileController {
@@ -22,19 +22,7 @@ module.exports = class ProfileController {
         userProfile
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
@@ -44,19 +32,7 @@ module.exports = class ProfileController {
       const profileData = await ProfileService.getOthersProfile(req.user_ID, req.body.user_Id);
       res.status(200).send(profileData);
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
@@ -71,44 +47,21 @@ module.exports = class ProfileController {
       });
 
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 
   // API Update Profile
   static async apiUpdateProfile(req, res, next) {
     try {
-      const profileData = await ProfileService.updateProfile(req.body, req.user_ID);
+      const { updateUsr, referral_code } = await ProfileService.updateProfile(req.body, req.user_ID);
       res.send({
         message: "success updated Profile",
-        ProfileDoc: profileData
+        ProfileDoc: updateUsr,
+        referral_code
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 
@@ -122,19 +75,7 @@ module.exports = class ProfileController {
           .status(200)
       }
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: `something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 };

@@ -6,7 +6,7 @@ const Profile = require("../models/Profile/Profile");
 const Referral = require("../models/referelSchema");
 const { track } = require("./mixpanel-service");
 const { my_age } = require("../utils/moment");
-const { createCreditForNewUser, CreditCheckFunction, creditDeductionFunction } = require("./CreditService");
+const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
 const { referral_code_generator } = require("../utils/otp.util");
 const { ObjectId } = require("mongodb");
@@ -279,15 +279,15 @@ module.exports = class ProfileService {
         },
       ])
       const referral_code = await Referral.findOne({
-        user_Id:ObjectId(user_ID)
+        user_Id: ObjectId(user_ID)
       });
 
       // mixpanel track get my profile 
       await track('Get My Profile ', {
         distinct_id: user_ID,
       });
-      
-      return {MyProfile,referral_code}
+
+      return { MyProfile, referral_code }
     }
 
   };
@@ -343,7 +343,10 @@ module.exports = class ProfileService {
         distinct_id: userId,
         $email: bodyData.email
       });
-      return updateUsr;
+      const referral_code = await Referral.findOne({
+        user_Id: ObjectId(userId)
+      });
+      return { updateUsr, referral_code };
     }
   };
 

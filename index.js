@@ -19,7 +19,8 @@ const { } = require("./CronJob/cronJob");
 const ReportRouter = require("./routes/report.routes");
 const JsonRouter = require('./routes/jsonData.routes');
 const ReferCodeRouter = require("./routes/referral.routes");
-const TransactionRouter = require("./routes/transaction.routes")
+const TransactionRouter = require("./routes/transaction.routes");
+const SuggestionRouter = require('./routes/suggestion.routes');
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -28,6 +29,7 @@ const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
 const { referral_code_generator } = require("./utils/otp.util");
+const ocr = require("./ocr");
 connectDB();
 
 app.set('trust proxy', 1)
@@ -53,11 +55,10 @@ app.use(GlobalSearchRouter);
 app.use(JsonRouter);
 app.use(ReportRouter);
 app.use(ReferCodeRouter);
-app.use(TransactionRouter)
+app.use(TransactionRouter);
+app.use(SuggestionRouter);
 
 //server listener
 app.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
 });
-
-referral_code_generator("Kevin")

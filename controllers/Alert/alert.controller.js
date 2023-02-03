@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const AlertService = require("../../services/AlertService");
 
 module.exports = class AlertController {
@@ -15,20 +16,7 @@ module.exports = class AlertController {
         alertData: alertData
       })
     } catch (e) {
-      console.log(e)
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 
@@ -44,19 +32,7 @@ module.exports = class AlertController {
         alertData: alerts
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 
@@ -73,19 +49,7 @@ module.exports = class AlertController {
         alertData: updateAlert
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   };
 
@@ -100,19 +64,7 @@ module.exports = class AlertController {
         message: deleteAlert,
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e, res)
     };
   }
 };

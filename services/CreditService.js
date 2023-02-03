@@ -1,7 +1,7 @@
 const Credit = require("../models/creditSchema");
 const { durationInDays, expiry_date_func } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
-const { credit_value, boost_vales } = require("../utils/creditValues");
+const { credit_value, boost_vales, HighLight_values } = require("../utils/creditValues");
 const moment = require('moment');
 const { ObjectId } = require("mongodb");
 const Generic = require("../models/Ads/genericSchema");
@@ -520,7 +520,8 @@ module.exports = class CreditService {
             ad_id: ad_id,
             number_of_credit: creditValue_for_usage,
             category: category,
-            credited_on: currentDate
+            credited_on: currentDate,
+            Boost_expiry_date: boost_duration === "Days7" ? expiry_date_func(7) : expiry_date_func(14)
           }
         }
       })
@@ -557,8 +558,8 @@ module.exports = class CreditService {
       Highlight: 5
     };
 
-    const Ad = await Generic.findOne({_id:ObjectId(ad_id)})
-    if(Ad.isPrime === true){
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id) })
+    if (Ad.isPrime === true) {
       throw ({ status: 401, message: 'AD_IS_ALREADY_PREMIUM' })
     }
 
@@ -703,4 +704,162 @@ module.exports = class CreditService {
     }
     return "SUCCESSFULLY_UPDATED_TO_PREMIUM"
   };
+
+  //HIGHLIGHTAD
+  static async HighLight_MyAd(user_Id, body) {
+
+    const { ad_id, category, HighLight_Duration } = body
+
+    const AdsArray = Array(body.AdsArray);
+
+    const adDetail = await Generic.findById({ _id: ad_id })
+
+    if (adDetail.isPrime !== true) {
+      throw ({ status: 404, message: 'AD_SHOULD_BE_PRIME' });
+    }
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+    const user_credit_Document = await Credit.findOne({
+
+      user_id: user_Id
+
+    })
+
+
+    let universal_credit_bundles = user_credit_Document.universal_credit_bundles;
+
+    universal_credit_bundles = universal_credit_bundles.filter(elem => {
+
+      if (elem.credit_status !== "Expired") {
+
+        return elem
+
+      }
+    })
+
+
+    universal_credit_bundles.sort((a, b) => {
+
+      return new Date(a.credit_expiry_date) - new Date(b.credit_expiry_date)
+
+    })
+
+
+    const CategoryCreditBaseValue = credit_value[category]
+
+    const tempArray = [];
+
+    AdsArray.forEach(ad => {
+      tempArray.push(false)
+    })
+
+    let creditValue_for_usage = 0
+
+    AdsArray.forEach((eachAd, i) => {
+
+      // const credittype = getCreditType(eachAd);
+
+      const creditTypeMultiple = HighLight_values;
+
+      const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
+
+
+      creditValue_for_usage = creditValue_for_usage + requiredCredits
+
+      let tempRequiredCredits = requiredCredits;
+
+      let tempBundles = universal_credit_bundles;
+
+
+      let usingUniversalBundle = false;
+
+      for (var j = 0; j < tempBundles.length; j++) {
+
+        let bundle = tempBundles[j];
+
+        let creditCount = bundle["number_of_credit"];
+
+        /// if this bundle has enough credit all the requirenment will be fulfilled
+        if (creditCount >= requiredCredits) {
+
+          creditCount = creditCount - tempRequiredCredits;
+          tempRequiredCredits = 0;
+          usingUniversalBundle = true;
+          tempBundles[j]['number_of_credit'] = creditCount;
+
+          break;
+
+        } else {
+          /// else using all the credits of this bundle and move to the next after reducing required credits
+          tempRequiredCredits = tempRequiredCredits - creditCount;
+          creditCount = 0;
+        }
+        tempBundles[j]['number_of_credit'] = creditCount;
+      }
+
+      // if this ad can be posted using universal credits
+      if (usingUniversalBundle) {
+
+        tempArray[i] = true;
+
+        universal_credit_bundles = tempBundles;
+      }
+
+    })
+
+    if (tempArray.includes(false)) {
+
+      return "NOT_ENOUGH_CREDITS"
+
+    } else {
+      universal_credit_bundles.forEach(async bundle => {
+
+        await Credit.updateOne({
+
+          user_id: ObjectId(user_Id),
+
+          "universal_credit_bundles._id": bundle._id
+
+        }, {
+          $set: {
+
+            'universal_credit_bundles.$.number_of_credit': bundle.number_of_credit,
+
+            'universal_credit_bundles.$.credit_status': bundle.number_of_credit == 0 ? "Empty" : "Active"
+          }
+        })
+      });
+
+      await Credit.updateOne({
+
+        user_id: ObjectId(user_Id),
+
+      }, {
+
+        $inc: { "total_universal_credits": -creditValue_for_usage },
+
+        $push: {
+          credit_usage: {
+            ad_id: ad_id,
+            number_of_credit: creditValue_for_usage,
+            category: category,
+            credited_on: currentDate,
+            Highlight_expiry_date:expiry_date_func(HighLight_Duration),
+          }
+        }
+      })
+
+      await Generic.findOneAndUpdate({ _id: ad_id }, {
+        $set: {
+          is_Highlighted: true,
+          Highlight_Days: HighLight_Duration,
+          Highlighted_Date: currentDate,
+          Highlight_Expiry_Date: expiry_date_func(HighLight_Duration),
+        }
+      })
+    }
+    return "SUCCESSFULLY_HIGHLIGHTED"
+  };
+
 };

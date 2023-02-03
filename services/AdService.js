@@ -149,7 +149,7 @@ module.exports = class AdService {
         }
 
         await createGlobalSearch(body)
-        
+
         if (UpdatedUser.my_ads.length == 1) {
 
           const reffered_by_user = await Referral.findOne({ is_used: true, used_by: ObjectId(userId) })
@@ -377,7 +377,7 @@ module.exports = class AdService {
                   _id: 1,
                   parent_id: 1,
                   title: 1,
-                  category:1,
+                  category: 1,
                   description: 1,
                   saved: 1,
                   views: 1,
@@ -936,7 +936,7 @@ module.exports = class AdService {
       $project to show only the required fields 
       $sort to sort all the final ads y ad_favourite date 
       */
-      const getMyFavAds = await Profile.aggregate([
+      let getMyFavAds = await Profile.aggregate([
         {
           '$match': {
             '_id': ObjectId(userId)
@@ -1013,6 +1013,14 @@ module.exports = class AdService {
       await track('get favourite Ads !! ', {
         distinct_id: userId
       });
+
+
+      // ads are filtered with ad_status
+      for (var i = getMyFavAds.length - 1; i >= 0; --i) {
+        if (getMyFavAds[i].ad_status !== "Selling") {
+          getMyFavAds.splice(i, 1);
+        }
+      }
 
       if (getMyFavAds.length == 0) {
         await track('failed get favourite Ads !! ', {
@@ -1566,7 +1574,7 @@ $skip and limit for pagination
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
-    
+
     /*  
     
     *************************************************
@@ -1576,7 +1584,7 @@ $skip and limit for pagination
 
     */
     const thumbnail_url = await imgCom(image_url[0]);
-    
+
 
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');

@@ -51,7 +51,7 @@ exports.signUpSignIn = async function (req, res) {
             phone_number: phone_number,
           });
 
-          const ottp = await OTP.findOneAndUpdate(
+          await OTP.findOneAndUpdate(
             {
               phone_number: phone_number,
             },
@@ -73,7 +73,7 @@ exports.signUpSignIn = async function (req, res) {
         //if user is old user and trying to log in again
         else {
           const otp = generateOTP(6);
-          const ottp = await OTP.findOneAndUpdate(
+          await OTP.findOneAndUpdate(
             {
               phone_number: phone_number,
             },
