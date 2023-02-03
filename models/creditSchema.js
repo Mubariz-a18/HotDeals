@@ -40,7 +40,7 @@ const creditSchema = mongoose.Schema({
         ]
       },
       transaction_Id: {
-        type: String
+        type: mongoose.Schema.Types.ObjectId,
       },
     }
   ],

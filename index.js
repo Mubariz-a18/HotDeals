@@ -29,6 +29,7 @@ const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
 const { referral_code_generator } = require("./utils/otp.util");
+const ocr = require("./ocr");
 connectDB();
 
 app.set('trust proxy', 1)
@@ -61,5 +62,3 @@ app.use(SuggestionRouter);
 app.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
 });
-
-referral_code_generator("Kevin")
