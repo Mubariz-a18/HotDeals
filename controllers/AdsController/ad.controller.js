@@ -1,3 +1,4 @@
+const errorHandler = require("../../middlewares/errorHandler");
 const AdService = require("../../services/AdService");
 const CreditService = require("../../services/CreditService");
 const { track } = require("../../services/mixpanel-service");
@@ -14,19 +15,7 @@ module.exports = class AdController {
         Ad: adDocument,
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res)
     };
   }
 
@@ -49,19 +38,7 @@ module.exports = class AdController {
         Suspended: getDocument[0].Suspended
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -75,19 +52,7 @@ module.exports = class AdController {
         getHistoryAds
       });
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res)
     };
   }
 
@@ -102,19 +67,7 @@ module.exports = class AdController {
       // Reponse code is sent
       res.status(200).json({ data: updatedAd })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -131,19 +84,7 @@ module.exports = class AdController {
         }
       )
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -159,19 +100,7 @@ module.exports = class AdController {
         Total_Fav_Ads: Get_My_Fav_Ads.length
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -193,19 +122,7 @@ module.exports = class AdController {
         isAdFav: isAdFav
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -237,19 +154,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -279,19 +184,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -327,19 +220,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -361,19 +242,7 @@ module.exports = class AdController {
         res.status(200).send(adstatus)
       }
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -389,19 +258,7 @@ module.exports = class AdController {
       })
 
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -415,19 +272,7 @@ module.exports = class AdController {
       })
 
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 
@@ -445,20 +290,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -472,20 +304,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   };
 
@@ -498,19 +317,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-      if (!e.status) {
-        res.status(500).json({
-          error: {
-            message: ` something went wrong try again : ${e.message} `
-          }
-        });
-      } else {
-        res.status(e.status).json({
-          error: {
-            message: e.message
-          }
-        });
-      };
+      errorHandler(e , res);
     };
   }
 };

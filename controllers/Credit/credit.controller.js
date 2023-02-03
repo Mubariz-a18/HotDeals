@@ -83,7 +83,7 @@ module.exports = class CreditController {
   static async apiHighlightAd(req, res, next) {
     try {
       // return the doc from service 
-      const creditDoc = await CreditService.highlight_MyAd(req.user_ID, req.body);
+      const creditDoc = await CreditService.HighLight_MyAd(req.user_ID, req.body);
       // response is sent
       res.status(200).send({
         message: creditDoc

@@ -47,16 +47,6 @@ const creditSchema = mongoose.Schema({
 
   credit_usage: [
     {
-      // source_of_credit:  {
-      //   type: String,
-      //   enum: [
-      //     "Paid",
-      //     "Admin-Login",
-      //     "Monthly",
-      //     "Refferal",
-      //     "By-Admin"
-      //   ]
-      // },
       ad_id: {
         type: mongoose.Schema.Types.ObjectId
       },
@@ -67,13 +57,10 @@ const creditSchema = mongoose.Schema({
       category: {
         type: String
       },
-      General_Boost_expiry_date: {
+      Boost_expiry_date: {
         type: String
       },
       Highlight_expiry_date: {
-        type: String
-      },
-      Premium_Boost_expiry_date: {
         type: String
       },
       credited_on: {

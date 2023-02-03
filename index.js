@@ -19,7 +19,8 @@ const { } = require("./CronJob/cronJob");
 const ReportRouter = require("./routes/report.routes");
 const JsonRouter = require('./routes/jsonData.routes');
 const ReferCodeRouter = require("./routes/referral.routes");
-const TransactionRouter = require("./routes/transaction.routes")
+const TransactionRouter = require("./routes/transaction.routes");
+const SuggestionRouter = require('./routes/suggestion.routes');
 //Middlewares
 const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -53,7 +54,8 @@ app.use(GlobalSearchRouter);
 app.use(JsonRouter);
 app.use(ReportRouter);
 app.use(ReferCodeRouter);
-app.use(TransactionRouter)
+app.use(TransactionRouter);
+app.use(SuggestionRouter);
 
 //server listener
 app.listen(PORT, () => {
