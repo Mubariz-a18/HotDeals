@@ -1,5 +1,5 @@
 const sharp = require('sharp');
-const firebase = require('firebase-admin');
+// const firebase = require('firebase-admin');
 const { app } = require('./firebaseAppSetup');
 const axios = require("axios")
 

@@ -33,12 +33,9 @@
     "nodemailer": "^6.8.0",
     "phone": "^3.1.33",
     "razorpay": "^2.8.4",
-    "regex-email": "^1.0.2",
-    "regex-url": "^1.0.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
-    "sharp": "^0.31.3",
-    "tesseract.js": "^4.0.2"
+    "sharp": "^0.31.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

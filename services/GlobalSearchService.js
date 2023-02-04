@@ -101,7 +101,6 @@ module.exports = class GlobalSearchService {
             created_at: 1,
             isPrime: -1
         }).sort({ isPrime: -1, created_at: -1 })
-        console.log(searched_ads);
         // mix panel track for Global search api
         await track('Global search  success !! ', {
             distinct_id:user_id,
