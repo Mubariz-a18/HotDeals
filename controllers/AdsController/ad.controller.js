@@ -2,6 +2,7 @@ const errorHandler = require("../../middlewares/errorHandler");
 const AdService = require("../../services/AdService");
 const CreditService = require("../../services/CreditService");
 const { track } = require("../../services/mixpanel-service");
+const imageWaterMark = require("../../waterMarkImages");
 
 module.exports = class AdController {
   // Ad Created -- data is saved &  retured from AdService  

@@ -28,8 +28,6 @@ const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 const PORT = process.env.PORT || 3000;
 //Connecting to MongoDB
 const connectDB = require("./db/connectDatabase");
-const { referral_code_generator } = require("./utils/otp.util");
-const ocr = require("./ocr");
 connectDB();
 
 app.set('trust proxy', 1)

@@ -4,14 +4,8 @@ const { app } = require('./firebaseAppSetup');
 const axios = require("axios")
 
 
-const imageWaterMark = async () => {
-
-    const imageUrls = [
-        // "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2F0.05471868184294.jpg?alt=media&token=de9862da-8384-4f50-8180-bdd1f292640e"
-        "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/postimages%2F1-201674189685243?alt=media&token=c2c407f5-e033-4894-bffa-e16f01aca125",
-        // "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/postimage%2F12-211671602917505?alt=media&token=c403f01c-3df7-4ce4-b031-d3d9d9553be6"
-    ];
-
+const imageWaterMark = async (imageArray) => {
+    const imageUrls = imageArray;
     const storage = app.storage();
 
     const bucket = storage.bucket(process.env.BUCKETNAME);

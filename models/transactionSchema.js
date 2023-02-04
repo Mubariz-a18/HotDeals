@@ -25,10 +25,20 @@ const transactionSchema = mongoose.Schema(
                 'Failed',
             ]
         },
+        credits_bundle: [
+            {
+                number_of_credit: {
+                    type: Number
+                },
+                credit_duration: {
+                    type: Number
+                },
+            }
+        ],
         payment_initate_date: {
             type: String,
         },
-        payment_completion_date:{
+        payment_completion_date: {
             type: String,
         }
     }

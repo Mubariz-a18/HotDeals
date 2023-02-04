@@ -5,6 +5,7 @@ const { credit_value, boost_vales, HighLight_values } = require("../utils/credit
 const moment = require('moment');
 const { ObjectId } = require("mongodb");
 const Generic = require("../models/Ads/genericSchema");
+const Transaction = require("../models/transactionSchema");
 
 const creditType = {
   Premium: "Premium",
@@ -113,6 +114,15 @@ module.exports = class CreditService {
 
       }, {
         new: true
+      })
+
+      await Transaction.findOneAndUpdate({_id:ObjectId(credit.transaction_Id)},{
+        $push:{
+          credits_bundle:{
+            number_of_credit:credit.number_of_credit,
+            credit_duration:credit.credit_duration
+          }
+        }
       })
 
     });

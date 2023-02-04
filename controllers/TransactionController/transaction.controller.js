@@ -25,4 +25,15 @@ module.exports = class TransactionController {
             errorHandler(e, res)
         };
     }
+    
+    static async apigetInvoices(req, res, next) {
+        try {
+            const Invoices = await TransactionService.getInvoiceService(req.user_ID)
+            res.status(200).json({
+                message: Invoices
+            })
+        } catch (e) {
+            errorHandler(e, res)
+        };
+    }
 };

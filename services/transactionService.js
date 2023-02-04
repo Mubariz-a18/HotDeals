@@ -98,4 +98,13 @@ module.exports = class TransactionService {
             throw ({ status: 403, message: "UNAUTHORIZED" });
         }
     };
+
+    static async getInvoiceService(user_ID){
+        const Invoices = await Transaction.find({user_id:ObjectId(user_ID),status:"Successfull"});
+        if(Invoices){
+            return Invoices
+        }else{
+            throw ({ status: 404, message: "NO_INVOICES_FOUND" });
+        }
+    }
 }

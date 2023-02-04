@@ -14,6 +14,7 @@ const cloudMessage = require("../cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
+const imageWaterMark = require("../waterMarkImages");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -280,6 +281,15 @@ module.exports = class AdService {
         await cloudMessage(userId.toString(), messageBody);
 
         await Draft.deleteOne({ _id: ad_id });
+       
+        // if(adDoc.thumbnail_url.length === 0){
+        //   await Generic.findOneAndUpdate({_id:ObjectId(ad_id)},{
+        //     $push:{
+        //       thumbnail_url:'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+        //     }
+        //   })
+        // }
+        // await imageWaterMark(image_url);
 
         return adDoc
       }
