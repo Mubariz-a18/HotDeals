@@ -8,10 +8,6 @@ const referralCodeSchema = mongoose.Schema(
     referral_code: {
       type: String
     },
-    is_used: {
-      type: Boolean,
-      default: false
-    },
     used_by: [
       {
         type: mongoose.Schema.Types.ObjectId,

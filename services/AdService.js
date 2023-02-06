@@ -190,7 +190,18 @@ module.exports = class AdService {
 
             }, {
               new: true
-            })
+            });
+            
+            const messageBody = {
+              title: `You Have Gained '${50}' Credits By Referral Code!!`,
+              body: "Check Your Credit Info",
+              data: {
+                navigateTo: navigateToTabs.home
+              },
+              type: "Info"
+            }
+
+            await cloudMessage(userId.toString(), messageBody);
           }
         } else {
 

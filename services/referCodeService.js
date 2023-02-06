@@ -3,6 +3,8 @@ const { createCredit } = require("./CreditService");
 const moment = require('moment');
 const Credit = require("../models/creditSchema");
 const { expiry_date_func } = require("../utils/moment");
+const navigateToTabs = require("../utils/navigationTabs");
+const cloudMessage = require("../cloudMessaging");
 
 
 
@@ -26,7 +28,7 @@ module.exports = class ReferCodeService {
             },
 
                 {
-                    $push:{
+                    $push: {
                         used_by: user_ID,
                     },
                     // $set: {
@@ -39,26 +41,37 @@ module.exports = class ReferCodeService {
             const push = {
 
                 universal_credit_bundles: {
-        
-                  number_of_credit: 50,
-                  source_of_credit: "Refferal",
-                  credit_status: "Active",
-                  credit_duration: 30,
-                  credit_expiry_date: expiry_date_func(30),
-                  credit_created_date: currentDate
-        
+
+                    number_of_credit: 50,
+                    source_of_credit: "Refferal",
+                    credit_status: "Active",
+                    credit_duration: 30,
+                    credit_expiry_date: expiry_date_func(30),
+                    credit_created_date: currentDate
+
                 }
-              }
+            }
 
             const Referred_Credit_Doc = await Credit.findOneAndUpdate({ user_id: user_ID }, {
 
                 $inc: { total_universal_credits: 50 },
-        
+
                 $push: push
-        
-              }, {
+
+            }, {
                 new: true
-              })
+            })
+
+            const messageBody = {
+                title: `You Have Gained '${50}' Credits By Referral Code!!`,
+                body: "Check Your Credit Info",
+                data: {
+                    navigateTo: navigateToTabs.home
+                },
+                type: "Info"
+            }
+
+            await cloudMessage(user_ID.toString(), messageBody);
 
             return "SUCCESSFULLY_REDEEMED_THE_REFERRALCODE"
         }

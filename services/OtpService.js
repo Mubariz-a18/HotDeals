@@ -12,7 +12,6 @@ module.exports = class OtpService {
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
     });
-    //if  number is already present return otpDoc  
     if (otpDoc) {
       await OtpModel.deleteOne(
         { phoneNumber: phoneNumber }
@@ -41,12 +40,10 @@ module.exports = class OtpService {
     });
     // Deleting Doc
     if (otpDoc) {
-      if (phoneNumber) {
-        await OtpModel.deleteOne({
-          phoneNumber,
-          otp,
-        });
-      };
+      await OtpModel.deleteOne({
+        phoneNumber,
+        otp,
+      });
       return "approved";
     }
     else {

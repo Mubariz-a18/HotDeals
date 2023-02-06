@@ -6,6 +6,8 @@ const moment = require('moment');
 const { ObjectId } = require("mongodb");
 const Generic = require("../models/Ads/genericSchema");
 const Transaction = require("../models/transactionSchema");
+const cloudMessage = require("../cloudMessaging");
+const navigateToTabs = require("../utils/navigationTabs");
 
 const creditType = {
   Premium: "Premium",
@@ -71,6 +73,24 @@ module.exports = class CreditService {
 
     });
 
+
+    /* 
+ 
+  Cloud Notification To firebase
+ 
+  */
+
+    const messageBody = {
+      title: `You Earned 200 Free Credits !!`,
+      body: "Check Your Credit Info",
+      data: {
+        navigateTo: navigateToTabs.home
+      },
+      type: "Info"
+    }
+
+    await cloudMessage(user_id.toString(), messageBody);
+
     // updating the user profile with default values
 
     await Profile.findOneAndUpdate({ _id: user_id }, {
@@ -116,16 +136,39 @@ module.exports = class CreditService {
         new: true
       })
 
-      await Transaction.findOneAndUpdate({_id:ObjectId(credit.transaction_Id)},{
-        $push:{
-          credits_bundle:{
-            number_of_credit:credit.number_of_credit,
-            credit_duration:credit.credit_duration
+      await Transaction.findOneAndUpdate({ _id: ObjectId(credit.transaction_Id) }, {
+        $push: {
+          credits_bundle: {
+            number_of_credit: credit.number_of_credit,
+            credit_duration: credit.credit_duration
           }
         }
       })
 
     });
+
+
+    /* 
+ 
+  Cloud Notification To firebase
+ 
+*/
+    let creditCount = 0;
+
+    creditsArray.forEach(crd=>{
+       creditCount = creditCount +  crd.number_of_credit
+    })
+
+    const messageBody = {
+      title: `You Have Purchased '${creditCount}' Credits !!`,
+      body: "Check Your Credit Info",
+      data: {
+        navigateTo: navigateToTabs.home
+      },
+      type: "Info"
+    }
+
+    await cloudMessage(userId.toString(), messageBody);
 
     return "SUCCESSFULLY_PURCHASED"
 
@@ -233,7 +276,7 @@ module.exports = class CreditService {
       Highlight: 5
     };
 
-    const { category ,title} = bodyData;
+    const { category, title } = bodyData;
 
     const AdsArray = Array(bodyData.AdsArray);
 
@@ -351,7 +394,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
-            title:title,
+            title: title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate
@@ -405,8 +448,8 @@ module.exports = class CreditService {
 
     const { ad_id, category, boost_duration } = body
 
-    const Ad = await Generic.findById({_id:ObjectId(ad_id)});
-  
+    const Ad = await Generic.findById({ _id: ObjectId(ad_id) });
+
     const AdsArray = Array(body.AdsArray);
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -531,7 +574,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
-            title:Ad.title,
+            title: Ad.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
@@ -700,7 +743,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
-            title:Ad.title,
+            title: Ad.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate
@@ -857,11 +900,11 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
-            title:adDetail.title,
+            title: adDetail.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
-            Highlight_expiry_date:expiry_date_func(HighLight_Duration),
+            Highlight_expiry_date: expiry_date_func(HighLight_Duration),
           }
         }
       })

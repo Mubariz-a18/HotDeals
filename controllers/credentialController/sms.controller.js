@@ -25,7 +25,7 @@ module.exports = class SMSController {
       "@api.exotel.in/v1/Accounts/" +
       EXOTEL_ACCOUNT_SID +
       "/Sms/send.json";
-      console.log(url)
+      // console.log(url)
     try {
       const exoResponse = await axios.post(
         url,

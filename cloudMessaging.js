@@ -19,58 +19,52 @@ const cloudMessage = async (userId, messageData) => {
     const userData = await getUserFromFireBase(userId);
 
     const deviceTokens = [];
-
-    if(userData.activeDevices){
-        
+    if (userData && userData.activeDevices ) {
         Object.keys(userData.activeDevices).forEach(function (key) {
 
             deviceTokens.push(userData.activeDevices[key].deviceToken);
-    
+
         });
-    }
-    else{
-        deviceTokens.push(userData.deviceToken)
-    }
+        const message = {
 
-
-    const message = {
-
-        tokens: deviceTokens,
-
-        android: {
-            notification: {
-                clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+            tokens: deviceTokens,
+    
+            android: {
+                notification: {
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                },
             },
-        },
-        
-        notification: {
-            title: title,
-            body: body
-        },
-
-        data:data
-    };
-
-    const messageSent = await messaging.sendMulticast(message);
-
-    await db
-        .ref("Notifications")
-        .child(userId.toString())
-        .push()
-        .set(
-
-            {
-                "title": title,
-                "content": body,
-                "createdAt": currentDate,
-                "data": data,
-                'seenByUser': false,
-                "type": type
-            }
-
-        )
-    return messageSent
-
+    
+            notification: {
+                title: title,
+                body: body
+            },
+    
+            data: data
+        };
+    
+        const messageSent = await messaging.sendMulticast(message);
+    
+        await db
+            .ref("Notifications")
+            .child(userId.toString())
+            .push()
+            .set(
+    
+                {
+                    "title": title,
+                    "content": body,
+                    "createdAt": currentDate,
+                    "data": data,
+                    'seenByUser': false,
+                    "type": type
+                }
+    
+            )
+            return messageSent
+    }
+    else { }
+ 
 }
 
 module.exports = cloudMessage

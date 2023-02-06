@@ -420,3 +420,27 @@ const { getStorage, ref, deleteObject, getDownloadURL } = require("firebase/stor
 
     //   return newCredit;
     // }
+
+
+
+    
+
+async function updateCredits(params) {
+  const credits = await Credit.find()
+
+  credits.forEach(cred=>{
+
+    cred.universal_credit_bundles.forEach(async bundle=>{
+      if(!bundle.credit_expiry_date){
+        await Credit.updateOne({_id:cred._id,'universal_credit_bundles._id':bundle._id},{
+          $set:{
+            'universal_credit_bundles.$.credit_expiry_date':"2023-03-14 18:10:01"
+            }
+        })
+      }
+    })
+
+  })
+}
+
+updateCredits()

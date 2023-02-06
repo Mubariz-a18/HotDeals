@@ -258,7 +258,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20
 });
 
 
-//(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc
+//(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc "0 0 01 * *"  "* * * * *"
 const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 
   const Credits = await Credit.find({});
@@ -281,11 +281,29 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
           credit_status: "Active",
           credit_created_date: currentDate,
           credit_duration: 30,
-          credits_expires_on: expiry_date_func(30)
+          credit_expiry_date: expiry_date_func(30)
 
         }
       }
     }, { new: true });
+
+    /* 
+ 
+  Cloud Notification To firebase
+ 
+*/
+
+    const messageBody = {
+      title: `You Earned 100 Free Credits!!`,
+      body: "Check Your Credit Info",
+      data: {
+        navigateTo: navigateToTabs.home
+      },
+      type: "Info"
+    }
+
+    await cloudMessage(creditDoc.user_id.toString(), messageBody);
+
   })
 });
 
@@ -462,12 +480,14 @@ const creditExpire = cron.schedule("0 0 0 * * *", async () => {
       "universal_credit_bundles.$.credit_status": "Expired"
 
     }
-  },{new:true});
+  }, { new: true });
 });
+
+
 
 
 module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
-  // Schedule_Task_Monthly_credits,
+  Schedule_Task_Monthly_credits,
   // creditExpire
 }

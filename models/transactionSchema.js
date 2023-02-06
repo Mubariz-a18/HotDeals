@@ -9,7 +9,7 @@ const transactionSchema = mongoose.Schema(
             type: String,
         },
         payment_id: {
-            type: mongoose.Schema.Types.ObjectId,
+            type:  String,
         },
         bundle_id: {
             type: String

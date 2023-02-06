@@ -40,7 +40,7 @@ module.exports = class TransactionService {
 
         const orderId = bodyData.orderId;
 
-        if(bodyData.status === "Failed"){
+        if (bodyData.status === "Failed") {
 
             await Transaction.findOneAndUpdate(
 
@@ -82,6 +82,7 @@ module.exports = class TransactionService {
                 { order_id: orderId }, {
                 $set: {
                     status: "Successfull",
+                    payment_id: paymentId,
                     payment_completion_date: currentDate
                 }
             });
@@ -92,6 +93,7 @@ module.exports = class TransactionService {
                 { order_id: orderId }, {
                 $set: {
                     status: "Failed",
+                    payment_id: paymentId,
                     payment_completion_date: currentDate
                 }
             });
@@ -99,12 +101,12 @@ module.exports = class TransactionService {
         }
     };
 
-    static async getInvoiceService(user_ID){
-        const Invoices = await Transaction.find({user_id:ObjectId(user_ID),status:"Successfull"});
-        if(Invoices){
+    static async getInvoiceService(user_ID) {
+        const Invoices = await Transaction.find({ user_id: ObjectId(user_ID), status: "Successfull" });
+        if (Invoices) {
             return Invoices
-        }else{
+        } else {
             throw ({ status: 404, message: "NO_INVOICES_FOUND" });
         }
-    }//comment
+    }
 }

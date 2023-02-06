@@ -27,7 +27,7 @@ const imageWaterMark = async (imageArray) => {
             .toBuffer();
 
 
-        const filename = url.substring(url.lastIndexOf('%2F') +3  , url.indexOf('?'));
+        const filename = url.substring(url.lastIndexOf('%2F') + 3, url.indexOf('?'));
 
 
         // Save the watermarked image to Firebase storage
