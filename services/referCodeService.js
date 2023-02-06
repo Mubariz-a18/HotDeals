@@ -12,7 +12,7 @@ module.exports = class ReferCodeService {
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-        const referCodeExist = await Referral.findOne({ is_used: false, referral_code: bodyData.referral_code });
+        const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
 
         if (!referCodeExist) {
 
@@ -21,16 +21,18 @@ module.exports = class ReferCodeService {
         } else {
 
             await Referral.findOneAndUpdate({
-                is_used: false,
+                // is_used: false,
                 referral_code: bodyData.referral_code
             },
 
                 {
-                    $set: {
-                        is_used: true,
+                    $push:{
                         used_by: user_ID,
-                        used_Date: currentDate
-                    }
+                    },
+                    // $set: {
+                    //     // is_used: true,
+                    //     // used_Date: currentDate
+                    // }
                 }
             )
 
@@ -41,8 +43,8 @@ module.exports = class ReferCodeService {
                   number_of_credit: 50,
                   source_of_credit: "Refferal",
                   credit_status: "Active",
-                  credit_duration: 60,
-                  credit_expiry_date: expiry_date_func(60),
+                  credit_duration: 30,
+                  credit_expiry_date: expiry_date_func(30),
                   credit_created_date: currentDate
         
                 }

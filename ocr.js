@@ -36,3 +36,17 @@
 //     // console.log(emailMatches, urlMatches, phoneMatches)
 //     await worker.terminate();
 // })();
+
+
+
+// const Ocrad = require("ocrad.js");
+// const request = require("request");
+
+// var imageUrl = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/postimages%2F1-101673337802046?alt=media&token=aeab2fbc-63fc-4536-930f-ebf5a328bc65";
+
+// request({url: imageUrl, encoding: null}, function(err, response, data) {
+//   var imageData = new Uint8Array(data);
+//   var text = Ocrad(imageData);
+
+//   console.log("OCR result:", text);
+// });

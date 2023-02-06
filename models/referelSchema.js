@@ -12,9 +12,11 @@ const referralCodeSchema = mongoose.Schema(
       type: Boolean,
       default: false
     },
-    used_by: {
-      type: mongoose.Schema.Types.ObjectId,
-    },
+    used_by: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+      }
+    ],
     used_Date: {
       type: String
     }

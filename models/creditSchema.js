@@ -50,7 +50,9 @@ const creditSchema = mongoose.Schema({
       ad_id: {
         type: mongoose.Schema.Types.ObjectId
       },
-
+      title:{
+        type: String
+      },
       number_of_credit: {
         type: Number
       },

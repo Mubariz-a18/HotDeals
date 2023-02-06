@@ -72,6 +72,17 @@ module.exports = class AdService {
 
       */
       const thumbnail_url = await imgCom(image_url[0]);
+
+      /*
+
+      *************************************************
+      IMAGE WATERMARK
+      *************************************************
+      
+      */
+
+      await imageWaterMark(image_url)
+
       /* 
       
       **********************************************************
@@ -86,6 +97,7 @@ module.exports = class AdService {
       if (health == "HEALTHY") {
 
         const creditDuctConfig = {
+          title: title,
           category: category,
           AdsArray: bodyData.AdsArray
         }
@@ -189,7 +201,7 @@ module.exports = class AdService {
  
         */
         const messageBody = {
-          title: "Your Ad Is Successfully Posted !!",
+          title: `Your Ad '${title}' Is Successfully Posted !!`,
           body: "Click here to check ...",
           data: {
             id: ad_id.toString(),
@@ -272,7 +284,7 @@ module.exports = class AdService {
  
         */
         const messageBody = {
-          title: "Your Ad Is Pending !!",
+          title: `Your Ad '${title}' Is Pending !!`,
           body: "Click here to check ...",
           data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
           type: "Info"
@@ -281,15 +293,15 @@ module.exports = class AdService {
         await cloudMessage(userId.toString(), messageBody);
 
         await Draft.deleteOne({ _id: ad_id });
-       
-        // if(adDoc.thumbnail_url.length === 0){
-        //   await Generic.findOneAndUpdate({_id:ObjectId(ad_id)},{
-        //     $push:{
-        //       thumbnail_url:'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
-        //     }
-        //   })
-        // }
-        // await imageWaterMark(image_url);
+
+        if (adDoc.thumbnail_url.length === 0) {
+          await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+            $push: {
+              thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+            }
+          })
+        }
+        await imageWaterMark(image_url);
 
         return adDoc
       }
@@ -332,7 +344,7 @@ module.exports = class AdService {
     
     */
     const messageBody = {
-      title: "Your Ad Is Successfully Updated !!",
+      title: `Your Ad Is '${title}' Successfully Updated !!`,
       body: "Click here to check ...",
       data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
       type: "Info"

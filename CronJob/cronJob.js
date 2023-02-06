@@ -206,7 +206,7 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20
         */
 
         const messageBody = {
-          title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
+          title: `Potential Ads For Your '${alert.name}' Ad Alert !!`,
           body: "Click here to check ...",
           data: {
             id: alert._id.toString(),

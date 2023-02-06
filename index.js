@@ -60,3 +60,7 @@ app.use(SuggestionRouter);
 app.listen(PORT, () => {
   console.log(`server is running On port : ${PORT}`)
 });
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error.message,error.stack,error.name);
+});

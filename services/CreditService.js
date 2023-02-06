@@ -233,7 +233,7 @@ module.exports = class CreditService {
       Highlight: 5
     };
 
-    const { category } = bodyData;
+    const { category ,title} = bodyData;
 
     const AdsArray = Array(bodyData.AdsArray);
 
@@ -351,6 +351,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
+            title:title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate
@@ -404,6 +405,8 @@ module.exports = class CreditService {
 
     const { ad_id, category, boost_duration } = body
 
+    const Ad = await Generic.findById({_id:ObjectId(ad_id)});
+  
     const AdsArray = Array(body.AdsArray);
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -528,6 +531,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
+            title:Ad.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
@@ -696,6 +700,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
+            title:Ad.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate
@@ -852,6 +857,7 @@ module.exports = class CreditService {
         $push: {
           credit_usage: {
             ad_id: ad_id,
+            title:adDetail.title,
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
