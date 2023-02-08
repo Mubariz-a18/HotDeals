@@ -444,3 +444,155 @@ async function updateCredits(params) {
 }
 
 updateCredits()
+
+***************************************************************************************************************
+
+        // // mixpanel track -- Ad create 
+        // await track('Ad creation succeed', {
+        //   category: bodyData.category,
+        //   distinct_id: adDoc._id
+        // })
+        // //save the ad_id in users profile in myads
+        // const UpdatedUser = await Profile.findByIdAndUpdate({ _id: userId }, {
+        //   $push: {
+        //     my_ads: ObjectId(ad_id)
+        //   }
+        // }, { new: true, returnDocument: "after" });
+
+        // const body = {
+        //   ad_id,
+        //   category,
+        //   sub_category,
+        //   title,
+        //   description,
+        //   ad_posted_address,
+        //   ad_posted_location,
+        //   SelectFields
+        // }
+
+        // await createGlobalSearch(body)
+
+        // if (UpdatedUser.my_ads.length == 1) {
+
+        //   const reffered_by_user = await Referral.findOne({ is_used: true, used_by: ObjectId(userId) })
+        //   if (reffered_by_user) {
+
+        //     const push = {
+
+        //       universal_credit_bundles: {
+
+        //         number_of_credit: 50,
+        //         source_of_credit: "Refferal",
+        //         credit_status: "Active",
+        //         credit_duration: 60,
+        //         credit_expiry_date: expiry_date_func(60),
+        //         credit_created_date: currentDate
+
+        //       }
+        //     }
+
+        //     await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
+
+        //       $inc: { total_universal_credits: 50 },
+
+        //       $push: push
+
+        //     }, {
+        //       new: true
+        //     });
+
+        //     const messageBody = {
+        //       title: `You Have Gained '${50}' Credits By Referral Code!!`,
+        //       body: "Check Your Credit Info",
+        //       data: {
+        //         navigateTo: navigateToTabs.home
+        //       },
+        //       type: "Info"
+        //     }
+
+        //     await cloudMessage(userId.toString(), messageBody);
+        //   }
+        // } else {
+
+        // }
+        // /* 
+
+        // Cloud Notification To firebase
+
+        // */
+        // const messageBody = {
+        //   title: `Your Ad '${title}' Is Successfully Posted !!`,
+        //   body: "Click here to check ...",
+        //   data: {
+        //     id: ad_id.toString(),
+        //     navigateTo: navigateToTabs.particularAd
+        //   },
+        //   type: "Info"
+        // }
+
+        // if (adDoc.thumbnail_url.length === 0) {
+        //   await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+        //     $push: {
+        //       thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+        //     }
+        //   })
+        // }
+
+        // await cloudMessage(userId.toString(), messageBody);
+
+        // await Draft.deleteOne({ _id: ad_id });
+
+
+
+
+****************************************************************************************************
+
+        // // mixpanel track -- Ad create 
+        // await track('Ad creation pending', {
+        //   category: bodyData.category,
+        //   distinct_id: adDoc._id
+        // })
+
+        // //save the ad_id in users profile in myads
+        // await Profile.findByIdAndUpdate({ _id: userId }, {
+        //   $push: {
+        //     my_ads: ObjectId(ad_id)
+        //   }
+        // });
+
+        // const body = {
+        //   ad_id,
+        //   category,
+        //   sub_category,
+        //   title,
+        //   description,
+        //   ad_posted_address,
+        //   ad_posted_location,
+        //   SelectFields
+        // }
+
+        // await createGlobalSearch(body);
+
+        // /* 
+
+        // Cloud Notification To firebase
+
+        // */
+        // const messageBody = {
+        //   title: `Your Ad '${title}' Is Pending !!`,
+        //   body: "Click here to check ...",
+        //   data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
+        //   type: "Info"
+        // }
+
+        // await cloudMessage(userId.toString(), messageBody);
+
+        // await Draft.deleteOne({ _id: ad_id });
+
+        // if (adDoc.thumbnail_url.length === 0) {
+        //   await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+        //     $push: {
+        //       thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+        //     }
+        //   })
+        // }

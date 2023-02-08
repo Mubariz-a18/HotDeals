@@ -5,6 +5,8 @@ const Credit = require("../models/creditSchema");
 const { expiry_date_func } = require("../utils/moment");
 const navigateToTabs = require("../utils/navigationTabs");
 const cloudMessage = require("../cloudMessaging");
+const Profile = require("../models/Profile/Profile");
+const { ObjectId } = require("mongodb");
 
 
 
@@ -22,19 +24,21 @@ module.exports = class ReferCodeService {
 
         } else {
 
+            const if_user_already_has_referred = await Profile.findOne({_id:user_ID })
+
+            if(if_user_already_has_referred.referrered_user){
+
+                throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
+
+            }
+
             await Referral.findOneAndUpdate({
-                // is_used: false,
                 referral_code: bodyData.referral_code
             },
-
                 {
-                    $push: {
+                    $addToSet: {
                         used_by: user_ID,
                     },
-                    // $set: {
-                    //     // is_used: true,
-                    //     // used_Date: currentDate
-                    // }
                 }
             )
 
@@ -61,6 +65,13 @@ module.exports = class ReferCodeService {
             }, {
                 new: true
             })
+
+            await Profile.findOneAndUpdate({_id:ObjectId(user_ID)},{
+                $set:{
+                    $inc:{availble_credit:50},
+                    referrered_user:referCodeExist.user_Id
+                }
+            });
 
             const messageBody = {
                 title: `You Have Gained '${50}' Credits By Referral Code!!`,

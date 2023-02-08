@@ -19,22 +19,16 @@ const imageWaterMark = require("../waterMarkImages");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const DateAfter30Days = moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss');
-    // check if user exist or not
-    const findUsr = await Profile.findOne({
-      _id: ObjectId(userId)
-    })
-    //if usere doesnot exist throw error 
-    if (!findUsr) {
-      // Mixpanel -- ad creation failed
-      await track('ad creation failed !!', {
-        distinct_id: userId,
-        message: ` user_id : ${userId}  does not exist`
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+    const adExist = await Generic.findById({_id:bodyData.ad_id});
+
+    if(adExist){
+      throw ({ status: 404, message: 'AD_ALREADY_EXISTS' })
     }
-    else {
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+    const DateAfter30Days = expiry_date_func(30);
+
       // Generic AdDoc is created 
       let {
         ad_id,
@@ -49,7 +43,6 @@ module.exports = class AdService {
         price,
         isPrime,
         image_url,
-        // thumbnail_url,
         video_url,
         ad_present_location,
         ad_posted_location,
@@ -92,26 +85,13 @@ module.exports = class AdService {
       */
       const { health, batch } = await detectSafeSearch(image_url)
 
-      let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
+      let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
 
-      if (health == "HEALTHY") {
-
-        const creditDuctConfig = {
-          title: title,
-          category: category,
-          AdsArray: bodyData.AdsArray
-        }
-        const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
-        if (message === "NOT_ENOUGH_CREDITS") {
-
-          throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
-
-        }
-
+      const createAdFunc = async (status) => {
         let adDoc = await Generic.create({
           _id: ObjectId(ad_id),
           parent_id,
-          user_id: findUsr._id,
+          user_id:  ObjectId(userId),
           category,
           sub_category,
           field,
@@ -125,138 +105,13 @@ module.exports = class AdService {
           ad_type: isPrime == false ? "Free" : "Premium",
           image_url,
           video_url,
-          thumbnail_url,
+          thumbnail_url: thumbnail_url ? thumbnail_url : "'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'",
           ad_present_location: ad_present_location || {},
           ad_posted_location: ad_posted_location || {},
           ad_posted_address,
           ad_present_address,
           ad_Premium_Date: isPrime == true ? currentDate : "",
-          ad_status,
-          is_negotiable,
-          is_ad_posted,
-          created_at: currentDate,
-          ad_expire_date: DateAfter30Days,
-          updated_at: currentDate,
-        });
-        // mixpanel track -- Ad create 
-        await track('Ad creation succeed', {
-          category: bodyData.category,
-          distinct_id: adDoc._id
-        })
-        //save the ad_id in users profile in myads
-        const UpdatedUser = await Profile.findByIdAndUpdate({ _id: userId }, {
-          $push: {
-            my_ads: ObjectId(ad_id)
-          }
-        }, { new: true, returnDocument: "after" });
-
-        const body = {
-          ad_id,
-          category,
-          sub_category,
-          title,
-          description,
-          ad_posted_address,
-          ad_posted_location,
-          SelectFields
-        }
-
-        await createGlobalSearch(body)
-
-        if (UpdatedUser.my_ads.length == 1) {
-
-          const reffered_by_user = await Referral.findOne({ is_used: true, used_by: ObjectId(userId) })
-          if (reffered_by_user) {
-
-            const push = {
-
-              universal_credit_bundles: {
-
-                number_of_credit: 50,
-                source_of_credit: "Refferal",
-                credit_status: "Active",
-                credit_duration: 60,
-                credit_expiry_date: expiry_date_func(60),
-                credit_created_date: currentDate
-
-              }
-            }
-
-            await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
-
-              $inc: { total_universal_credits: 50 },
-
-              $push: push
-
-            }, {
-              new: true
-            });
-            
-            const messageBody = {
-              title: `You Have Gained '${50}' Credits By Referral Code!!`,
-              body: "Check Your Credit Info",
-              data: {
-                navigateTo: navigateToTabs.home
-              },
-              type: "Info"
-            }
-
-            await cloudMessage(userId.toString(), messageBody);
-          }
-        } else {
-
-        }
-        /* 
- 
-        Cloud Notification To firebase
- 
-        */
-        const messageBody = {
-          title: `Your Ad '${title}' Is Successfully Posted !!`,
-          body: "Click here to check ...",
-          data: {
-            id: ad_id.toString(),
-            navigateTo: navigateToTabs.particularAd
-          },
-          type: "Info"
-        }
-
-        await cloudMessage(userId.toString(), messageBody);
-
-        await Draft.deleteOne({ _id: ad_id });
-
-        return adDoc["_doc"];
-
-        // }
-
-
-      }
-
-      else {
-        let adDoc = await Generic.create({
-          _id: ObjectId(ad_id),
-          parent_id,
-          user_id: findUsr._id,
-          category,
-          sub_category,
-          field,
-          description,
-          SelectFields,
-          special_mention,
-          title,
-          price,
-          product_age: age,
-          isPrime,
-          ad_type: isPrime == false ? "Free" : "Premium",
-          image_url,
-          video_url,
-          thumbnail_url,
-          ad_present_location: ad_present_location || {},
-          ad_posted_location: ad_posted_location || {},
-          ad_posted_address,
-          ad_present_address,
-          ad_Premium_Date: isPrime == true ? currentDate : "",
-          ad_status: "Pending",
+          ad_status: status,
           is_negotiable,
           is_ad_posted,
           detection: batch,
@@ -264,60 +119,198 @@ module.exports = class AdService {
           ad_expire_date: DateAfter30Days,
           updated_at: currentDate,
         });
-        // mixpanel track -- Ad create 
-        await track('Ad creation pending', {
-          category: bodyData.category,
-          distinct_id: adDoc._id
-        })
-        //save the ad_id in users profile in myads
-        await Profile.findByIdAndUpdate({ _id: userId }, {
-          $push: {
-            my_ads: ObjectId(ad_id)
-          }
-        });
-
-        const body = {
-          ad_id,
-          category,
-          sub_category,
-          title,
-          description,
-          ad_posted_address,
-          ad_posted_location,
-          SelectFields
-        }
-
-        await createGlobalSearch(body);
-
-        /* 
- 
-        Cloud Notification To firebase
- 
-        */
-        const messageBody = {
-          title: `Your Ad '${title}' Is Pending !!`,
-          body: "Click here to check ...",
-          data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
-          type: "Info"
-        }
-
-        await cloudMessage(userId.toString(), messageBody);
-
-        await Draft.deleteOne({ _id: ad_id });
-
-        if (adDoc.thumbnail_url.length === 0) {
-          await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
-            $push: {
-              thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
-            }
-          })
-        }
-        await imageWaterMark(image_url);
 
         return adDoc
       }
-    }
+
+      if (health == "HEALTHY") {
+
+        const creditDuctConfig = {
+
+          title: title,
+          category: category,
+          AdsArray: bodyData.AdsArray
+
+        }
+        const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
+
+        if (message === "NOT_ENOUGH_CREDITS") {
+
+          throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
+
+        }
+
+        let adDoc = await createAdFunc(ad_status)
+
+        return adDoc["_doc"];
+
+      }
+
+      else {
+
+        let adDoc = await createAdFunc("Pending")
+
+        return adDoc
+      }
   };
+
+
+  static async AfterAdIsPosted(adDoc, userId) {
+
+    const ad_id = adDoc._id;
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+    // mixpanel track -- Ad create 
+    await track('Ad creation succeed', {
+      category: adDoc.category,
+      distinct_id: ad_id
+    });
+
+    //save the ad_id in users profile in myads
+    const UpdatedUser = await Profile.findByIdAndUpdate({ _id: userId }, {
+      $push: {
+        my_ads: ObjectId(ad_id)
+      }
+    }, { new: true, returnDocument: "after" });
+
+    const { category, sub_category, title, description, ad_posted_address, ad_posted_location, SelectFields } = adDoc;
+
+    const body = {
+      ad_id: ad_id,
+      category,
+      sub_category,
+      title,
+      description,
+      ad_posted_address,
+      ad_posted_location,
+      SelectFields
+    }
+
+    await createGlobalSearch(body)
+
+    if (UpdatedUser.my_ads.length === 1 && UpdatedUser.referrered_user) {
+
+      const reffered_by_user = await Referral.findOne({ user_Id: UpdatedUser.referrered_user });
+
+      if (reffered_by_user) {
+
+        const push = {
+
+          universal_credit_bundles: {
+
+            number_of_credit: 50,
+            source_of_credit: "Refferal",
+            credit_status: "Active",
+            credit_duration: 30,
+            credit_expiry_date: expiry_date_func(30),
+            credit_created_date: currentDate
+
+          }
+        }
+
+        await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
+
+          $inc: { total_universal_credits: 50 },
+
+          $push: push
+
+        }, {
+          new: true
+        });
+
+
+        const messageBody = {
+          title: `You Have Gained '${50}' Credits By Referral Code!!`,
+          body: "Check Your Credit Info",
+          data: {
+            navigateTo: navigateToTabs.home
+          },
+          type: "Info"
+        }
+
+        await cloudMessage(reffered_by_user.user_Id.toString(), messageBody);
+      }
+    } else {
+
+    }
+    /* 
+ 
+    Cloud Notification To firebase
+ 
+    */
+    const messageBody = {
+      title: `Your Ad '${title}' Is Successfully Posted !!`,
+      body: "Click here to check ...",
+      data: {
+        id: ad_id.toString(),
+        navigateTo: navigateToTabs.particularAd
+      },
+      type: "Info"
+    }
+
+    if (adDoc.thumbnail_url.length === 0) {
+      await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+        $push: {
+          thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+        }
+      })
+    }
+
+    await cloudMessage(userId.toString(), messageBody);
+
+    await Draft.deleteOne({ _id: ad_id });
+  }
+
+  static async AfterPendingAd(adDoc, userId) {
+
+    const ad_id = adDoc._id;
+    const { category, sub_category, title, description, ad_posted_address, ad_posted_location, SelectFields } = adDoc;
+
+    // mixpanel track -- Ad create 
+    await track('Ad creation pending', {
+      category: category,
+      distinct_id: ad_id
+    })
+
+    //save the ad_id in users profile in myads
+    await Profile.findByIdAndUpdate({ _id: userId }, {
+      $push: {
+        my_ads: ObjectId(ad_id)
+      }
+    });
+
+
+    const body = {
+      ad_id,
+      category,
+      sub_category,
+      title,
+      description,
+      ad_posted_address,
+      ad_posted_location,
+      SelectFields
+    }
+
+    await createGlobalSearch(body);
+
+    /* 
+
+    Cloud Notification To firebase
+
+    */
+    const messageBody = {
+      title: `Your Ad '${title}' Is Pending !!`,
+      body: "Click here to check ...",
+      data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
+      type: "Info"
+    }
+
+    await cloudMessage(userId.toString(), messageBody);
+
+    await Draft.deleteOne({ _id: ad_id });
+  }
+
   //Update Ad
   static async updateAd(bodyData, user_id) {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -543,6 +536,23 @@ module.exports = class AdService {
                   ad_Suspended_Date: 1,
                   thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
+                }
+              }
+            ],
+            "Pending": [
+              { $match: { ad_status: "Pending" } },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  price: 1,
+                  thumbnail_url: 1
                 }
               }
             ]

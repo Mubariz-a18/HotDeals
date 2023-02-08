@@ -150,6 +150,9 @@ const profileSchema = mongoose.Schema({
     type: Boolean,
     default: false
   },
+  referrered_user:{
+    type:mongoose.Schema.Types.ObjectId,
+  },
   rate_count: {
     type: Number,
     default: 0

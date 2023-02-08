@@ -10,6 +10,11 @@ module.exports = class AdController {
     try {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
+      if(adDocument.ad_status == "Pending"){
+        const AfterAdPosted = await AdService.AfterPendingAd(adDocument,req.user_ID)
+      }else{
+        const AfterAdPosted = await AdService.AfterAdIsPosted(adDocument,req.user_ID)
+      }
       // response code is send 
       res.status(200).send({
         message: "Ad Successfully created!",
@@ -36,7 +41,8 @@ module.exports = class AdController {
         Deleted: getDocument[0].Deleted,
         Reposted: getDocument[0].Reposted,
         Sold: getDocument[0].Sold,
-        Suspended: getDocument[0].Suspended
+        Suspended: getDocument[0].Suspended,
+        Pending: getDocument[0].Pending
       });
     } catch (e) {
       errorHandler(e , res);
