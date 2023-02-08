@@ -78,8 +78,7 @@ module.exports = class ProfileService {
 
         //mixpanel track for new Profile Created
         await track('New Profile Created ', {
-          distinct_id: profileDoc1._id,
-          $email: profileDoc.email.text
+          distinct_id: profileDoc1._id
         });
 
         return {
@@ -345,7 +344,7 @@ module.exports = class ProfileService {
       });
       const referral_code = await Referral.findOne({
         user_Id: ObjectId(userId)
-      },{
+      }, {
       });
       return { updateUsr, referral_code };
     }
