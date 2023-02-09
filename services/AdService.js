@@ -336,7 +336,8 @@ module.exports = class AdService {
       video_url,
       is_negotiable,
     } = bodyData;
-
+    
+    const Ad = await Generic.findOne({parent_id:parent_id})
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
@@ -393,7 +394,7 @@ module.exports = class AdService {
       */
       const messageBody = {
 
-        title: `Your Ad Is '${updateAd.title}' Successfully Updated !!`,
+        title: `Your Ad Is ${Ad.title} Successfully Updated !!`,
         body: "Click here to check ...",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
@@ -433,7 +434,7 @@ module.exports = class AdService {
       */
       const messageBody = {
 
-        title: `Your Ad Is '${updateAd.title}' Pending !!`,
+        title: `Your Ad Is '${Ad.title}' Pending !!`,
         body: "Click here to check ...",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
@@ -543,6 +544,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   parent_id: 1,
+                  category: 1,
                   title: 1,
                   description: 1,
                   isPrime:1,
@@ -565,6 +567,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   parent_id: 1,
+                  category: 1,
                   title: 1,
                   isPrime:1,
                   ad_posted_address: 1,
@@ -585,6 +588,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   parent_id: 1,
+                  category: 1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
@@ -604,6 +608,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   parent_id: 1,
+                  category: 1,
                   isPrime:1,
                   title: 1,
                   ad_posted_address: 1,
@@ -1722,6 +1727,22 @@ $skip and limit for pagination
         distinct_id: user_id,
         ad_id: newDoc._id,
       })
+
+      /* 
+      
+      Cloud Notification To firebase
+      
+      */
+      const messageBody = {
+
+        title: `Your Ad '${newDoc.title}' is Successfully Reposted!!`,
+        body: "Click here to check ...",
+        data: { _id: new_id.toString(), navigateTo: navigateToTabs.particularAd },
+        type: "Info"
+
+      }
+
+      await cloudMessage(user_id.toString(), messageBody);
       return newDoc
     }
   };

@@ -16,7 +16,7 @@ const cloudMessage = require('../cloudMessaging');
 const navigateToTabs = require('../utils/navigationTabs');
 const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
-// // (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
+// (ScheduleTask_Ad_Status_Expire) will update the status the of ad to Expired after checking if the date has past the (current date)
 // const ScheduleTask_Ad_Status_Expire = cron.schedule('0 0 0 * * *', async () => {
 //   const Ads = await Generic.find({ad_status:"Selling"});
 //   Ads.forEach(ad => {
@@ -63,6 +63,162 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
 
 // (Schedule_Task_Alert_6am_to_10pm)                   '0 06,08,10,12,14,16,18,20,22 * * *'     '* * * * * *'   '0 * * * * *'
+
+// (Schedule_Task_Credit_Status_Update) will change the status to expire if the credit expiry date exceeds the curent date
+// const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () => {
+//   const credits = await Credit.find();
+
+//   credits.map(async credit => {
+//     const { free_credits_info, premium_credits_info, user_id } = credit;
+
+//     //free
+//     free_credits_info.map(async info => {
+//       const { credits_expires_on, status, count } = info
+
+//       if (currentDate > credits_expires_on && status == "Available") {
+
+//         await Credit.findOneAndUpdate({
+//           user_id: user_id,
+//           "free_credits_info.credits_expires_on": credits_expires_on,
+//         }, {
+//           $set: {
+//             "free_credits_info.$.status": "Expired"
+//           }
+//         }, { new: true })
+//           .then(async res => {
+//             if (res !== null) {
+//               await Credit.findOneAndUpdate({ user_id: user_id }, {
+//                 $inc: { available_free_credits: - count }
+//               })
+//               await Profile.findOneAndUpdate({_id:user_id},{
+//                 $inc: { free_credit: - count }
+//               })
+//             } else { }
+//           }).catch(e => {
+//             e
+//           })
+//       } else { }
+//     })
+//     // premium
+//     premium_credits_info.map(async info => {
+//       const { credits_expires_on, status, count } = info
+
+//       if (currentDate > credits_expires_on && status == "Available") {
+
+//         await Credit.findOneAndUpdate({
+//           user_id: user_id,
+//           "premium_credits_info.credits_expires_on": credits_expires_on
+//         }, {
+//           $set: {
+//             "premium_credits_info.$.status": "Expired"
+//           }
+//         }, { new: true })
+//           .then(async res => {
+//             if (res !== null) {
+//               await Credit.findOneAndUpdate({ user_id: user_id }, {
+//                 $inc: { available_premium_credits: - count }
+//               })
+//               await Profile.findOneAndUpdate({_id:user_id},{
+//                 $inc: { premium_credit: - count }
+//               })
+//             } else { }
+//           }).catch(e => {
+//             e
+//           })
+//       } else {
+
+//       }
+//     })
+//   })
+
+// });
+// // (Schedule_Task_Is_user_Recommended) which change the is_recommended to true if user have more than or eqa; tp 5 rate count and rate average
+// const Schedule_Task_Is_user_Recommended = cron.schedule('0 0 0 * * *', async () => {
+//   await Profile.updateMany({
+//     rate_count: { $gte: 5 },
+//     rate_average: { $gte: 4 }
+//   }, {
+//     $set: {
+//       is_recommended: true
+//     }
+//   })
+// })
+
+// const expiry_boost = cron.schedule("* * * * * *", async () => {
+//     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+//     const ads = await Generic.find({ is_Boosted: true ,"Boost_Expiry_Date": { $lte: currentDate }})
+// ads.forEach(async ad => {
+//     if (currentDate > ad.Boost_Expiry_Date) {
+//         await Generic.findByIdAndUpdate({ _id: ad._id }, {
+//             $unset: {
+//                 Boost_Days: 1,
+//                 Boost_Expiry_Date: 1,
+//                 Boosted_Date: 1
+//             },
+//             $set: {
+//                 "is_Boosted": false
+//             },
+//         })
+//     }
+// })
+// })
+
+
+
+//Starting the schedular
+// ScheduleTask_Ad_Status_Expire.start()
+// ScheduleTask_Display_Historic_Ads.start()
+// ScheduleTask_Alert_activation.start()
+// Schedule_Task_Alert_6am_to_10pm.start()
+// Schedule_Task_Monthly_credits.start()
+// Schedule_Task_Credit_Status_Update.start()
+// Schedule_Task_Is_user_Recommended.start()
+
+
+// cron.schedule("* * * * * *", async () => {
+//     const Reports = await Report.find({ flag: { $ne: "Green" } })
+//     const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
+
+//     Reports.forEach(async report => {
+//         let reported_Date = [];
+//         let { reports_box } = report;
+
+//         reports_box.forEach(
+//             reportList => {
+//                 reported_Date.push(reportList.report_action_date)
+//             }
+//         );
+//         reported_Date.sort();
+//         let last_report_Date = reported_Date.pop()
+
+//         if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended > 0) {
+//             await Report.findOneAndUpdate({user_id:report.user_id},{
+//                 $inc:{
+//                     grace_counter:2
+//                 },
+//                 $inc:{
+//                     total_Ads_suspended:-2
+//                 }
+//             })
+//         }
+//     })
+// });
+
+
+// async function sendAlert(){
+//   const messageBody = {
+//     title: `Potential Ads For Your ${"test"} Ad Alert !!`,
+//     body: "Click here to check ...",
+//     data: {
+//       id: "sefegdfgdfbdfbfgbhfg",
+//       navigateTo: navigateToTabs.alert
+//     },
+//     type: "Alert"
+//   }
+
+//   await cloudMessage('63c0fb5999db943aba6baa7e', messageBody);
+// }
+
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true })
   Alerts.forEach(async (alert) => {
@@ -306,164 +462,6 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 
   })
 });
-
-
-
-// (Schedule_Task_Credit_Status_Update) will change the status to expire if the credit expiry date exceeds the curent date
-// const Schedule_Task_Credit_Status_Update = cron.schedule("0 0 * * *", async () => {
-//   const credits = await Credit.find();
-
-//   credits.map(async credit => {
-//     const { free_credits_info, premium_credits_info, user_id } = credit;
-
-//     //free
-//     free_credits_info.map(async info => {
-//       const { credits_expires_on, status, count } = info
-
-//       if (currentDate > credits_expires_on && status == "Available") {
-
-//         await Credit.findOneAndUpdate({
-//           user_id: user_id,
-//           "free_credits_info.credits_expires_on": credits_expires_on,
-//         }, {
-//           $set: {
-//             "free_credits_info.$.status": "Expired"
-//           }
-//         }, { new: true })
-//           .then(async res => {
-//             if (res !== null) {
-//               await Credit.findOneAndUpdate({ user_id: user_id }, {
-//                 $inc: { available_free_credits: - count }
-//               })
-//               await Profile.findOneAndUpdate({_id:user_id},{
-//                 $inc: { free_credit: - count }
-//               })
-//             } else { }
-//           }).catch(e => {
-//             e
-//           })
-//       } else { }
-//     })
-//     // premium
-//     premium_credits_info.map(async info => {
-//       const { credits_expires_on, status, count } = info
-
-//       if (currentDate > credits_expires_on && status == "Available") {
-
-//         await Credit.findOneAndUpdate({
-//           user_id: user_id,
-//           "premium_credits_info.credits_expires_on": credits_expires_on
-//         }, {
-//           $set: {
-//             "premium_credits_info.$.status": "Expired"
-//           }
-//         }, { new: true })
-//           .then(async res => {
-//             if (res !== null) {
-//               await Credit.findOneAndUpdate({ user_id: user_id }, {
-//                 $inc: { available_premium_credits: - count }
-//               })
-//               await Profile.findOneAndUpdate({_id:user_id},{
-//                 $inc: { premium_credit: - count }
-//               })
-//             } else { }
-//           }).catch(e => {
-//             e
-//           })
-//       } else {
-
-//       }
-//     })
-//   })
-
-// });
-// // (Schedule_Task_Is_user_Recommended) which change the is_recommended to true if user have more than or eqa; tp 5 rate count and rate average
-// const Schedule_Task_Is_user_Recommended = cron.schedule('0 0 0 * * *', async () => {
-//   await Profile.updateMany({
-//     rate_count: { $gte: 5 },
-//     rate_average: { $gte: 4 }
-//   }, {
-//     $set: {
-//       is_recommended: true
-//     }
-//   })
-// })
-
-// const expiry_boost = cron.schedule("* * * * * *", async () => {
-//     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-//     const ads = await Generic.find({ is_Boosted: true ,"Boost_Expiry_Date": { $lte: currentDate }})
-// ads.forEach(async ad => {
-//     if (currentDate > ad.Boost_Expiry_Date) {
-//         await Generic.findByIdAndUpdate({ _id: ad._id }, {
-//             $unset: {
-//                 Boost_Days: 1,
-//                 Boost_Expiry_Date: 1,
-//                 Boosted_Date: 1
-//             },
-//             $set: {
-//                 "is_Boosted": false
-//             },
-//         })
-//     }
-// })
-// })
-
-
-
-//Starting the schedular
-// ScheduleTask_Ad_Status_Expire.start()
-// ScheduleTask_Display_Historic_Ads.start()
-// ScheduleTask_Alert_activation.start()
-// Schedule_Task_Alert_6am_to_10pm.start()
-// Schedule_Task_Monthly_credits.start()
-// Schedule_Task_Credit_Status_Update.start()
-// Schedule_Task_Is_user_Recommended.start()
-
-
-// cron.schedule("* * * * * *", async () => {
-//     const Reports = await Report.find({ flag: { $ne: "Green" } })
-//     const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
-
-//     Reports.forEach(async report => {
-//         let reported_Date = [];
-//         let { reports_box } = report;
-
-//         reports_box.forEach(
-//             reportList => {
-//                 reported_Date.push(reportList.report_action_date)
-//             }
-//         );
-//         reported_Date.sort();
-//         let last_report_Date = reported_Date.pop()
-
-//         if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended > 0) {
-//             await Report.findOneAndUpdate({user_id:report.user_id},{
-//                 $inc:{
-//                     grace_counter:2
-//                 },
-//                 $inc:{
-//                     total_Ads_suspended:-2
-//                 }
-//             })
-//         }
-//     })
-// });
-
-
-// async function sendAlert(){
-//   const messageBody = {
-//     title: `Potential Ads For Your ${"test"} Ad Alert !!`,
-//     body: "Click here to check ...",
-//     data: {
-//       id: "sefegdfgdfbdfbfgbhfg",
-//       navigateTo: navigateToTabs.alert
-//     },
-//     type: "Alert"
-//   }
-
-//   await cloudMessage('63c0fb5999db943aba6baa7e', messageBody);
-// }
-
 
 
 const creditExpire = cron.schedule("0 0 0 * * *", async () => {
