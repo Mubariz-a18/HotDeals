@@ -62,5 +62,5 @@ app.listen(PORT, () => {
 });
 
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error.message,error.stack,error.name);
+  console.error("Uncaught Exception:", error.message, error.stack, error.name);
 });

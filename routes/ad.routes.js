@@ -93,6 +93,10 @@ router.post('/api/v1/checkAdStatus',
     rateLimiter(getadStatusTime, getadStatusHits),
     AdController.apiCheckAdStatus);
 
+router.post('/api/repostAd',
+    // rateLimiter(createAdTime, createAdHits),
+    verifyToken,
+    AdController.apiRepostAd);
 
 
 /* 

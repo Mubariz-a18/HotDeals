@@ -267,7 +267,7 @@ module.exports = class AdController {
     } catch (e) {
       errorHandler(e , res);
     };
-  }
+  };
 
   static async apiMakeAdPremuium(req,res,next){
     try {
@@ -278,6 +278,22 @@ module.exports = class AdController {
         data: Updated_Ad
       })
 
+    } catch (e) {
+      errorHandler(e , res);
+    };
+  };
+
+  static async apiRepostAd(req, res, next) {
+    try {
+      const adID = req.body.ad_id;
+      // Ad is saved in Favourite and sent to responce
+      const updated_Ad = await AdService.repostAd(adID);
+      res.status(200).send(
+        {
+          message: "success",
+          updated_Ad
+        }
+      )
     } catch (e) {
       errorHandler(e , res);
     };
@@ -326,5 +342,5 @@ module.exports = class AdController {
     } catch (e) {
       errorHandler(e , res);
     };
-  }
+  };
 };

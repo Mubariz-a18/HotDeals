@@ -182,8 +182,9 @@ module.exports = class CreditService {
       Premium: 3,
       General_Boost: 2,
       Premium_Boost: 4,
-      Highlight: 7
+      HighLight: 5
     };
+    
     const { category, AdsArray } = bodyData;
 
     const user_credit_Document = await Credit.findOne({
@@ -207,6 +208,8 @@ module.exports = class CreditService {
 
     const CategoryCreditBaseValue = credit_value[category];
 
+    console.log(CategoryCreditBaseValue)
+
     const tempArray = [];
 
     AdsArray.forEach(ad => {
@@ -218,9 +221,15 @@ module.exports = class CreditService {
 
       const credittype = getCreditType(eachAd);
 
-      const creditTypeMultiple = typeMultiples[credittype];
+      let creditTypeMultiple = typeMultiples[credittype];
+
+      if(credittype === "HighLight"){
+        creditTypeMultiple = creditTypeMultiple + typeMultiples.Premium
+      } 
 
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
+
+      console.log(requiredCredits)
 
       let tempRequiredCredits = requiredCredits;
 
@@ -273,7 +282,7 @@ module.exports = class CreditService {
       General_Boost: 2,
       Premium: 3,
       Premium_Boost: 4,
-      Highlight: 5
+      HighLight: 5
     };
 
     const { category, title } = bodyData;
@@ -313,7 +322,12 @@ module.exports = class CreditService {
 
       const credittype = getCreditType(eachAd);
 
-      const creditTypeMultiple = typeMultiples[credittype];
+      let creditTypeMultiple = typeMultiples[credittype];
+
+      
+      if(credittype === "HighLight"){
+        creditTypeMultiple = creditTypeMultiple + typeMultiples.Premium
+      }
 
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
 
@@ -612,7 +626,7 @@ module.exports = class CreditService {
       General_Boost: 2,
       Premium: 3,
       Premium_Boost: 4,
-      Highlight: 5
+      HighLight: 5
     };
 
     const Ad = await Generic.findOne({ _id: ObjectId(ad_id) })
@@ -772,9 +786,9 @@ module.exports = class CreditService {
 
     const adDetail = await Generic.findById({ _id: ad_id })
 
-    if (adDetail.isPrime !== true) {
-      throw ({ status: 404, message: 'AD_SHOULD_BE_PRIME' });
-    }
+    // if (adDetail.isPrime !== true) {
+    //   throw ({ status: 404, message: 'AD_SHOULD_BE_PRIME' });
+    // }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 

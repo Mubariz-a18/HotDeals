@@ -8,7 +8,7 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const detectSafeSearch = require("../image.controller");
+const { detectSafeSearch, detectsafeText } = require("../image.controller");
 const imgCom = require("../imageCompression");
 const cloudMessage = require("../cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
@@ -19,9 +19,9 @@ const imageWaterMark = require("../waterMarkImages");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    const adExist = await Generic.findById({_id:bodyData.ad_id});
+    const adExist = await Generic.findById({ _id: bodyData.ad_id });
 
-    if(adExist){
+    if (adExist) {
       throw ({ status: 404, message: 'AD_ALREADY_EXISTS' })
     }
 
@@ -29,10 +29,69 @@ module.exports = class AdService {
 
     const DateAfter30Days = expiry_date_func(30);
 
-      // Generic AdDoc is created 
-      let {
-        ad_id,
+    // Generic AdDoc is created 
+    let {
+      ad_id,
+      parent_id,
+      category,
+      sub_category,
+      field,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      isPrime,
+      image_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status,
+      is_negotiable,
+      is_ad_posted,
+    } = bodyData
+
+    if (image_url.length == 0) {
+      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+    }
+    /*  
+    
+    *************************************************
+    IMAGE COMPRESSION FOR THUMBNAILS
+    *************************************************
+
+
+    */
+    const thumbnail_url = await imgCom(image_url[0]);
+
+    /*
+
+    *************************************************
+    IMAGE WATERMARK
+    *************************************************
+    
+    */
+
+    await imageWaterMark(image_url)
+
+    /* 
+    
+    **********************************************************
+    CHECKING IMAGES PROFANITY
+    **********************************************************
+    
+    */
+    const { health, batch } = await detectSafeSearch(image_url);
+
+    let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
+
+    const createAdFunc = async (status) => {
+      let adDoc = await Generic.create({
+        _id: ObjectId(ad_id),
         parent_id,
+        user_id: ObjectId(userId),
         category,
         sub_category,
         field,
@@ -41,117 +100,70 @@ module.exports = class AdService {
         special_mention,
         title,
         price,
+        product_age: age,
         isPrime,
+        ad_type: isPrime == false ? "Free" : "Premium",
         image_url,
         video_url,
-        ad_present_location,
-        ad_posted_location,
+        thumbnail_url: thumbnail_url ? thumbnail_url : "'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'",
+        ad_present_location: ad_present_location || {},
+        ad_posted_location: ad_posted_location || {},
         ad_posted_address,
         ad_present_address,
-        ad_status,
+        ad_Premium_Date: isPrime == true ? currentDate : "",
+        ad_status: status,
         is_negotiable,
         is_ad_posted,
-      } = bodyData
+        detection: batch,
+        created_at: currentDate,
+        ad_expire_date: DateAfter30Days,
+        updated_at: currentDate,
+      });
 
-      if (image_url.length == 0) {
-        throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+      return adDoc
+    }
+
+    if (health === "HEALTHY") {
+
+      const creditDuctConfig = {
+
+        title: title,
+        category: category,
+        AdsArray: bodyData.AdsArray
+
       }
-      /*  
-      
-      *************************************************
-      IMAGE COMPRESSION FOR THUMBNAILS
-      *************************************************
+      const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
 
+      if (message === "NOT_ENOUGH_CREDITS") {
 
-      */
-      const thumbnail_url = await imgCom(image_url[0]);
-
-      /*
-
-      *************************************************
-      IMAGE WATERMARK
-      *************************************************
-      
-      */
-
-      await imageWaterMark(image_url)
-
-      /* 
-      
-      **********************************************************
-      CHECKING IMAGES PROFANITY
-      **********************************************************
-      
-      */
-      const { health, batch } = await detectSafeSearch(image_url)
-
-      let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
-
-      const createAdFunc = async (status) => {
-        let adDoc = await Generic.create({
-          _id: ObjectId(ad_id),
-          parent_id,
-          user_id:  ObjectId(userId),
-          category,
-          sub_category,
-          field,
-          description,
-          SelectFields,
-          special_mention,
-          title,
-          price,
-          product_age: age,
-          isPrime,
-          ad_type: isPrime == false ? "Free" : "Premium",
-          image_url,
-          video_url,
-          thumbnail_url: thumbnail_url ? thumbnail_url : "'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'",
-          ad_present_location: ad_present_location || {},
-          ad_posted_location: ad_posted_location || {},
-          ad_posted_address,
-          ad_present_address,
-          ad_Premium_Date: isPrime == true ? currentDate : "",
-          ad_status: status,
-          is_negotiable,
-          is_ad_posted,
-          detection: batch,
-          created_at: currentDate,
-          ad_expire_date: DateAfter30Days,
-          updated_at: currentDate,
-        });
-
-        return adDoc
-      }
-
-      if (health == "HEALTHY") {
-
-        const creditDuctConfig = {
-
-          title: title,
-          category: category,
-          AdsArray: bodyData.AdsArray
-
-        }
-        const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
-
-        if (message === "NOT_ENOUGH_CREDITS") {
-
-          throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
-
-        }
-
-        let adDoc = await createAdFunc(ad_status)
-
-        return adDoc["_doc"];
+        throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
 
       }
 
-      else {
+      let adDoc = await createAdFunc(ad_status)
 
-        let adDoc = await createAdFunc("Pending")
-
-        return adDoc
+      //***************************************************************************** BETA**********************************************
+      if (bodyData.AdsArray.isHighlighted === true) {
+        await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+          $set: {
+            is_Highlighted: true,
+            Highlight_Days: 15,
+            Highlighted_Date: currentDate,
+            Highlight_Expiry_Date: expiry_date_func(15),
+          }
+        })
       }
+
+      return adDoc["_doc"];
+
+    }
+
+    else {
+
+      let adDoc = await createAdFunc("Pending")
+
+      return adDoc
+    }
   };
 
 
@@ -320,42 +332,120 @@ module.exports = class AdService {
       SelectFields,
       special_mention,
       price,
-      thumbnail_url,
       image_url,
       video_url,
-      ad_status,
       is_negotiable,
-    } = bodyData
-    const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
-      $set: {
-        description,
-        SelectFields,
-        special_mention,
-        price,
-        image_url,
-        thumbnail_url,
-        video_url,
-        ad_status,
-        is_negotiable,
-        updated_at: currentDate,
-      }
-    }, {
-      new: true,
-    });
-    /* 
+    } = bodyData;
+
+    if (image_url.length == 0) {
+      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+    }
+    /*  
     
-    Cloud Notification To firebase
+    *************************************************
+    IMAGE COMPRESSION FOR THUMBNAILS
+    *************************************************
+
+
+    */
+    const thumbnail_url = await imgCom(image_url[0]);
+
+    /*
+
+    *************************************************
+    IMAGE WATERMARK
+    *************************************************
     
     */
-    const messageBody = {
-      title: `Your Ad Is '${title}' Successfully Updated !!`,
-      body: "Click here to check ...",
-      data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
-      type: "Info"
+
+    await imageWaterMark(image_url)
+
+    /* 
+    
+    **********************************************************
+    CHECKING IMAGES PROFANITY
+    **********************************************************
+    
+    */
+    const { health, batch } = await detectSafeSearch(image_url);
+
+    if (health === "HEALTHY") {
+      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
+        $set: {
+          description,
+          SelectFields,
+          special_mention,
+          price,
+          image_url,
+          thumbnail_url,
+          video_url,
+          detection:batch,
+          is_negotiable,
+          updated_at: currentDate,
+        }
+      }, {
+        new: true,
+      });
+      /* 
+      
+      Cloud Notification To firebase
+      
+      */
+      const messageBody = {
+
+        title: `Your Ad Is '${updateAd.title}' Successfully Updated !!`,
+        body: "Click here to check ...",
+        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
+        type: "Info"
+
+      }
+
+      await cloudMessage(user_id.toString(), messageBody);
+
+      return updateAd;
+
+    }else{
+
+      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
+
+        $set: {
+
+          description,
+          SelectFields,
+          special_mention,
+          price,
+          'ad_status':"Pending",
+          image_url,
+          detection:batch,
+          thumbnail_url,
+          video_url,
+          is_negotiable,
+          updated_at: currentDate
+
+        }
+      }, {
+        new: true,
+      });
+      /* 
+      
+      Cloud Notification To firebase
+      
+      */
+      const messageBody = {
+
+        title: `Your Ad Is '${updateAd.title}' Pending !!`,
+        body: "Click here to check ...",
+        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
+        type: "Info"
+
+      }
+
+      await cloudMessage(user_id.toString(), messageBody);
+
+      return updateAd
     }
 
-    await cloudMessage(user_id.toString(), messageBody);
-    return updateAd
+
   };
 
   // Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
@@ -433,7 +523,8 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   description: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  isPrime:1,
+                  ad_posted_address: 1,
                   thumbnail_url: 1,
                   saved: 1,
                   views: 1,
@@ -454,6 +545,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   description: 1,
+                  isPrime:1,
                   thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
@@ -474,6 +566,7 @@ module.exports = class AdService {
                   _id: 1,
                   parent_id: 1,
                   title: 1,
+                  isPrime:1,
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   thumbnail_url: 1,
@@ -511,6 +604,7 @@ module.exports = class AdService {
                 $project: {
                   _id: 1,
                   parent_id: 1,
+                  isPrime:1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
@@ -535,7 +629,6 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
                 }
               }
             ],
@@ -699,9 +792,9 @@ module.exports = class AdService {
           return adDoc;
         }
         else if (bodyData.status == "Sold") {
-          const adDoc = await Generic.findByIdAndUpdate(
+          const adDoc = await Generic.updateMany(
             {
-              _id: ad_id
+              parent_id: ad_id
             },
             {
               $set: {
@@ -778,72 +871,6 @@ module.exports = class AdService {
           )
           return adDoc;
         }
-        else if (bodyData.status == "Reposted") {
-          // only after payment is done 
-          const adCopy = await Generic.findById({ _id: ad_id });
-          const {
-            user_id,
-            category,
-            sub_category,
-            description,
-            SelectFields,
-            special_mention,
-            title,
-            price,
-            image_url,
-            video_url,
-            ad_present_location,
-            ad_posted_location,
-            ad_posted_address,
-          } = adCopy
-          //  Create a new Doc identical to the old after status chaned to Reposted
-          const newDoc = await Generic.create({
-            _id: ObjectId(),
-            user_id,
-            category,
-            sub_category,
-            description,
-            SelectFields,
-            special_mention,
-            title,
-            price,
-            image_url,
-            video_url,
-            ad_present_location,
-            ad_posted_location,
-            ad_posted_address,
-            created_at: currentDate,
-            updated_at: currentDate
-          });
-          if (newDoc) {
-            //save the ad id in users profile in myads
-            await Profile.findByIdAndUpdate({ _id: userId }, {
-              $push: {
-                my_ads: ObjectId(newDoc._id)
-              }
-            })
-            const updatedDoc = await Generic.findByIdAndUpdate(
-              { _id: ad_id },
-              {
-                $set:
-                {
-                  ad_status: "Reposted",
-                  ad_Reposted_Date: currentDate,
-                  is_Reposted: true
-                }
-              },
-              { returnOriginal: false }
-            );
-            // mixpanel track - when Status Of Ad changed reposted and new ad created
-            await track('ad created successfully !!', {
-              distinct_id: userId,
-              ad_id: newDoc._id,
-              $latitude: ad_posted_location.coordinates[1],
-              $longitude: ad_posted_location.coordinates[0],
-            })
-            return updatedDoc;
-          }
-        };
       };
     };
   };
@@ -1584,6 +1611,120 @@ $skip and limit for pagination
     }
   };
 
+  static async repostAd(ad_id) {
+
+    // only after payment is done 
+
+    const adCopy = await Generic.findById({ _id: ad_id });
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+
+    const {
+
+      user_id,
+      parent_id,
+      category,
+      sub_category,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      isPrime,
+      thumbnail_url,
+      image_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      is_negotiable,
+      is_ad_posted
+
+    } = adCopy
+
+
+    let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
+
+    const creditDuctConfig = {
+
+      title: title,
+      category: category,
+      AdsArray: {
+
+        "isPrime": isPrime,
+        "isHighlighted": false,
+        "isBoosted": false
+
+      }
+
+    }
+    const new_id = ObjectId();
+
+    const message = await creditDeductionFunction(creditDuctConfig, user_id, new_id);
+
+    if (message === "NOT_ENOUGH_CREDITS") {
+
+      throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" });
+
+    }
+
+    const newDoc = await Generic.create({
+
+      _id: new_id,
+      user_id,
+      parent_id,
+      category,
+      sub_category,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      age: age,
+      isPrime,
+      image_url,
+      thumbnail_url,
+      video_url,
+      ad_present_location,
+      ad_posted_location,
+      ad_posted_address,
+      ad_present_address,
+      ad_status: "Selling",
+      is_negotiable,
+      is_ad_posted,
+      created_at: currentDate,
+      updated_at: currentDate
+
+    });
+    if (newDoc) {
+      //save the ad id in users profile in myads
+      await Profile.findByIdAndUpdate({ _id: user_id }, {
+        $push: {
+          my_ads: ObjectId(newDoc._id)
+        }
+      });
+      await Generic.findByIdAndUpdate(
+        { _id: ad_id },
+        {
+          $set:
+          {
+            ad_status: "Reposted",
+            ad_Reposted_Date: currentDate,
+            is_Reposted: true
+          }
+        },
+        { returnOriginal: false }
+      );
+      // mixpanel track - when Status Of Ad changed reposted and new ad created
+      await track('ad created successfully !!', {
+        distinct_id: user_id,
+        ad_id: newDoc._id,
+      })
+      return newDoc
+    }
+  };
 
   /* 
   DRAFT ADS API SERVICES HERE
