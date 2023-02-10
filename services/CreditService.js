@@ -494,7 +494,7 @@ module.exports = class CreditService {
     })
 
 
-    const CategoryCreditBaseValue = 1
+    const CategoryCreditBaseValue = credit_value[category]
 
     const tempArray = [];
 
@@ -629,7 +629,10 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id) })
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id) });
+    if(!Ad){
+      throw ({ status: 404, message: 'AD_NOT_EXIST' })
+    }
     if (Ad.isPrime === true) {
       throw ({ status: 401, message: 'AD_IS_ALREADY_PREMIUM' })
     }
@@ -664,7 +667,7 @@ module.exports = class CreditService {
     })
 
 
-    const CategoryCreditBaseValue = 1
+    const CategoryCreditBaseValue = credit_value[category]
 
     const tempArray = [];
 

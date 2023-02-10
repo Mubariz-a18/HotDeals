@@ -336,8 +336,8 @@ module.exports = class AdService {
       video_url,
       is_negotiable,
     } = bodyData;
-    
-    const Ad = await Generic.findOne({parent_id:parent_id})
+
+    const Ad = await Generic.findOne({ parent_id: parent_id })
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
@@ -380,7 +380,7 @@ module.exports = class AdService {
           image_url,
           thumbnail_url,
           video_url,
-          detection:batch,
+          detection: batch,
           is_negotiable,
           updated_at: currentDate,
         }
@@ -405,7 +405,7 @@ module.exports = class AdService {
 
       return updateAd;
 
-    }else{
+    } else {
 
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
 
@@ -415,9 +415,9 @@ module.exports = class AdService {
           SelectFields,
           special_mention,
           price,
-          'ad_status':"Pending",
+          'ad_status': "Pending",
           image_url,
-          detection:batch,
+          detection: batch,
           thumbnail_url,
           video_url,
           is_negotiable,
@@ -524,7 +524,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   description: 1,
-                  isPrime:1,
+                  isPrime: 1,
                   ad_posted_address: 1,
                   thumbnail_url: 1,
                   saved: 1,
@@ -547,7 +547,7 @@ module.exports = class AdService {
                   category: 1,
                   title: 1,
                   description: 1,
-                  isPrime:1,
+                  isPrime: 1,
                   thumbnail_url: 1,
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
@@ -569,7 +569,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   category: 1,
                   title: 1,
-                  isPrime:1,
+                  isPrime: 1,
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   thumbnail_url: 1,
@@ -609,7 +609,7 @@ module.exports = class AdService {
                   _id: 1,
                   parent_id: 1,
                   category: 1,
-                  isPrime:1,
+                  isPrime: 1,
                   title: 1,
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
@@ -799,7 +799,8 @@ module.exports = class AdService {
         else if (bodyData.status == "Sold") {
           const adDoc = await Generic.updateMany(
             {
-              parent_id: ad_id
+              parent_id: ad_id,
+              ad_status: "Selling"
             },
             {
               $set: {
@@ -1455,7 +1456,7 @@ $skip and limit for pagination
   };
 
   // Get particular Ad Detail with distance and user details
-  static async getRelatedAds(query, user_id) {
+  static async getRelatedAds(query, user_id, adId) {
     let category = query.category;
     let sub_category = query.sub_category;
     let lng = +query.lng;
@@ -1590,7 +1591,18 @@ $skip and limit for pagination
     await isAdFavFunc(RelatedAds[0].RecentAds)
     await isAdFavFunc(RelatedAds[0].PremiumAds)
 
-    const featureAds = featureAdsFunction(RelatedAds[0].RecentAds, RelatedAds[0].PremiumAds)
+    let featureAds = featureAdsFunction(RelatedAds[0].RecentAds, RelatedAds[0].PremiumAds);
+
+    
+    if (adId) {
+      featureAds = featureAds.filter((ad) => {
+        return ad._id.toString() !== adId;
+      });
+    } else {
+
+    }
+
+
     // mixpanel -- track  get Particular ad ads
     await track('get related ads', {
       distinct_id: user_id,

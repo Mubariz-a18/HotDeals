@@ -1,11 +1,12 @@
-const User = require("../models/Profile/Profile");
-const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
 const Report = require("../models/reportSchema");
 const Generic = require("../models/Ads/genericSchema");
 const Reason_points = require("../utils/reason_points");
 const { expiry_date_func } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
+const { userRef } = require("../firebaseAppSetup");
+const cloudMessage = require("../cloudMessaging");
+const navigateToTabs = require("../utils/navigationTabs");
 
 
 
@@ -25,9 +26,13 @@ module.exports = class ReportService {
 
     // Api Report On an Ad
     static async reportAd(bodyData, user_ID) {
+
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
         const { ad_id, reason, description } = bodyData;
+
         const points = Reason_points(reason)
+
         const findAd = await Generic.findById({ _id: ad_id });
 
         if (!findAd) {
@@ -66,8 +71,19 @@ module.exports = class ReportService {
                         }
                     }
                 }, {
-                    new: true
-                })
+                    new: true, returnDocument: "after"
+                });
+
+                if (Push_Report_With_Reason) {
+
+                    await this.check_ad_suspended(ad_id, findAd.user_id, findAd.title);
+
+
+
+                } else {
+
+                }
+
                 return Push_Report_With_Reason
             } else {
                 const Push_Report_If_ReportList_exist = await Report.findOneAndUpdate({
@@ -105,7 +121,7 @@ module.exports = class ReportService {
                     })
 
                     if (Update_Action_Flag) {
-                        this.check_ad_suspended(ad_id, findAd.user_id)
+                        await this.check_ad_suspended(ad_id, findAd.user_id, findAd.title)
                     } else {
 
                     }
@@ -118,8 +134,10 @@ module.exports = class ReportService {
     };
 
     // Check Ad Suspended
-    static async check_ad_suspended(ad_id, user_id) {
+    static async check_ad_suspended(ad_id, user_id, title) {
+
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
         await Generic.findByIdAndUpdate({ _id: ad_id }, {
             $set: {
                 ad_status: "Suspended",
@@ -128,7 +146,18 @@ module.exports = class ReportService {
             }
         }, {
             new: true
-        })
+        });
+        const messageBody = {
+            title: `Your Ad '${title}' is Suspended`,
+            body: "Check Your Ad in My Ads",
+            data: {
+                navigateTo: navigateToTabs.myads
+            },
+            type: "Warning"
+        }
+
+        await cloudMessage(user_id.toString(), messageBody);
+
         const Update_Report = await Report.findOneAndUpdate({
             user_id: user_id
         }, {
@@ -140,28 +169,57 @@ module.exports = class ReportService {
         });
 
         const Update_flag_func = async (flag) => {
-            if (flag == "Red") {
+            if (flag === "Red") {
+
                 const Updated_flag = await Report.findOneAndUpdate({
+
                     user_id: user_id
+
                 }, {
+
                     $set: {
+
                         "flag": flag,
                         "flag_Date": currentDate
+
                     },
                 }, {
                     new: true
                 });
 
+                if (Updated_flag) {
+
+                    await Profile.findByIdAndUpdate({ _id: user_id }, {
+
+                        $set: {
+                            user_Banned_Flag: true,
+                            user_Banned_Date: currentDate
+                        },
+                        $inc: {
+                            user_Banned_Times: 1
+                        }
+
+                    }, {
+                        new: true
+                    })
+
+                    userRef(user_id.toString()).update({ isBanned: true });
+                }
+
                 return Updated_flag
             }
             else {
-                if (Update_Report["flag"] != flag) {
+                if (Update_Report["flag"] !== flag) {
 
                     const Updated_flag = await Report.findOneAndUpdate({
+
                         user_id: user_id
+
                     }, {
                         $set: {
+
                             "flag": flag,
+
                             "flag_Date": currentDate
                         },
                     }, {
@@ -174,25 +232,21 @@ module.exports = class ReportService {
         }
 
         if (Update_Report["total_Ads_suspended"] >= 10 && Update_Report["total_Ads_suspended"] <= 14) {
+
             Update_flag_func("Yellow")
 
+        } else if (Update_Report["total_Ads_suspended"] <= 10) {
+
+            Update_flag_func("Green");
+
         } else if (Update_Report["total_Ads_suspended"] >= 15 && Update_Report["total_Ads_suspended"] <= 19) {
+
             Update_flag_func("Orange")
 
         } else if (Update_Report["total_Ads_suspended"] >= 20) {
-            const Updated_flag = Update_flag_func("Red");
 
-            if (Updated_flag) {
-                await Profile.findByIdAndUpdate({ _id: user_id }, {
-                    $set: {
-                        user_Banned_Flag: true,
-                        user_Banned_Date: currentDate
-                    },
-                    $inc: {
-                        user_Banned_Times: 1
-                    }
-                })
-            }
+            Update_flag_func("Red");
+
         }
     };
 };

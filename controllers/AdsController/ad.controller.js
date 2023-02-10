@@ -10,10 +10,10 @@ module.exports = class AdController {
     try {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
-      if(adDocument.ad_status == "Pending"){
-        const AfterAdPosted = await AdService.AfterPendingAd(adDocument,req.user_ID)
-      }else{
-        const AfterAdPosted = await AdService.AfterAdIsPosted(adDocument,req.user_ID)
+      if (adDocument.ad_status == "Pending") {
+        const AfterAdPosted = await AdService.AfterPendingAd(adDocument, req.user_ID)
+      } else {
+        const AfterAdPosted = await AdService.AfterAdIsPosted(adDocument, req.user_ID)
       }
       // response code is send 
       res.status(200).send({
@@ -21,7 +21,7 @@ module.exports = class AdController {
         Ad: adDocument,
       })
     } catch (e) {
-      errorHandler(e , res)
+      errorHandler(e, res)
     };
   }
 
@@ -45,7 +45,7 @@ module.exports = class AdController {
         Pending: getDocument[0].Pending
       });
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   }
 
@@ -59,7 +59,7 @@ module.exports = class AdController {
         getHistoryAds
       });
     } catch (e) {
-      errorHandler(e , res)
+      errorHandler(e, res)
     };
   }
 
@@ -74,7 +74,7 @@ module.exports = class AdController {
       // Reponse code is sent
       res.status(200).json({ data: updatedAd })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -91,7 +91,7 @@ module.exports = class AdController {
         }
       )
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   }
 
@@ -107,7 +107,7 @@ module.exports = class AdController {
         Total_Fav_Ads: Get_My_Fav_Ads.length
       })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   }
 
@@ -129,7 +129,7 @@ module.exports = class AdController {
         isAdFav: isAdFav
       })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   }
 
@@ -161,7 +161,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -191,7 +191,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -199,7 +199,7 @@ module.exports = class AdController {
   static async apiGetRelatedAds(req, res, next) {
     try {
       // Premium ads are fetched from db and sent to response
-      const { RelatedAds, featureAds } = await AdService.getRelatedAds(req.query, req.user_ID);
+      const { RelatedAds, featureAds } = await AdService.getRelatedAds(req.query, req.user_ID, req.body.ad_id);
       // Response is sent
       if (RelatedAds == null) {
         // mixpanel track for get premium ads failed
@@ -227,7 +227,7 @@ module.exports = class AdController {
         res.status(204).json({})
       }
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -249,7 +249,7 @@ module.exports = class AdController {
         res.status(200).send(adstatus)
       }
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -265,21 +265,21 @@ module.exports = class AdController {
       })
 
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
-  static async apiMakeAdPremuium(req,res,next){
+  static async apiMakeAdPremuium(req, res, next) {
     try {
       // const { ad_id } = req.body;
       const user_id = req.user_ID;
-      const Updated_Ad = await CreditService.MakeAdPremium(user_id ,req.body);
+      const Updated_Ad = await CreditService.MakeAdPremium(user_id, req.body);
       res.status(200).json({
         data: Updated_Ad
       })
 
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -295,7 +295,7 @@ module.exports = class AdController {
         }
       )
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   }
 
@@ -313,7 +313,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -327,7 +327,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 
@@ -340,7 +340,7 @@ module.exports = class AdController {
         data: Drafted_Ad
       })
     } catch (e) {
-      errorHandler(e , res);
+      errorHandler(e, res);
     };
   };
 };

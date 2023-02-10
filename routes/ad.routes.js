@@ -85,7 +85,7 @@ router.get('/api/v1/getFeaturedAds',
     rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetRecentAds);
-router.get('/api/v1/getRelatedAd',
+router.post('/api/v1/getRelatedAd',
     rateLimiter(getRelatedAdTime, getRelatedAdHits),
     verifyJwtTokenForAds,
     AdController.apiGetRelatedAds);
@@ -94,7 +94,7 @@ router.post('/api/v1/checkAdStatus',
     AdController.apiCheckAdStatus);
 
 router.post('/api/repostAd',
-    // rateLimiter(createAdTime, createAdHits),
+    rateLimiter(createAdTime, createAdHits),
     verifyToken,
     AdController.apiRepostAd);
 

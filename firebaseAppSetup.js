@@ -22,4 +22,13 @@ const getUserFromFireBase = async (userId) => {
 
 }
 
-module.exports = { app, getUserFromFireBase }
+const userRef = (userId) => {
+
+    const db = app.database(process.env.DATABASEURL);
+
+    const userRef = db.ref(`Users/${userId}`);
+    
+    return userRef
+}
+
+module.exports = { app, getUserFromFireBase , userRef }
