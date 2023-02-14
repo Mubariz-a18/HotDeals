@@ -30,9 +30,9 @@ module.exports = class SMSController {
       const exoResponse = await axios.post(
         url,
         formUrlEncoded({
-          From: "DEEPNU",
+          From: "DNTRUE",
           To: phoneNumber.text,
-          Body: `Dear user, your OTP for DeepNucleus is ${otp}--${smsToken}.`
+          Body: `Dear user, your OTP for TrueList is ${otp}  ${smsToken}.`
           // Priority: "HIGH",
         }),
         {

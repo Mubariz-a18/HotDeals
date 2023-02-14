@@ -31,9 +31,9 @@ const profileSchema = mongoose.Schema({
       default: true,
     },
   },
-  age: {
-    type: Number,
-  },
+  // age: {
+  //   type: Number,
+  // },
   gender: {
     type: String,
     enum: ["Male", "Female", "Others"],

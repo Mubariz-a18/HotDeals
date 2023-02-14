@@ -5,7 +5,6 @@ const Rating = require("../models/ratingSchema");
 const Profile = require("../models/Profile/Profile");
 const Referral = require("../models/referelSchema");
 const { track } = require("./mixpanel-service");
-const { my_age } = require("../utils/moment");
 const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
 const { referral_code_generator } = require("../utils/otp.util");
@@ -48,7 +47,6 @@ module.exports = class ProfileService {
             text: bodyData.city.text || "",
           },
           date_of_birth: bodyData.DOB,
-          age: bodyData.age,
           gender: bodyData.gender,
           language_preference: bodyData.language_preference,
           profile_url: bodyData.profile_url,
@@ -97,7 +95,11 @@ module.exports = class ProfileService {
 
         };
       };
-    };
+    }else{
+
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+      
+    }
   };
 
   //DB Service to Get Profile By Phone Number
@@ -326,7 +328,7 @@ module.exports = class ProfileService {
             cover_photo_url: bodyData.cover_photo_url,
             is_email_verified: userProfile.email.text !== bodyData.email.text ? false : userProfile.is_email_verified,
             date_of_birth: bodyData.date_of_birth,
-            age: my_age(moment(bodyData.date_of_birth)),
+            // age: my_age(moment(bodyData.date_of_birth)),
             gender: bodyData.gender,
             language_preference: bodyData.language_preference,
             profile_url: bodyData.profile_url,

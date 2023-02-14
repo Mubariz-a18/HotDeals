@@ -90,16 +90,6 @@ module.exports = class CreditService {
     }
 
     await cloudMessage(user_id.toString(), messageBody);
-
-    // updating the user profile with default values
-
-    await Profile.findOneAndUpdate({ _id: user_id }, {
-
-      $set: {
-        availble_credit: 200
-      }
-
-    })
   };
 
   // Create Credit for old users
