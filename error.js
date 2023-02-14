@@ -12,4 +12,4 @@ exports.JWT_DECODE_ERR = "incorrect token";
 
 exports.USER_NOT_FOUND_ERR = "User not found";
 
-exports.ACCESS_DENIED_ERR = "Access deny for normal user";
+exports.ACCESS_DENIED_ERR = "Access deny for normal user"; 
