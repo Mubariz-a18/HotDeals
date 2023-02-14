@@ -40,17 +40,17 @@ module.exports = class OtpService {
     });
     // Deleting Doc
     if (otpDoc) {
-      await OtpModel.deleteOne({
-        phoneNumber,
-        otp,
-      });
+      // await OtpModel.deleteOne({
+      //   phoneNumber,
+      //   otp,
+      // });
       return "approved";
     }
     else {
       // mixpanel track - invalid otp 
-      track('Otp invalid !! ', {
+      await track('Otp invalid !! ', {
         phoneNumber: phoneNumber,
-      })
+      });
       return "unapproved";
     };
   };
@@ -115,7 +115,7 @@ module.exports = class OtpService {
           }
         })
         //delete doc
-        await OtpModel.deleteOne({ email, otp })
+        // await OtpModel.deleteOne({ email, otp })
         // mixpanel track - email sent 
         await track('Otp verfication Success !! ', {
           email: email,

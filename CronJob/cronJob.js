@@ -173,147 +173,7 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 // Schedule_Task_Credit_Status_Update.start()
 // Schedule_Task_Is_user_Recommended.start()
 
-//*************************************************************** */
 
-
-// const banuser = cron.schedule("'0 0 0 * * *'", async () => {
-
-//   const Reports = await Report.find({ flag: { $ne: "Green" } })
-
-//   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-//   const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
-
-//   Reports.forEach(async report => {
-
-//     let reported_Date = [];
-
-//     let { reports_box } = report;
-
-//     reports_box.forEach(
-
-//       reportList => {
-//         reported_Date.push(reportList.report_action_date)
-//       }
-
-//     );
-
-//     reported_Date.sort();
-
-//     let last_report_Date = reported_Date.pop()
-
-
-//     //01012021        <   01122022
-//     if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended >= 2) {
-
-//       if (report.grace_count_latest_date && report.grace_count_latest_date > Date_Before_Two_Months) {
-
-//       } else {
-//         const Update_Report = await Report.findOneAndUpdate({ user_id: report.user_id }, {
-//           $inc: {
-//             grace_counter: 2
-//           },
-//           $inc: {
-//             total_Ads_suspended: -2,
-//           },
-//           $set: {
-//             grace_count_latest_date: currentDate
-//           }
-
-//         }, { new: true })
-
-
-
-//         const Update_flag_func = async (flag) => {
-
-//           if (flag === "Red") {
-
-//             const Updated_flag = await Report.findOneAndUpdate({
-
-//               user_id: report.user_id
-
-//             }, {
-//               $set: {
-
-//                 "flag": flag,
-
-//                 "flag_Date": currentDate
-
-//               },
-//             }, {
-//               new: true
-//             });
-
-//             return Updated_flag
-//           }
-//           else {
-//             if (Update_Report["flag"] !== flag) {
-
-//               const Updated_flag = await Report.findOneAndUpdate({
-//                 user_id: report.user_id
-//               }, {
-//                 $set: {
-//                   "flag": flag,
-//                   "flag_Date": currentDate
-//                 },
-//               }, {
-//                 new: true
-//               });
-
-//               return Updated_flag
-//             }
-//           }
-//         }
-
-//         if (Update_Report["total_Ads_suspended"] >= 10 && Update_Report["total_Ads_suspended"] <= 14) {
-
-//           Update_flag_func("Yellow");
-
-//           userRef(report.user_id.toString()).update({ isBanned: false });
-
-//         } else if (Update_Report["total_Ads_suspended"] >= 15 && Update_Report["total_Ads_suspended"] <= 19) {
-
-//           Update_flag_func("Orange");
-
-//           userRef(report.user_id.toString()).update({ isBanned: false });
-
-
-//         }else if ( Update_Report["total_Ads_suspended"] <= 10) {
-
-//           Update_flag_func("Green");
-
-//           userRef(report.user_id.toString()).update({ isBanned: false });
-
-//         }
-//          else if (Update_Report["total_Ads_suspended"] >= 20) {
-
-//           const Updated_flag = Update_flag_func("Red");
-
-//           if (Updated_flag) {
-
-//             await Profile.findByIdAndUpdate({ _id: report.user_id }, {
-
-//               $set: {
-//                 user_Banned_Flag: true,
-//                 user_Banned_Date: currentDate
-//               },
-//               $inc: {
-//                 user_Banned_Times: 1
-//               }
-
-//             })
-
-//             userRef(report.user_id.toString()).update({ isBanned: true });
-//           }
-//         }
-//       }
-//     }
-//   })
-// });
-
-
-
-//************************************************************** */
 
 
 // async function sendAlert(){
@@ -606,7 +466,155 @@ const creditExpire = cron.schedule("0 0 0 * * *", async () => {
 //   });
 // });
 
+//*************************************************************** */
 
+                                                                              //'0 0 0 * * *'
+// const banuser = cron.schedule("* * * * * *", async () => {
+
+//   const Reports = await Report.find({ flag: { $ne: "Green" } })
+
+//   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+//   const Date_Before_Two_Months = moment().add(-61, 'd').format('YYYY-MM-DD HH:mm:ss');
+
+//   if (Reports.length > 0) {
+
+//     Reports.forEach(async report => {
+
+//       let reported_Date = [];
+
+//       let { reports_box } = report;
+
+//       if (reports_box.length > 0) {
+
+//         reports_box.forEach(
+
+//           reportList => {
+//             reported_Date.push(reportList.report_action_date)
+//           }
+
+//         );
+
+//         reported_Date.sort();
+
+//         let last_report_Date = reported_Date.pop()
+
+
+//         //01012021        <   01122022
+//         if (last_report_Date < Date_Before_Two_Months && report.total_Ads_suspended >= 2) {
+
+//           if (report.grace_count_latest_date && report.grace_count_latest_date > Date_Before_Two_Months) {
+
+//           } else {
+//             const Update_Report = await Report.findOneAndUpdate({ user_id: report.user_id }, {
+//               $inc: {
+//                 grace_counter: 2
+//               },
+//               $inc: {
+//                 total_Ads_suspended: -2,
+//               },
+//               $set: {
+//                 grace_count_latest_date: currentDate
+//               }
+
+//             }, { new: true })
+
+
+
+//             const Update_flag_func = async (flag) => {
+
+//               if (flag === "Red") {
+
+//                 const Updated_flag = await Report.findOneAndUpdate({
+
+//                   user_id: report.user_id
+
+//                 }, {
+//                   $set: {
+
+//                     "flag": flag,
+
+//                     "flag_Date": currentDate
+
+//                   },
+//                 }, {
+//                   new: true
+//                 });
+
+//                 return Updated_flag
+//               }
+//               else {
+//                 if (Update_Report["flag"] !== flag) {
+
+//                   const Updated_flag = await Report.findOneAndUpdate({
+//                     user_id: report.user_id
+//                   }, {
+//                     $set: {
+//                       "flag": flag,
+//                       "flag_Date": currentDate
+//                     },
+//                   }, {
+//                     new: true
+//                   });
+
+//                   return Updated_flag
+//                 }
+//               }
+//             }
+
+//             if (Update_Report["total_Ads_suspended"] >= 10 && Update_Report["total_Ads_suspended"] <= 14) {
+
+//               Update_flag_func("Yellow");
+
+//               userRef(report.user_id.toString()).update({ isBanned: false });
+
+//             } else if (Update_Report["total_Ads_suspended"] >= 15 && Update_Report["total_Ads_suspended"] <= 19) {
+
+//               Update_flag_func("Orange");
+
+//               userRef(report.user_id.toString()).update({ isBanned: false });
+
+
+//             } else if (Update_Report["total_Ads_suspended"] <= 10) {
+
+//               Update_flag_func("Green");
+
+//               userRef(report.user_id.toString()).update({ isBanned: false });
+
+//             }
+//             else if (Update_Report["total_Ads_suspended"] >= 20) {
+
+//               const Updated_flag = Update_flag_func("Red");
+
+//               if (Updated_flag) {
+
+//                 await Profile.findByIdAndUpdate({ _id: report.user_id }, {
+
+//                   $set: {
+//                     user_Banned_Flag: true,
+//                     user_Banned_Date: currentDate
+//                   },
+//                   $inc: {
+//                     user_Banned_Times: 1
+//                   }
+
+//                 })
+
+//                 userRef(report.user_id.toString()).update({ isBanned: true });
+//               }
+//             }
+//           }
+//         }
+//       }
+//     })
+//   } else {
+
+//   }
+// });
+
+
+
+//************************************************************** */
 
 module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
