@@ -9,26 +9,32 @@ const { track } = require('./mixpanel-service');
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
   static async generateOTPAndCreateDocument(phoneNumber) {
+    
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
     });
+    
     if (otpDoc) {
-      await OtpModel.deleteOne(
-        { phoneNumber: phoneNumber }
-      )
+
       const otp = generateOTP(6);
 
-      return await OtpModel.create({
+      const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
       });
+
+      return newOtp;
 
     } else {
+
       const otp = generateOTP(6);
-      return await OtpModel.create({
+
+      const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
       });
+
+      return newOtp;
     }
   };
 
