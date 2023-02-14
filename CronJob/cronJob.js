@@ -276,14 +276,14 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 //           Update_flag_func("Orange");
 
 //           userRef(report.user_id.toString()).update({ isBanned: false });
-          
+
 
 //         }else if ( Update_Report["total_Ads_suspended"] <= 10) {
 
 //           Update_flag_func("Green");
 
 //           userRef(report.user_id.toString()).update({ isBanned: false });
-          
+
 //         }
 //          else if (Update_Report["total_Ads_suspended"] >= 20) {
 
@@ -331,197 +331,201 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 // }
 
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
-  const Alerts = await Alert.find({ activate_status: true })
-  Alerts.forEach(async (alert) => {
-    const {
-      name,
-      category,
-      sub_category,
-      keywords,
-    } = alert
-    let price = Number(keywords[1])
-    let myFilterArray = keywords.filter(Boolean);
+  const Alerts = await Alert.find({ activate_status: true });
+  if (Alerts.length > 0) {
+    Alerts.forEach(async (alert) => {
+      const {
+        name,
+        category,
+        sub_category,
+        keywords,
+      } = alert
+      let price = Number(keywords[1])
+      let myFilterArray = keywords.filter(Boolean);
 
-    const alertNotificationDoc = await Generic.aggregate(
-      [
-        {
-          $search: {
-            "index": "generic_search_index",
+      const alertNotificationDoc = await Generic.aggregate(
+        [
+          {
+            $search: {
+              "index": "generic_search_index",
 
-            "compound": {
-              "filter": {
-                "text": {
-                  "query": category,
-                  "path": "category"
+              "compound": {
+                "filter": {
+                  "text": {
+                    "query": category,
+                    "path": "category"
+                  },
+                  "text": {
+                    "query": sub_category,
+                    "path": "sub_category"
+                  },
                 },
-                "text": {
-                  "query": sub_category,
-                  "path": "sub_category"
+                "should": {
+                  "autocomplete": {
+                    "query": name,
+                    "path": "title"
+                  },
+                  "autocomplete": {
+                    "query": keywords[0],
+                    "path": "ad_posted_address"
+                  },
                 },
-              },
-              "should": {
-                "autocomplete": {
-                  "query": name,
-                  "path": "title"
+                "must": {
+                  "range": {
+                    "path": "price",
+                    "lte": price
+                  }
                 },
-                "autocomplete": {
-                  "query": keywords[0],
-                  "path": "ad_posted_address"
+                "should": {
+                  "text": {
+                    "query": myFilterArray,
+                    "path": ["SelectFields.Condition", "SelectFields.Brand", "SelectFields.Color", "SelectFields.Gated Community", "SelectFields.Device", "description", "special_mention"]
+                  }
                 },
-              },
-              "must": {
-                "range": {
-                  "path": "price",
-                  "lte": price
-                }
-              },
-              "should": {
-                "text": {
-                  "query": myFilterArray,
-                  "path": ["SelectFields.Condition", "SelectFields.Brand", "SelectFields.Color", "SelectFields.Gated Community", "SelectFields.Device", "description", "special_mention"]
-                }
-              },
+              }
+            }
+
+          },
+          {
+            $match: {
+              ad_status: "Selling"
+            }
+          },
+          {
+            $project: {
+              '_id': 1,
+              'parent_id': 1,
+              "Seller_Id": 1,
+              'Seller_Name': 1,
+              "Seller_verified": 1,
+              "Seller_recommended": 1,
+              'category': 1,
+              'sub_category': 1,
+              'ad_status': 1,
+              'title': 1,
+              "created_at": 1,
+              'price': 1,
+              "thumbnail_url": 1,
+              'isPrime': 1,
+              "dist": 1,
+              "is_Boosted": 1,
+              "Boosted_Date": 1,
+              "is_Highlighted": 1,
+              "Highlighted_Date": 1
             }
           }
+        ]
+      )
 
-        },
-        {
-          $match: {
-            ad_status: "Selling"
-          }
-        },
-        {
-          $project: {
-            '_id': 1,
-            'parent_id': 1,
-            "Seller_Id": 1,
-            'Seller_Name': 1,
-            "Seller_verified": 1,
-            "Seller_recommended": 1,
-            'category': 1,
-            'sub_category': 1,
-            'ad_status': 1,
-            'title': 1,
-            "created_at": 1,
-            'price': 1,
-            "thumbnail_url": 1,
-            'isPrime': 1,
-            "dist": 1,
-            "is_Boosted": 1,
-            "Boosted_Date": 1,
-            "is_Highlighted": 1,
-            "Highlighted_Date": 1
-          }
-        }
-      ]
-    )
+      alertNotificationDoc.forEach(async (eachAd, i) => {
 
-    alertNotificationDoc.forEach(async (eachAd, i) => {
+        eachAd._id = eachAd._id.toString()
+        eachAd.parent_id = eachAd.parent_id.toString()
 
-      eachAd._id = eachAd._id.toString()
-      eachAd.parent_id = eachAd.parent_id.toString()
-
-      await Alert.updateOne(
-        { _id: alert._id },
-        {
-          $addToSet: { "alerted_Ads": eachAd }
-        });
-
-    });
-
-
-    const alertRef = db.ref(`Alerts/${alert.user_ID.toString()}/alert_ads/${alert._id.toString()}`);
-
-    const snapshot = await alertRef.once('value')
-
-    const alertData = await snapshot.val();
-
-    if (alertData !== null) {
-
-      const arrayOfadIds = []
-
-      alertData.forEach(element => {
-
-        arrayOfadIds.push(element._id)
+        await Alert.updateOne(
+          { _id: alert._id },
+          {
+            $addToSet: { "alerted_Ads": eachAd }
+          });
 
       });
 
-      let flag = true;
 
-      alertNotificationDoc.forEach(alert => {
+      const alertRef = db.ref(`Alerts/${alert.user_ID.toString()}/alert_ads/${alert._id.toString()}`);
 
-        if (!arrayOfadIds.includes(alert._id)) {
+      const snapshot = await alertRef.once('value')
 
-          flag = false
+      const alertData = await snapshot.val();
+
+      if (alertData !== null) {
+
+        const arrayOfadIds = []
+
+        alertData.forEach(element => {
+
+          arrayOfadIds.push(element._id)
+
+        });
+
+        let flag = true;
+
+        alertNotificationDoc.forEach(alert => {
+
+          if (!arrayOfadIds.includes(alert._id)) {
+
+            flag = false
+
+          }
+        })
+        if (flag == false) {
+
+          db.ref("Alerts")
+            .child(alert.user_ID.toString())
+            .child("user_alerts")
+            .child(alert._id.toString())
+            .update({
+              seenByUser: false
+            });
+
+          /* 
+   
+            Cloud Notification To firebase
+   
+          */
+
+          const messageBody = {
+            title: `Potential Ads For Your '${alert.name}' Ad Alert !!`,
+            body: "Click here to check ...",
+            data: {
+              id: alert._id.toString(),
+              navigateTo: navigateToTabs.alert
+            },
+            type: "Alert"
+          }
+
+          await cloudMessage(alert.user_ID.toString(), messageBody);
 
         }
-      })
-      if (flag == false) {
 
-        db.ref("Alerts")
-          .child(alert.user_ID.toString())
-          .child("user_alerts")
-          .child(alert._id.toString())
-          .update({
-            seenByUser: false
-          });
+      } else {
+        if (alertNotificationDoc.length !== 0) {
+          db.ref("Alerts")
+            .child(alert.user_ID.toString())
+            .child("user_alerts")
+            .child(alert._id.toString())
+            .update({
+              seenByUser: false
+            });
 
-        /* 
- 
-          Cloud Notification To firebase
- 
-        */
+          /* 
+      
+            Cloud Notification To firebase
+      
+          */
+          const messageBody = {
+            title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
+            body: "Click here to check ...",
+            data: {
+              id: alert._id.toString(),
+              navigateTo: navigateToTabs.alert
+            },
+            type: "Alert"
+          }
 
-        const messageBody = {
-          title: `Potential Ads For Your '${alert.name}' Ad Alert !!`,
-          body: "Click here to check ...",
-          data: {
-            id: alert._id.toString(),
-            navigateTo: navigateToTabs.alert
-          },
-          type: "Alert"
+          await cloudMessage(alert.user_ID.toString(), messageBody);
         }
-
-        await cloudMessage(alert.user_ID.toString(), messageBody);
 
       }
 
-    } else {
-      if (alertNotificationDoc.length !== 0) {
-        db.ref("Alerts")
-          .child(alert.user_ID.toString())
-          .child("user_alerts")
-          .child(alert._id.toString())
-          .update({
-            seenByUser: false
-          });
+      db.ref("Alerts")
+        .child(alert.user_ID.toString())
+        .child("alert_ads")
+        .child(alert._id.toString())
+        .set(alertNotificationDoc)
+    })
+  } else {
 
-        /* 
-    
-          Cloud Notification To firebase
-    
-        */
-        const messageBody = {
-          title: `Potential Ads For Your ${alert.name} Ad Alert !!`,
-          body: "Click here to check ...",
-          data: {
-            id: alert._id.toString(),
-            navigateTo: navigateToTabs.alert
-          },
-          type: "Alert"
-        }
-
-        await cloudMessage(alert.user_ID.toString(), messageBody);
-      }
-
-    }
-
-    db.ref("Alerts")
-      .child(alert.user_ID.toString())
-      .child("alert_ads")
-      .child(alert._id.toString())
-      .set(alertNotificationDoc)
-  })
+  }
 });
 
 
