@@ -3,7 +3,8 @@ const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
 const app = express();
-
+const initializeApp = require('./firebaseAppSetup');
+initializeApp.app
 //Router Imports
 const authRouter = require("./routes/auth.routes");
 const profileRouter = require("./routes/profile.routes");

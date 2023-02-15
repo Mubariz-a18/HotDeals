@@ -21,6 +21,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
+        expire_at:Date.now()
       });
 
       return newOtp;
@@ -32,6 +33,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
+        expire_at:Date.now()
       });
 
       return newOtp;

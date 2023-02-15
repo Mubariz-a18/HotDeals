@@ -14,9 +14,7 @@ module.exports = class AuthController {
     const { phoneNumber, smsToken } = req.body;
     // Creating OTP for phoneNumber
     if (!phoneNumber.text) {
-      res.status(400).json({
-        message: "Phone_Number_Is_Required"
-      });
+      throw ({ status: 401, message: 'PHONE_NUMBER_REQUIRED' });
     } else {
       if (phoneNumber.text == "0123456789") {
         res.status(200).json({
@@ -26,20 +24,24 @@ module.exports = class AuthController {
       else {
         let msgResponse = {};
         const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
-        msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber, smsToken);
-        if (msgResponse.status === "success") {
-          // mixpanel track - email sent 
-          await track('Otp Sent to Phone number successfully !! ', {
-            phoneNumber: phoneNumber,
-            message: `otp sent to  ${phoneNumber}`
-          })
-          res.status(200).json({
-            message: "OTP Sent Successfully",
-          });
+        if (otpDoc) {
+          msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber, smsToken);
+          if (msgResponse.status === "success") {
+            // mixpanel track - email sent 
+            await track('Otp Sent to Phone number successfully !! ', {
+              phoneNumber: phoneNumber,
+              message: `otp sent to  ${phoneNumber}`
+            })
+            res.status(200).json({
+              message: "OTP Sent Successfully",
+            });
+          } else {
+            res.status(400).json({
+              message: msgResponse.data,
+            });
+          }
         } else {
-          res.status(400).json({
-            message: msgResponse.data,
-          });
+          throw ({ status: 500, message: 'SOMETHING_WENT_WRONG' });
         }
       }
     }
@@ -49,13 +51,18 @@ module.exports = class AuthController {
     const { phoneNumber, otp } = req.body;
     try {
       if (phoneNumber.text == "0123456789") {
+
+        const dummyExist = await Profile.findById({_id:ObjectId("63ca69c1bed13a9dd55702fc")});
+
         const token = await createJwtToken(ObjectId("63ca69c1bed13a9dd55702fc"), phoneNumber.text);
+
         return res.status(200).json({
           message: "success",
           token,
           existingUser: true,
-          usersProfileExist: "USERS_PROFILE_EXISTS"
+          usersProfileExist: dummyExist ? "USERS_PROFILE_EXISTS": "USERS_PROFILE_DOESNOT_EXISTS"
         });
+        
       } else {
         //Verfying again otp collection to check the otp is valid
         const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);
@@ -108,10 +115,9 @@ module.exports = class AuthController {
             });
           }
         }
-        if (verficationStatus === "unapproved") {
+        else {
           return res.status(400).json({
-            message: INVALID_OTP_ERR,
-            statusCode: 401
+            message: INVALID_OTP_ERR
           });
         }
       }

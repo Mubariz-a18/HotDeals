@@ -78,4 +78,21 @@ module.exports = class ProfileController {
       errorHandler(e, res)
     };
   };
+
+  static async apiDeleteUser(req, res, next) {
+    try {
+      const deleteUser = await ProfileService.deleteUserService(
+        req.user_ID,
+      );
+      //response code is sent
+      if (deleteUser) {
+        res.status(200).json({
+          message: "User deleted successfully"
+        })
+      }
+    } catch (e) {
+      errorHandler(e, res)
+    };
+  }
+
 };

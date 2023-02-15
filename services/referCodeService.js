@@ -11,9 +11,15 @@ const { ObjectId } = require("mongodb");
 
 
 module.exports = class ReferCodeService {
-
+    static  ReferralCredits = (isPromo)=>{
+        if(isPromo){
+            return 80;
+        }else{
+            return 50;
+        }
+    };
     static async checkReferCodeService(bodyData, user_ID) {
-
+        
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
@@ -40,13 +46,15 @@ module.exports = class ReferCodeService {
                         used_by: user_ID,
                     },
                 }
-            )
+            );
+
+            const isPromo = referCodeExist.isPromoCode;
 
             const push = {
 
                 universal_credit_bundles: {
 
-                    number_of_credit: 50,
+                    number_of_credit: this.ReferralCredits(isPromo),
                     source_of_credit: "Refferal",
                     credit_status: "Active",
                     credit_duration: 30,
@@ -58,7 +66,7 @@ module.exports = class ReferCodeService {
 
             const Referred_Credit_Doc = await Credit.findOneAndUpdate({ user_id: user_ID }, {
 
-                $inc: { total_universal_credits: 50 },
+                $inc: { total_universal_credits: this.ReferralCredits(isPromo) },
 
                 $push: push
 
@@ -68,13 +76,13 @@ module.exports = class ReferCodeService {
 
             await Profile.findOneAndUpdate({_id:ObjectId(user_ID)},{
                 $set:{
-                    $inc:{availble_credit:50},
+                    $inc:{availble_credit:this.ReferralCredits(isPromo)},
                     referrered_user:referCodeExist.user_Id
                 }
             });
 
             const messageBody = {
-                title: `You Have Gained '${50}' Credits By Referral Code!!`,
+                title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By Referral Code!!`,
                 body: "Check Your Credit Info",
                 data: {
                     navigateTo: navigateToTabs.home

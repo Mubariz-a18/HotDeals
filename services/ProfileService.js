@@ -9,6 +9,14 @@ const { createCreditForNewUser } = require("./CreditService");
 const { apiCreateReportDoc } = require("./reportService");
 const { referral_code_generator } = require("../utils/otp.util");
 const { ObjectId } = require("mongodb");
+const Credit = require("../models/creditSchema");
+const Alert = require("../models/alertSchema");
+const Draft = require("../models/Ads/draftSchema");
+const Generic = require("../models/Ads/genericSchema");
+const GlobalSearch = require("../models/GlobalSearch");
+const HelpService = require("./HelpService");
+const Report = require("../models/reportSchema");
+const { app, storage } = require("../firebaseAppSetup");
 
 
 module.exports = class ProfileService {
@@ -56,11 +64,12 @@ module.exports = class ProfileService {
           updated_date: currentDate
 
         });
-        // Create a new referralCode doc
 
+        // Create a new referralCode doc
         await Referral.create({
           user_Id: profileDoc1._id,
           referral_code: referral_code_generator(bodyData.name),
+          isPromoCode: false
         });
 
         // creating a default Rating for new user
@@ -68,8 +77,17 @@ module.exports = class ProfileService {
           user_id: profileDoc1._id,
         });
 
-        //create a new credit doc for new user
-        await createCreditForNewUser(profileDoc1._id);
+        if (!profileDoc.isDeletedOnce) {
+
+          //create a new credit doc for new user
+          await createCreditForNewUser(profileDoc1._id, 200, "Active");
+
+        } else {
+
+          //create a new credit doc for new user
+          await createCreditForNewUser(profileDoc1._id, 0, "Empty");
+
+        }
 
         //create a new report doc for new user
         await apiCreateReportDoc(userID);
@@ -95,10 +113,10 @@ module.exports = class ProfileService {
 
         };
       };
-    }else{
+    } else {
 
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-      
+
     }
   };
 
@@ -362,4 +380,115 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
   };
+
+  static async deleteUserService(user_ID) {
+
+    // const defultProfile = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb";
+    // const defaultThumbnail = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"; 
+    // const userDeleted = await Profile.findOne({ _id: user_ID });
+    // const usersAds = await Generic.find({ user_id: user_ID }, {
+    // image_url: 1,
+    //   video_url: 1,
+    //     thumbnail_url: 1
+    // });
+    const userDeleted = await Profile.findOneAndDelete({ _id: user_ID });
+
+    if (userDeleted) {
+      await User.findOneAndUpdate({ _id: user_ID }, {
+        $set: {
+          isDeletedOnce: true
+        }
+      });
+
+        await Credit.deleteOne({ user_id: user_ID });
+      //   await Alert.deleteOne({ user_ID: user_ID });
+      //   await Draft.deleteMany({ user_id: user_ID });
+      //   // await Generic.deleteMany({ user_id: user_ID });
+      //   await GlobalSearch.deleteMany({ ad_id: { $in: userDeleted.my_ads } });
+      //   await HelpService.deleteMany({user_id:user_ID});
+      //   await Rating.deleteOne({user_id:user_ID});
+      //   await Referral.deleteOne({user_Id:user_ID});
+
+      // if (userDeleted.profile_url !== defultProfile) {
+      //   //firebase delete operation
+      // } else {
+      //   console.log("isdefault")
+      // }
+      // let images = [];
+      // let videos = [];
+      // let thumbnails = [];
+
+      // usersAds.forEach(element => {
+      //   element.image_url?.forEach(img => images.push(img))
+      //   element.video_url?.forEach(vid => videos.push(vid))
+      //   element.thumbnail_url?.forEach(thumb => {
+      //     if (thumb !== defaultThumbnail) {
+      //       thumbnails.push(thumb)
+      //     }
+      //   })
+
+      // })
+
+
+      // console.log(
+      //   images, "\n",
+      //   videos, "\n",
+      //   thumbnails)
+
+      // const { getStorage, ref, deleteObject } = require("firebase/storage");
+
+      // const { initializeApp } = require("firebase/app");
+
+
+      // const firebaseConfig = {
+      //   apiKey: process.env.APIKEY,
+      //   authDomain: process.env.AUTHDOMAIN,
+      //   databaseURL: process.env.DATABASEURL,
+      //   projectId: process.env.PROJECTID,
+      //   storageBucket: process.env.STORAGEBUCKET,
+      //   messagingSenderId: process.env.MESSAGINGSENDERID,
+      //   appId: process.env.APPID,
+      //   measurementId: process.env.MEASUREMENTID
+      // };
+
+      // const app = initializeApp(firebaseConfig);
+      // const storage = getStorage(app);
+
+      // if (images.length > 0) {
+      //   images.forEach(img => {
+      //     const desertRef = ref(storage, img)
+      //     deleteObject(desertRef).then(() => {
+      //       console.log("deleted")
+      //     }).catch(e => {
+      //       console.log(e)
+      //     })
+      //   });
+      // }
+      // if (videos.length > 0) {
+      //   videos.forEach(vid => {
+      //     const desertRef = ref(storage, vid)
+      //     deleteObject(desertRef).then(() => {
+      //       console.log("deleted")
+      //     }).catch(e => {
+      //       console.log(e)
+      //     })
+      //   })
+      // }
+      // if (thumbnails.length > 0) {
+      //   thumbnails.forEach(thumb => {
+      //     const desertRef = ref(storage, vid)
+      //     deleteObject(desertRef).then(() => {
+      //       console.log("deleted")
+      //     }).catch(e => {
+      //       console.log(e)
+      //     })
+      //   })
+      // }
+
+      return userDeleted
+    }
+    else {
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+  }
 };

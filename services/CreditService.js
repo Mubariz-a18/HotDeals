@@ -47,7 +47,7 @@ const getCreditType = (ad) => {
 
 module.exports = class CreditService {
   // create Default Credit for new user 
-  static async createCreditForNewUser(user_id) {
+  static async createCreditForNewUser(user_id, cred, status) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
@@ -58,14 +58,14 @@ module.exports = class CreditService {
     await Credit.create({
 
       user_id: user_id,
-      total_universal_credits: 200,
+      total_universal_credits: cred,
 
       universal_credit_bundles: {
 
-        number_of_credit: 200,
+        number_of_credit: cred,
         source_of_credit: "Admin-Login",
         credit_created_date: currentDate,
-        credit_status: "Active",
+        credit_status: status,
         credit_duration: durationInDays(Free_credit_Expiry),
         credit_expiry_date: Free_credit_Expiry
 
@@ -145,8 +145,8 @@ module.exports = class CreditService {
 */
     let creditCount = 0;
 
-    creditsArray.forEach(crd=>{
-       creditCount = creditCount +  crd.number_of_credit
+    creditsArray.forEach(crd => {
+      creditCount = creditCount + crd.number_of_credit
     })
 
     const messageBody = {
@@ -174,7 +174,7 @@ module.exports = class CreditService {
       Premium_Boost: 4,
       HighLight: 5
     };
-    
+
     const { category, AdsArray } = bodyData;
 
     const user_credit_Document = await Credit.findOne({
@@ -213,9 +213,9 @@ module.exports = class CreditService {
 
       let creditTypeMultiple = typeMultiples[credittype];
 
-      if(credittype === "HighLight"){
+      if (credittype === "HighLight") {
         creditTypeMultiple = creditTypeMultiple + typeMultiples.Premium
-      } 
+      }
 
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
 
@@ -314,8 +314,8 @@ module.exports = class CreditService {
 
       let creditTypeMultiple = typeMultiples[credittype];
 
-      
-      if(credittype === "HighLight"){
+
+      if (credittype === "HighLight") {
         creditTypeMultiple = creditTypeMultiple + typeMultiples.Premium
       }
 
@@ -620,7 +620,7 @@ module.exports = class CreditService {
     };
 
     const Ad = await Generic.findOne({ _id: ObjectId(ad_id) });
-    if(!Ad){
+    if (!Ad) {
       throw ({ status: 404, message: 'AD_NOT_EXIST' })
     }
     if (Ad.isPrime === true) {

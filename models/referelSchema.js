@@ -13,6 +13,9 @@ const referralCodeSchema = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
       }
     ],
+    isPromoCode:{
+      type:Boolean
+    },
     used_Date: {
       type: String
     }

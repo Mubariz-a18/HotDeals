@@ -6,6 +6,10 @@ const userSchema = mongoose.Schema({
     unique: true,
     required: true,
   },
+  isDeletedOnce:{
+    type:Boolean,
+    default:false
+  },
   created_at: {
     type: String
   },

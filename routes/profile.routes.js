@@ -31,5 +31,8 @@ verifyToken, ProfileCotroller.apiUpdateProfile)             //Upddate
 router.get("/api/v1/checkUserProfile", 
 verifyToken, 
 ProfileCotroller.apiCheckUserProfileExist);
+router.delete("/api/v1/deleteUser", 
+verifyToken,
+ProfileCotroller.apiDeleteUser);
 
 module.exports = router;
