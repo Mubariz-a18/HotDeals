@@ -8,7 +8,7 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const { detectSafeSearch, detectsafeText } = require("../image.controller");
+const { detectSafeSearch, safetext } = require("../image.controller");
 const imgCom = require("../imageCompression");
 const cloudMessage = require("../cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
@@ -85,6 +85,18 @@ module.exports = class AdService {
     */
     const { health, batch } = await detectSafeSearch(image_url);
 
+    /* 
+    
+    **********************************************************
+    CHECKING TITLE AND DESCRIPTION PROFANITY
+    **********************************************************
+    
+    */
+
+    const isTextSafe = await safetext(title, description);
+
+    console.log(isTextSafe);
+
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
 
     const createAdFunc = async (status) => {
@@ -123,7 +135,7 @@ module.exports = class AdService {
       return adDoc
     }
 
-    if (health === "HEALTHY") {
+    if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
 
       const creditDuctConfig = {
 
@@ -855,6 +867,7 @@ module.exports = class AdService {
             {
               $set: {
                 ad_status: "Draft",
+                ad_Sold_Date: currentDate,
                 ad_Draft_Date: currentDate
               }
             },
@@ -871,7 +884,14 @@ module.exports = class AdService {
             {
               $set: {
                 ad_status: "Selling",
-              }
+              },
+              $unset: {
+                ad_Draft_Date: 1,
+                ad_Deleted_Date: 1,
+                ad_Sold_Date: 1,
+                ad_Archive_Date: 1,
+                ad_Historic_Duration_Date: 1
+              },
             },
             { returnOriginal: false, new: true }
           )
@@ -1593,7 +1613,7 @@ $skip and limit for pagination
 
     let featureAds = featureAdsFunction(RelatedAds[0].RecentAds, RelatedAds[0].PremiumAds);
 
-    
+
     if (adId) {
       featureAds = featureAds.filter((ad) => {
         return ad._id.toString() !== adId;

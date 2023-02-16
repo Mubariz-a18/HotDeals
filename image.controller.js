@@ -1,4 +1,6 @@
 const vision = require('@google-cloud/vision');
+const Filter = require('bad-words');
+const badWords = require('./utils/badWords');
 
 const client = new vision.ImageAnnotatorClient({
     keyFilename: "googleVisionKeys.json"
@@ -65,33 +67,52 @@ async function detectSafeSearch(imageArray) {
 }
 
 
-async function detectsafeText(imageArray) {
+// async function detectsafeText(imageArray) {
 
-    const detectionsPromises = imageArray.map(async (imageUrl) => {
+//     const detectionsPromises = imageArray.map(async (imageUrl) => {
 
-        const [result] = await client.textDetection(imageUrl);
+//         const [result] = await client.textDetection(imageUrl);
 
-        return result.textAnnotations[0].description;
-    });
+//         return result.textAnnotations[0].description;
+//     });
 
-    Promise.all(detectionsPromises)
+//     Promise.all(detectionsPromises)
 
-        .then((detections) => {
+//         .then((detections) => {
 
-            const emailRegex = detections[0].match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
-            const phoneRegex = detections[0].match(/\+[0-9]{1,3}-[0-9]{3}-[0-9]{3}-[0-9]{4}/);
-            const urlRegex =   detections[0].match(/(https?:\/\/[^\s]+)/);
+//             const emailRegex = detections[0].match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
+//             const phoneRegex = detections[0].match(/\+[0-9]{1,3}-[0-9]{3}-[0-9]{3}-[0-9]{4}/);
+//             const urlRegex = detections[0].match(/(https?:\/\/[^\s]+)/);
 
-            console.log(detections[0])
-            console.log(emailRegex , phoneRegex , urlRegex)
-        })
+//             console.log(detections[0])
+//             console.log(emailRegex, phoneRegex, urlRegex)
+//         })
 
-        .catch((error) => {
+//         .catch((error) => {
 
-            console.error(error);
-        });
+//             console.error(error);
+//         });
+// }
+
+
+async function safetext(title, description) {
+
+    const filter = new Filter();
+
+    filter.addWords(...badWords);
+
+    const isTitleBad = filter.isProfane(title);
+
+    const isDescriptionBad = filter.isProfane(description);
+
+    if (isTitleBad === true || isDescriptionBad === true) {
+        return "HarmFull"
+    }
+    else {
+        return "NotHarmFull"
+    }
 }
 
 
 
-module.exports = { detectSafeSearch, detectsafeText }
+module.exports = { detectSafeSearch, safetext }
