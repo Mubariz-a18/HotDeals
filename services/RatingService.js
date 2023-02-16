@@ -103,8 +103,10 @@ module.exports = class RatingService {
             await Rating_doc.save();
             //saving the average rating in user profile
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-              rate_average: Rating_doc.average_rating,
-              rate_count: Rating_doc.RatingInfo.length
+              $set:{
+                rate_average: Rating_doc.average_rating,
+                rate_count: Rating_doc.RatingInfo.length
+              }
             }, { new: true })
             // mixpanel track create rating success
             await track('  create Rating successfully !! ', {
@@ -137,8 +139,10 @@ module.exports = class RatingService {
             await Rating_doc.save();
             //updating user rating count
             await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-              rate_average: Rating_doc.average_rating,
-              rate_count: Rating_doc.RatingInfo.length
+              $set:{
+                rate_average: Rating_doc.average_rating,
+                rate_count: Rating_doc.RatingInfo.length
+              }
             })
             return Rating_doc;
           }

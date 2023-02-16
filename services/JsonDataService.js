@@ -23,4 +23,11 @@ module.exports = class JsonDataService {
         const JsonData = collection.findOne();
         return JsonData
     }
+
+    static async getAppVersion(){
+        const db = await this.db();
+        const collection = db.collection("versions");
+        const versions = collection.findOne();
+        return versions
+    }
 };

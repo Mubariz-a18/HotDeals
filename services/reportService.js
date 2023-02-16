@@ -5,7 +5,7 @@ const Reason_points = require("../utils/reason_points");
 const { expiry_date_func } = require("../utils/moment");
 const Profile = require("../models/Profile/Profile");
 const { userRef } = require("../firebaseAppSetup");
-const cloudMessage = require("../cloudMessaging");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 
 

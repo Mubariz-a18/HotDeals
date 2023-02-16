@@ -8,13 +8,13 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const { detectSafeSearch, safetext } = require("../image.controller");
-const imgCom = require("../imageCompression");
-const cloudMessage = require("../cloudMessaging");
+const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
+const imgCom = require("../Firebase operations/imageCompression");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
-const imageWaterMark = require("../waterMarkImages");
+const imageWaterMark = require("../Firebase operations/waterMarkImages");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -22,7 +22,7 @@ module.exports = class AdService {
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
 
     if (adExist) {
-      throw ({ status: 404, message: 'AD_ALREADY_EXISTS' })
+      throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -83,6 +83,7 @@ module.exports = class AdService {
     **********************************************************
     
     */
+
     const { health, batch } = await detectSafeSearch(image_url);
 
     /* 
@@ -95,7 +96,6 @@ module.exports = class AdService {
 
     const isTextSafe = await safetext(title, description);
 
-    console.log(isTextSafe);
 
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
 
@@ -178,6 +178,13 @@ module.exports = class AdService {
     }
   };
 
+  static  ReferralCredits = (isPromo)=>{
+    if(isPromo){
+        return 80;
+    }else{
+        return 50;
+    }
+};
 
   static async AfterAdIsPosted(adDoc, userId) {
 
@@ -219,11 +226,13 @@ module.exports = class AdService {
 
       if (reffered_by_user) {
 
+        const isPromo = reffered_by_user?.isPromoCode;
+
         const push = {
 
           universal_credit_bundles: {
 
-            number_of_credit: 50,
+            number_of_credit: this.ReferralCredits(isPromo),
             source_of_credit: "Refferal",
             credit_status: "Active",
             credit_duration: 30,
@@ -235,7 +244,7 @@ module.exports = class AdService {
 
         await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
 
-          $inc: { total_universal_credits: 50 },
+          $inc: { total_universal_credits: this.ReferralCredits(isPromo) },
 
           $push: push
 
@@ -245,7 +254,7 @@ module.exports = class AdService {
 
 
         const messageBody = {
-          title: `You Have Gained '${50}' Credits By Referral Code!!`,
+          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By Referral Code!!`,
           body: "Check Your Credit Info",
           data: {
             navigateTo: navigateToTabs.home
@@ -380,9 +389,20 @@ module.exports = class AdService {
     **********************************************************
     
     */
+   
     const { health, batch } = await detectSafeSearch(image_url);
 
-    if (health === "HEALTHY") {
+    /* 
+    
+    **********************************************************
+    CHECKING TITLE AND DESCRIPTION PROFANITY
+    **********************************************************
+    
+    */
+
+    const isTextSafe = await safetext(" ", description);
+
+    if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
         $set: {
           description,
@@ -448,7 +468,7 @@ module.exports = class AdService {
 
         title: `Your Ad Is '${Ad.title}' Pending !!`,
         body: "Click here to check ...",
-        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
+        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.myads },
         type: "Info"
 
       }

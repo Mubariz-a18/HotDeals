@@ -1,6 +1,6 @@
 const vision = require('@google-cloud/vision');
 const Filter = require('bad-words');
-const badWords = require('./utils/badWords');
+const badWords = require('../utils/badWords');
 
 const client = new vision.ImageAnnotatorClient({
     keyFilename: "googleVisionKeys.json"

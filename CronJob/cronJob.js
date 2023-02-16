@@ -11,7 +11,7 @@ const {
   expiry_date_func } = require('../utils/moment');
 const { app, userRef } = require('../firebaseAppSetup');
 const { ObjectId } = require('mongodb');
-const cloudMessage = require('../cloudMessaging');
+const cloudMessage = require('../Firebase operations/cloudMessaging');
 const navigateToTabs = require('../utils/navigationTabs');
 const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 
@@ -174,21 +174,6 @@ const db = app.database("https://true-list-default-rtdb.firebaseio.com");
 // Schedule_Task_Is_user_Recommended.start()
 
 
-
-
-// async function sendAlert(){
-//   const messageBody = {
-//     title: `Potential Ads For Your ${"test"} Ad Alert !!`,
-//     body: "Click here to check ...",
-//     data: {
-//       id: "sefegdfgdfbdfbfgbhfg",
-//       navigateTo: navigateToTabs.alert
-//     },
-//     type: "Alert"
-//   }
-
-//   await cloudMessage('63c0fb5999db943aba6baa7e', messageBody);
-// }
 
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true });

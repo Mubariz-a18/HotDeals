@@ -1,8 +1,6 @@
 const sharp = require('sharp');
-// const firebase = require('firebase-admin');
-const { app } = require('./firebaseAppSetup');
+const { app } = require('../firebaseAppSetup');
 const axios = require("axios")
-
 
 const imageWaterMark = async (imageArray) => {
     const imageUrls = imageArray;

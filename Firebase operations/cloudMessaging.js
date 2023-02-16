@@ -1,4 +1,4 @@
-const { app, getUserFromFireBase } = require("./firebaseAppSetup");
+const { app, getUserFromFireBase } = require("../firebaseAppSetup");
 const moment = require("moment")
 
 const messaging = app.messaging();

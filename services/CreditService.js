@@ -6,7 +6,7 @@ const moment = require('moment');
 const { ObjectId } = require("mongodb");
 const Generic = require("../models/Ads/genericSchema");
 const Transaction = require("../models/transactionSchema");
-const cloudMessage = require("../cloudMessaging");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 
 const creditType = {

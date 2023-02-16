@@ -1,6 +1,6 @@
 const request = require('request-promise-native');
 const sharp = require('sharp');
-const { app } = require('./firebaseAppSetup');
+const { app } = require('../firebaseAppSetup');
 
 async function imgCom(imageUrl) {
     try {
