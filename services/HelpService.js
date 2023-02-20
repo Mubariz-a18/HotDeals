@@ -55,22 +55,13 @@ module.exports = class HelpService {
 
   // Delete Help
   static async deleteHelp(bodyData, userId) {
+
     const helpID = bodyData.helpID;
+    
     // create Help doc
     const findUser = await Profile.findOne({
       _id: userId
     });
-    // verify if the user is authorized -- if authorized find help doc with users id
-    if (!findUser) {
-      //mixpanel track for failed to delete help
-      await track('failed to delete help !!', {
-        distinct_id: userId,
-        message: `user_id : ${userId} doesnot exists `,
-        helpID: helpID
-      });
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    else {
       // check if help exists
       const findHelp = await Help.findOne({
         _id: helpID
@@ -97,9 +88,8 @@ module.exports = class HelpService {
           distinct_id: userId,
           helpID: helpID,
         });
-        return deleteHelp;
+        return "SUCCESSFULLY DELETED";
       }
-    }
   };
 
   static async getHelp(userId) {

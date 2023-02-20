@@ -110,22 +110,9 @@ module.exports = class AlertService {
       sub_category,
       keywords,
     } = bodyData
-    const user = await Profile.findOne({ _id: userId });
-    // if user is verified alert i updated in alert collection
-    if (!user) {
-      // mixpanel track - failed to update alert
-      await track('failed !! to update alert ', {
-        sub_category: sub_category,
-        category: category,
-        keyword: keywords,
-        distinct_id: alert_id,
-        message: `user : ${userId}  does not exist`
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-    }
-    else {
+
       // update alert with input 
-      const updateAds = await Alert.findOneAndUpdate({
+      const UpdateAlert = await Alert.findOneAndUpdate({
         _id: alert_id, user_ID: userId
       }, {
         $set: {
@@ -143,13 +130,23 @@ module.exports = class AlertService {
         category: category,
         keyword: keywords,
         distinct_id: alert_id,
-      })
-      return updateAds;
-    }
+      });
+
+      if(!UpdateAlert){
+        throw ({ status: 401, message: 'Access_Denied' });
+      }
+
+      return UpdateAlert;
   }
 
   // Delete Alert
   static async deleteAlert(alert_id, userId) {
+    
+      const findAlert = await Alert.findOne({_id:alert_id , user_ID :userId});
+
+      if(!findAlert){
+        throw ({ status: 401, message: 'Access_Denied' });
+      }
 
       // remove alert id from user profile
       await Profile.findOneAndUpdate(

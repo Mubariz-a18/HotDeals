@@ -1,7 +1,9 @@
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const Profile = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 const ObjectId = require('mongodb').ObjectId;
 const { currentDate } = require('../utils/moment');
+const navigateToTabs = require("../utils/navigationTabs");
 const { track } = require("./mixpanel-service");
 
 module.exports = class FollowUnfollowService {
@@ -11,7 +13,7 @@ module.exports = class FollowUnfollowService {
         const dbUser = await Profile.findById({ _id: userId })
         if (dbUser) {
             if (userId == bodyData.following_id) {
-                throw ({ status: 401, message: 'ACCESS_DENIED' });
+                throw ({ status: 401, message: 'Access_Denied' });
             }
             // if user exist find user_to_follow 
             const user_to_follow = await Profile.findById({ _id: bodyData.following_id })
@@ -22,6 +24,19 @@ module.exports = class FollowUnfollowService {
 
                 // if not user_id is saved in users profile -- increase follower count
                 if (alreadyExistInFollowers == false && alreadyExistInfollowing == false) {
+
+                    // notification to user
+                    const messageBody = {
+                        title: `${dbUser.name}  started Following You!!`,
+                        body: "Check Your Profile",
+                        data: {
+                            navigateTo: navigateToTabs.profile
+                        },
+                        type: "Info"
+                    }
+
+                    await cloudMessage(bodyData.following_id.toString(), messageBody);
+
                     const user_followed = await Profile.findByIdAndUpdate(bodyData.following_id,
                         {
                             $push: {
@@ -53,7 +68,8 @@ module.exports = class FollowUnfollowService {
                     })
 
                     return (followInfo)
-                } else {
+                }
+                else {
                     // mixpanel track -user already following
                     await track("user already following", {
                         distinct_id: userId,
@@ -88,7 +104,7 @@ module.exports = class FollowUnfollowService {
         // finding user if exist
         if (dbUser) {
             if (userId == bodyData.unfollowing_id) {
-                throw ({ status: 401, message: 'ACCESS_DENIED' });
+                throw ({ status: 401, message: 'Access_Denied' });
             }
             // if user exist find user_to_unfollow 
             const user_to_unfollow = await Profile.findById({ _id: bodyData.unfollowing_id })

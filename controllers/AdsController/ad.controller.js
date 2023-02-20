@@ -115,18 +115,25 @@ module.exports = class AdController {
     try {
       const ad_id = req.body.ad_id;
       // AD detail is fetched from db and sent to response
-      const { AdDetail, ownerDetails, isAdFav } = await AdService.getParticularAd(ad_id, req.query, req.user_ID)
-      // Response is sent
-      await track('viewed ad successfully', {
-        distinct_id: req.user_ID,
-        ad_id: ad_id,
-        message: `user : ${req.user_ID} viewed Ad`
-      })
-      res.status(200).json({
-        AdDetails: AdDetail,
-        Owner: ownerDetails,
-        isAdFav: isAdFav
-      })
+      if (req.body.ad_status && req.body.ad_status === "Pending") {
+        const AdDetail = await AdService.getParticularAd(req.body, req.query, req.user_ID);
+        res.status(200).json({
+          AdDetails: [AdDetail]
+        })
+      } else {
+        const { AdDetail, ownerDetails, isAdFav } = await AdService.getParticularAd(req.body, req.query, req.user_ID)
+        // Response is sent
+        await track('viewed ad successfully', {
+          distinct_id: req.user_ID,
+          ad_id: ad_id,
+          message: `user : ${req.user_ID} viewed Ad`
+        })
+        res.status(200).json({
+          AdDetails: AdDetail,
+          Owner: ownerDetails,
+          isAdFav: isAdFav
+        })
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -286,7 +293,7 @@ module.exports = class AdController {
     try {
       const adID = req.body.ad_id;
       // Ad is saved in Favourite and sent to responce
-      const updated_Ad = await AdService.repostAd(adID);
+      const updated_Ad = await AdService.repostAd(adID, req.user_ID);
       res.status(200).send(
         {
           message: "success",
@@ -343,16 +350,16 @@ module.exports = class AdController {
     };
   };
 
-    // Delete One Draft
-    static async apiDeleteDraft(req, res, next) {
-      try {
-        const user_id = req.user_ID;
-        const deleteDraft = await AdService.deleteDraft(user_id , req.body.ad_id);
-        res.status(200).json({
-          data: deleteDraft
-        })
-      } catch (e) {
-        errorHandler(e, res);
-      };
+  // Delete One Draft
+  static async apiDeleteDraft(req, res, next) {
+    try {
+      const user_id = req.user_ID;
+      const deleteDraft = await AdService.deleteDraft(user_id, req.body.ad_id);
+      res.status(200).json({
+        data: deleteDraft
+      })
+    } catch (e) {
+      errorHandler(e, res);
     };
+  };
 };

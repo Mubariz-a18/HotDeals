@@ -452,7 +452,11 @@ module.exports = class CreditService {
 
     const { ad_id, category, boost_duration } = body
 
-    const Ad = await Generic.findById({ _id: ObjectId(ad_id) });
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+
+    if (!Ad) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
 
     const AdsArray = Array(body.AdsArray);
 
@@ -619,10 +623,12 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id) });
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+
     if (!Ad) {
-      throw ({ status: 404, message: 'AD_NOT_EXIST' })
+      throw ({ status: 401, message: 'Access_Denied' });
     }
+
     if (Ad.isPrime === true) {
       throw ({ status: 401, message: 'AD_IS_ALREADY_PREMIUM' })
     }
@@ -777,11 +783,11 @@ module.exports = class CreditService {
 
     const AdsArray = Array(body.AdsArray);
 
-    const adDetail = await Generic.findById({ _id: ad_id })
+    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id });
 
-    // if (adDetail.isPrime !== true) {
-    //   throw ({ status: 404, message: 'AD_SHOULD_BE_PRIME' });
-    // }
+    if (!adDetail) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
