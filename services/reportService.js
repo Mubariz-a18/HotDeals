@@ -29,7 +29,7 @@ module.exports = class ReportService {
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-        const { ad_id, reason, description } = bodyData;
+        const { ad_id, reason, description , attachment } = bodyData;
 
         const points = Reason_points(reason)
 
@@ -66,6 +66,7 @@ module.exports = class ReportService {
                         "reports_box.$.reports_list": {
                             "reported_user_id": user_ID,
                             "reason": reason,
+                            "attachment":attachment,
                             "description": description,
                             "reported_date": currentDate,
                         }
@@ -73,19 +74,19 @@ module.exports = class ReportService {
                 }, {
                     new: true, returnDocument: "after"
                 });
-
-                if (Push_Report_With_Reason) {
-
-                    await this.check_ad_suspended(ad_id, findAd.user_id, findAd.title);
-
-
-
-                } else {
-
-                }
-
                 return Push_Report_With_Reason
             } else {
+
+                const User_report_already_exist = await Report.findOne({
+                    user_id: findAd.user_id,
+                    "reports_box.ad_id": ad_id,
+                    "reports_box.reports_list.reported_user_id":user_ID
+                })
+
+                if(User_report_already_exist){
+                    throw ({ status: 401, message: 'REPORT_ALREADY_EXISTS' });
+                }
+
                 const Push_Report_If_ReportList_exist = await Report.findOneAndUpdate({
                     user_id: findAd.user_id,
                     "reports_box.ad_id": ad_id
@@ -97,6 +98,7 @@ module.exports = class ReportService {
                         "reports_box.$.reports_list": {
                             "reported_user_id": user_ID,
                             "reason": reason,
+                            "attachment":attachment,
                             "description": description,
                             "reported_date": currentDate,
                         }

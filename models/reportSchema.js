@@ -50,6 +50,9 @@ const reportSchema = mongoose.Schema({
                     description: {
                         type: String
                     },
+                    attachment:{
+                        type:Array
+                    },
                     reported_date: {
                         type: String
                     }

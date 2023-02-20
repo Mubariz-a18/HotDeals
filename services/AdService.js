@@ -1180,6 +1180,7 @@ module.exports = class AdService {
         '$project': {
           '_id': 1,
           'parent_id': 1,
+          'user_id':1,
           'category': 1,
           'sub_category': 1,
           'title': 1,
@@ -1204,14 +1205,21 @@ module.exports = class AdService {
           'dist': 1
         }
       }
-    ])
+    ]);
+
     if (AdDetail.length == 0) {
       throw ({ status: 404, message: 'NOT_FOUND' });
     }
-    const updateAdViews = await Generic.findOneAndUpdate({ _id: ad_id }, {
-      $inc: { views: 1 }
-    }, { new: true });
-    const ownerDetails = await Profile.findById({ _id: updateAdViews.user_id }, {
+
+    if(AdDetail[0].user_id.toString() !== user_id){
+      const updateAdViews = await Generic.findOneAndUpdate({ _id: ad_id }, {
+        $inc: { views: 1 }
+      }, { new: true });
+
+      AdDetail[0].views = AdDetail[0].views + 1 
+    }
+
+    const ownerDetails = await Profile.findById({ _id: AdDetail[0].user_id }, {
       _id: 1,
       name: 1,
       profile_url: 1,
@@ -1225,7 +1233,8 @@ module.exports = class AdService {
         "favourite_ads": {
           $elemMatch: { "ad_id": ad_id }
         }
-      })
+      });
+      
     let isAdFav
     if (user) {
       isAdFav = true
@@ -1960,4 +1969,16 @@ $skip and limit for pagination
       throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
+
+  static async deleteDraft(user_Id , ad_id){
+    const findandDeleteDraft = await Draft.deleteOne({
+      user_id:user_Id,
+      _id:ad_id
+    });
+
+    if(!findandDeleteDraft.deletedCount > 0){
+      throw ({ status: 401, message: 'DRAFT_DOEST_NOT_EXIST' })
+    }
+    return "SUCCESSFULLY_DELETED"
+  }
 };

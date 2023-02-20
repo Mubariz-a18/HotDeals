@@ -342,4 +342,17 @@ module.exports = class AdController {
       errorHandler(e, res);
     };
   };
+
+    // Delete One Draft
+    static async apiDeleteDraft(req, res, next) {
+      try {
+        const user_id = req.user_ID;
+        const deleteDraft = await AdService.deleteDraft(user_id , req.body.ad_id);
+        res.status(200).json({
+          data: deleteDraft
+        })
+      } catch (e) {
+        errorHandler(e, res);
+      };
+    };
 };
