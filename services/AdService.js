@@ -8,13 +8,13 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const { detectSafeSearch, safetext } = require("../image.controller");
-const imgCom = require("../imageCompression");
-const cloudMessage = require("../cloudMessaging");
+const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
+const imgCom = require("../Firebase operations/imageCompression");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
-const imageWaterMark = require("../waterMarkImages");
+const imageWaterMark = require("../Firebase operations/waterMarkImages");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -22,7 +22,7 @@ module.exports = class AdService {
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
 
     if (adExist) {
-      throw ({ status: 404, message: 'AD_ALREADY_EXISTS' })
+      throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -83,6 +83,7 @@ module.exports = class AdService {
     **********************************************************
     
     */
+
     const { health, batch } = await detectSafeSearch(image_url);
 
     /* 
@@ -92,10 +93,10 @@ module.exports = class AdService {
     **********************************************************
     
     */
+    const special_mention_string = special_mention.join(" ");
 
-    const isTextSafe = await safetext(title, description);
+    const isTextSafe = await safetext(title, description , special_mention_string);
 
-    console.log(isTextSafe);
 
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
 
@@ -135,22 +136,23 @@ module.exports = class AdService {
       return adDoc
     }
 
+    const creditDuctConfig = {
+
+      title: title,
+      category: category,
+      AdsArray: bodyData.AdsArray
+
+    }
+    const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
+
+    if (message === "NOT_ENOUGH_CREDITS") {
+
+      throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
+
+    }
+
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
 
-      const creditDuctConfig = {
-
-        title: title,
-        category: category,
-        AdsArray: bodyData.AdsArray
-
-      }
-      const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
-
-      if (message === "NOT_ENOUGH_CREDITS") {
-
-        throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
-
-      }
 
       let adDoc = await createAdFunc(ad_status)
 
@@ -178,6 +180,13 @@ module.exports = class AdService {
     }
   };
 
+  static ReferralCredits = (isPromo) => {
+    if (isPromo) {
+      return 80;
+    } else {
+      return 50;
+    }
+  };
 
   static async AfterAdIsPosted(adDoc, userId) {
 
@@ -219,11 +228,13 @@ module.exports = class AdService {
 
       if (reffered_by_user) {
 
+        const isPromo = reffered_by_user?.isPromoCode;
+
         const push = {
 
           universal_credit_bundles: {
 
-            number_of_credit: 50,
+            number_of_credit: this.ReferralCredits(isPromo),
             source_of_credit: "Refferal",
             credit_status: "Active",
             credit_duration: 30,
@@ -235,7 +246,7 @@ module.exports = class AdService {
 
         await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
 
-          $inc: { total_universal_credits: 50 },
+          $inc: { total_universal_credits: this.ReferralCredits(isPromo) },
 
           $push: push
 
@@ -245,7 +256,7 @@ module.exports = class AdService {
 
 
         const messageBody = {
-          title: `You Have Gained '${50}' Credits By Referral Code!!`,
+          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By Referral Code!!`,
           body: "Check Your Credit Info",
           data: {
             navigateTo: navigateToTabs.home
@@ -337,7 +348,9 @@ module.exports = class AdService {
 
   //Update Ad
   static async updateAd(bodyData, user_id) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
     const {
       parent_id,
       description,
@@ -349,7 +362,12 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id })
+    const Ad = await Generic.findOne({ parent_id: parent_id ,user_id:user_id });
+
+    if (!Ad) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
+
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
@@ -380,9 +398,21 @@ module.exports = class AdService {
     **********************************************************
     
     */
+
     const { health, batch } = await detectSafeSearch(image_url);
 
-    if (health === "HEALTHY") {
+    /* 
+    
+    **********************************************************
+    CHECKING TITLE AND DESCRIPTION PROFANITY
+    **********************************************************
+    
+    */
+    const special_mention_string = special_mention.join(" ");
+    
+    const isTextSafe = await safetext(" ", description , special_mention_string );
+
+    if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
         $set: {
           description,
@@ -391,6 +421,7 @@ module.exports = class AdService {
           price,
           image_url,
           thumbnail_url,
+          ad_status:"Selling",
           video_url,
           detection: batch,
           is_negotiable,
@@ -448,7 +479,7 @@ module.exports = class AdService {
 
         title: `Your Ad Is '${Ad.title}' Pending !!`,
         body: "Click here to check ...",
-        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
+        data: { _id: parent_id.toString(), navigateTo: navigateToTabs.myads },
         type: "Info"
 
       }
@@ -662,6 +693,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   price: 1,
+                  ad_posted_address: 1,
                   thumbnail_url: 1
                 }
               }
@@ -751,175 +783,170 @@ module.exports = class AdService {
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
-    // check if user exist 
-    const userExist = await Profile.findOne({
-      _id: userId
+
+    const findAd = await Generic.findOne({
+      _id: ad_id,
+      user_id: userId
     });
-    // if not xist throw error
-    if (!userExist) {
-      // mixpanel -- track failed to chane ad status 
+
+    if (!findAd) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
+
+    // if ad doesnt exist throw error 
+    if (!findAd) {
       await track('failed !! to chaange ad status', {
         distinct_id: userId,
         ad_id: ad_id,
-        message: ` user_id : ${userId}  does not exist`
+        message: ` ad_id : ${ad_id}  does not exist`
+
       })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+      throw ({ status: 404, message: 'AD_NOT_EXISTS' })
     }
+    // if ad exist change the status of Ad
     else {
-      /* 
-      if user exists find the ad whose status is to be changed
-      */
-      const findAd = await Generic.findOne({
-        _id: ad_id
-      });
-
-      // if ad doesnt exist throw error 
-      if (!findAd) {
-        await track('failed !! to chaange ad status', {
-          distinct_id: userId,
-          ad_id: ad_id,
-          message: ` ad_id : ${ad_id}  does not exist`
-
-        })
-        throw ({ status: 404, message: 'AD_NOT_EXISTS' })
+      // mixpanel track - when Status Of Ad changed 
+      await track('ad status changed successfully !!', {
+        distinct_id: userId,
+        ad_id: ad_id,
+        status: bodyData.status
+      })
+      if (bodyData.status == "Archive") {
+        const adDoc = await Generic.findByIdAndUpdate(
+          {
+            _id: ad_id
+          },
+          {
+            $set: {
+              ad_status: "Archive",
+              ad_Archive_Date: currentDate
+            }
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
       }
-      // if ad exist change the status of Ad
-      else {
-        // mixpanel track - when Status Of Ad changed 
-        await track('ad status changed successfully !!', {
-          distinct_id: userId,
-          ad_id: ad_id,
-          status: bodyData.status
-        })
-        if (bodyData.status == "Archive") {
-          const adDoc = await Generic.findByIdAndUpdate(
-            {
-              _id: ad_id
+      else if (bodyData.status == "Sold") {
+        const adDoc = await Generic.updateMany(
+          {
+            parent_id: ad_id,
+            ad_status: "Selling"
+          },
+          {
+            $set: {
+              ad_status: "Sold",
+              ad_Sold_Date: currentDate,
+              ad_Historic_Duration_Date: Ad_Historic_Duration,
+            }
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
+      }
+      else if (bodyData.status == "Delete") {
+        const adDoc = await Generic.findByIdAndUpdate(
+          {
+            _id: ad_id
+          },
+          {
+            $set: {
+              ad_status: "Delete",
+              ad_Deleted_Date: currentDate,
+              ad_Historic_Duration_Date: Ad_Historic_Duration
+            }
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
+      }
+      else if (bodyData.status == "Premium") {
+        // only after payment is done 
+        const adDoc = await Generic.findByIdAndUpdate(
+          {
+            _id: ad_id
+          },
+          {
+            $set: {
+              ad_status: "Selling",
+              ad_Premium_Date: currentDate,
+              isPrime: true
+            }
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
+      }
+      else if (bodyData.status == "Draft") {
+        // only after payment is done 
+        const adDoc = await Generic.findByIdAndUpdate(
+          {
+            _id: ad_id
+          },
+          {
+            $set: {
+              ad_status: "Draft",
+              ad_Sold_Date: currentDate,
+              ad_Draft_Date: currentDate
+            }
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
+      }
+      else if (bodyData.status == "Selling") {
+        // only after payment is done 
+        const adDoc = await Generic.findByIdAndUpdate(
+          {
+            _id: ad_id
+          },
+          {
+            $set: {
+              ad_status: "Selling",
             },
-            {
-              $set: {
-                ad_status: "Archive",
-                ad_Archive_Date: currentDate
-              }
+            $unset: {
+              ad_Draft_Date: 1,
+              ad_Deleted_Date: 1,
+              ad_Sold_Date: 1,
+              ad_Archive_Date: 1,
+              ad_Historic_Duration_Date: 1
             },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-        else if (bodyData.status == "Sold") {
-          const adDoc = await Generic.updateMany(
-            {
-              parent_id: ad_id,
-              ad_status: "Selling"
-            },
-            {
-              $set: {
-                ad_status: "Sold",
-                ad_Sold_Date: currentDate,
-                ad_Historic_Duration_Date: Ad_Historic_Duration,
-              }
-            },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-        else if (bodyData.status == "Delete") {
-          const adDoc = await Generic.findByIdAndUpdate(
-            {
-              _id: ad_id
-            },
-            {
-              $set: {
-                ad_status: "Delete",
-                ad_Deleted_Date: currentDate,
-                ad_Historic_Duration_Date: Ad_Historic_Duration
-              }
-            },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-        else if (bodyData.status == "Premium") {
-          // only after payment is done 
-          const adDoc = await Generic.findByIdAndUpdate(
-            {
-              _id: ad_id
-            },
-            {
-              $set: {
-                ad_status: "Selling",
-                ad_Premium_Date: currentDate,
-                isPrime: true
-              }
-            },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-        else if (bodyData.status == "Draft") {
-          // only after payment is done 
-          const adDoc = await Generic.findByIdAndUpdate(
-            {
-              _id: ad_id
-            },
-            {
-              $set: {
-                ad_status: "Draft",
-                ad_Sold_Date: currentDate,
-                ad_Draft_Date: currentDate
-              }
-            },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-        else if (bodyData.status == "Selling") {
-          // only after payment is done 
-          const adDoc = await Generic.findByIdAndUpdate(
-            {
-              _id: ad_id
-            },
-            {
-              $set: {
-                ad_status: "Selling",
-              },
-              $unset: {
-                ad_Draft_Date: 1,
-                ad_Deleted_Date: 1,
-                ad_Sold_Date: 1,
-                ad_Archive_Date: 1,
-                ad_Historic_Duration_Date: 1
-              },
-            },
-            { returnOriginal: false, new: true }
-          )
-          return adDoc;
-        }
-      };
+          },
+          { returnOriginal: false, new: true }
+        )
+        return adDoc;
+      }
     };
+
   };
 
   // Make Ads favourite  or Unfavourite 
   static async favouriteAds(bodyData, userId, ad_id) {
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
     // Ad is find from Generics collection    if body contains "Favourite"
     if (bodyData.value == "Favourite") {
+
       const findAd = await Generic.findOne({
         _id: ad_id
-      })
+      });
       // if Ad doesnt exists throw error
       if (!findAd) {
+
         // mixpanel track for failed event in make ad favourite
         await track('failed !! Make Ad favourite ', {
           distinct_id: userId,
           ad_id: ad_id,
           message: ` ad_id : ${ad_id}  does not exist`
         })
+
         throw ({ status: 404, message: 'AD_NOT_EXISTS' });
       }
       else {
+
         const isAdFav = await Profile.findOne(
           {
             _id: userId,
@@ -1131,10 +1158,19 @@ module.exports = class AdService {
   };
 
   // Get particular Ad Detail with distance and user details
-  static async getParticularAd(ad_id, query, user_id) {
+  static async getParticularAd(bodyData, query, user_id) {
+
+    
+    const ad_id = bodyData.ad_id;
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
+    
+    
+    if(bodyData.ad_status === "Pending"){
+      return await Generic.findById({_id:ad_id});
+    }
+
     const AdDetail = await Generic.aggregate([
       {
         '$geoNear': {
@@ -1160,6 +1196,7 @@ module.exports = class AdService {
         '$project': {
           '_id': 1,
           'parent_id': 1,
+          'user_id': 1,
           'category': 1,
           'sub_category': 1,
           'title': 1,
@@ -1184,14 +1221,21 @@ module.exports = class AdService {
           'dist': 1
         }
       }
-    ])
+    ]);
+
     if (AdDetail.length == 0) {
       throw ({ status: 404, message: 'NOT_FOUND' });
     }
-    const updateAdViews = await Generic.findOneAndUpdate({ _id: ad_id }, {
-      $inc: { views: 1 }
-    }, { new: true });
-    const ownerDetails = await Profile.findById({ _id: updateAdViews.user_id }, {
+
+    if (AdDetail[0].user_id.toString() !== user_id) {
+      const updateAdViews = await Generic.findOneAndUpdate({ _id: ad_id }, {
+        $inc: { views: 1 }
+      }, { new: true });
+
+      AdDetail[0].views = AdDetail[0].views + 1
+    }
+
+    const ownerDetails = await Profile.findById({ _id: AdDetail[0].user_id }, {
       _id: 1,
       name: 1,
       profile_url: 1,
@@ -1205,7 +1249,8 @@ module.exports = class AdService {
         "favourite_ads": {
           $elemMatch: { "ad_id": ad_id }
         }
-      })
+    });
+
     let isAdFav
     if (user) {
       isAdFav = true
@@ -1648,11 +1693,15 @@ $skip and limit for pagination
     }
   };
 
-  static async repostAd(ad_id) {
+  static async repostAd(ad_id, userId) {
 
     // only after payment is done 
 
-    const adCopy = await Generic.findById({ _id: ad_id });
+    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId });
+
+    if (!adCopy) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
@@ -1868,6 +1917,7 @@ $skip and limit for pagination
 
   // Update Any Draft Ad
   static async updateDraft(bodyData, userId) {
+
     const {
       ad_id,
       category,
@@ -1888,6 +1938,16 @@ $skip and limit for pagination
       ad_status,
       is_negotiable,
     } = bodyData
+
+    const Ad = await Draft.findById({ _id: ad_id });
+
+    if (!Ad) {
+      throw ({ status: 404, message: 'DRAFT_NOT_FOUND' });
+    }
+
+    if (Ad.user_id.toString() !== userId) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
 
     const updateAd = await Draft.findByIdAndUpdate({ _id: ad_id, user_id: userId }, {
       $set: {
@@ -1940,4 +2000,22 @@ $skip and limit for pagination
       throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
+
+  static async deleteDraft(user_Id, ad_id) {
+
+    const Ad = await Draft.findOne({ _id: ad_id, user_id: user_Id });
+
+    if (!Ad) {
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
+    const findandDeleteDraft = await Draft.deleteOne({
+      user_id: user_Id,
+      _id: ad_id
+    });
+
+    if (!findandDeleteDraft.deletedCount > 0) {
+      throw ({ status: 401, message: 'DRAFT_DOEST_NOT_EXIST' })
+    }
+    return "SUCCESSFULLY_DELETED"
+  }
 };

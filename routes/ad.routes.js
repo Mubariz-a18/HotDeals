@@ -117,4 +117,9 @@ router.post('/api/updateDraftAd',
     rateLimiter(createAdTime, createAdHits),
     verifyToken,
     AdController.apiUpdateDraftAds);
+
+router.post('/api/deleteDraft',
+    rateLimiter(getMyAdTime, getMyAdHits),
+    verifyToken,
+    AdController.apiDeleteDraft);
 module.exports = router;

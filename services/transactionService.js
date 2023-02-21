@@ -108,5 +108,5 @@ module.exports = class TransactionService {
         } else {
             throw ({ status: 404, message: "NO_INVOICES_FOUND" });
         }
-    }
+    };
 }

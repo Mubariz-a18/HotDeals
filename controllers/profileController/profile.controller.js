@@ -9,6 +9,7 @@ module.exports = class ProfileController {
         profileDoc1,
         message,
         userProfile,
+        ShowReferral,
         statusCode
       } = await ProfileService.createProfile(
         req.body,
@@ -19,6 +20,7 @@ module.exports = class ProfileController {
       res.status(statusCode).json({
         message: message,
         profileDoc1,
+        showReferral:ShowReferral,
         userProfile
       })
     } catch (e) {

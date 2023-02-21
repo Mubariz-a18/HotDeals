@@ -1,6 +1,6 @@
 const vision = require('@google-cloud/vision');
 const Filter = require('bad-words');
-const badWords = require('./utils/badWords');
+const badWords = require('../utils/badWords');
 
 const client = new vision.ImageAnnotatorClient({
     keyFilename: "googleVisionKeys.json"
@@ -95,7 +95,7 @@ async function detectSafeSearch(imageArray) {
 // }
 
 
-async function safetext(title, description) {
+async function safetext(title, description , special_mention) {
 
     const filter = new Filter();
 
@@ -105,7 +105,9 @@ async function safetext(title, description) {
 
     const isDescriptionBad = filter.isProfane(description);
 
-    if (isTitleBad === true || isDescriptionBad === true) {
+    const isSpecialMentionsBAd  = filter.isProfane(special_mention);
+
+    if (isTitleBad === true || isDescriptionBad === true || isSpecialMentionsBAd === true) {
         return "HarmFull"
     }
     else {

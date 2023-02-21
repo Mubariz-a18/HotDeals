@@ -2,7 +2,7 @@ const { generateOTP } = require('../utils/otp.util');
 const OtpModel = require('../models/Otp');
 const EmailController = require('../controllers/CredentialController/email.controller');
 const Profile = require('../models/Profile/Profile');
-const { INVALID_OTP_ERR } = require('../error');
+const { INVALID_OTP_ERR } = require('../validators/error');
 const { track } = require('./mixpanel-service');
 
 

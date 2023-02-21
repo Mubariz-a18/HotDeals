@@ -240,6 +240,7 @@ const badWords = [
     "mr hands",
     "muff diver",
     "muffdiving",
+    "nasty",
     "nambla",
     "nawashi",
     "negro",

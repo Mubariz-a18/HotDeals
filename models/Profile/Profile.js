@@ -166,7 +166,8 @@ const profileSchema = mongoose.Schema({
     default: "",
   },
   user_Banned_Flag: {
-    type: Boolean
+    type: Boolean,
+    default:false,
   },
   user_Banned_Times: {
     type: Number

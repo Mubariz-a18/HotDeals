@@ -2,6 +2,8 @@ const User = require("../models/Profile/Profile");
 const Rating = require("../models/ratingSchema");
 const moment = require('moment');
 const { track } = require("./mixpanel-service");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
+const navigateToTabs = require("../utils/navigationTabs");
 
 module.exports = class RatingService {
   // creating a new Rating document for a particular user
@@ -41,7 +43,20 @@ module.exports = class RatingService {
           throw ({ status: 401, message: 'ACCESS_DENIED' });
         }
         // If RatingInfo doesnot exist for a user create new one
-        const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id })
+        const alreadyexist = await Rating.findOne({ user_id: bodyData.user_id });
+        
+          // notification to user
+          const messageBody = {
+            title: `You Got ${bodyData.RatingInfo.rating} Star Rating by ${user.name} !!`,
+            body: "Check Your Profile",
+            data: {
+              navigateTo: navigateToTabs.profile
+            },
+            type: "Info"
+          }
+  
+          await cloudMessage(bodyData.user_id.toString(), messageBody);
+
         if (!alreadyexist) {
           const ratDoc = await Rating.create({
             user_id: bodyData.user_id,
@@ -49,11 +64,11 @@ module.exports = class RatingService {
             RatingInfo: {
               rating_given_by: userId,
               rating: bodyData.RatingInfo.rating,
-              comment:bodyData.RatingInfo.comment,
+              comment: bodyData.RatingInfo.comment,
               rating_given_date: currentDate,
               rating_updated_date: currentDate
             }
-          });
+          });       
           //updating the rating feilds in ratedUser
 
           const ratedUser = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
@@ -80,7 +95,7 @@ module.exports = class RatingService {
                   RatingInfo: {
                     // average_rating: bodyData.RatingInfo.rating,
                     rating: bodyData.RatingInfo.rating,
-                    comment:bodyData.RatingInfo.comment,
+                    comment: bodyData.RatingInfo.comment,
                     rating_given_by: userId,
                     rating_given_date: currentDate,
                     rating_updated_date: currentDate
@@ -103,8 +118,10 @@ module.exports = class RatingService {
             await Rating_doc.save();
             //saving the average rating in user profile
             const update_User_avg_rating = await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-              rate_average: Rating_doc.average_rating,
-              rate_count: Rating_doc.RatingInfo.length
+              $set: {
+                rate_average: Rating_doc.average_rating,
+                rate_count: Rating_doc.RatingInfo.length
+              }
             }, { new: true })
             // mixpanel track create rating success
             await track('  create Rating successfully !! ', {
@@ -137,8 +154,10 @@ module.exports = class RatingService {
             await Rating_doc.save();
             //updating user rating count
             await User.findByIdAndUpdate({ _id: bodyData.user_id }, {
-              rate_average: Rating_doc.average_rating,
-              rate_count: Rating_doc.RatingInfo.length
+              $set: {
+                rate_average: Rating_doc.average_rating,
+                rate_count: Rating_doc.RatingInfo.length
+              }
             })
             return Rating_doc;
           }

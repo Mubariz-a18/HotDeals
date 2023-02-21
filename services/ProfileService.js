@@ -97,28 +97,37 @@ module.exports = class ProfileService {
           distinct_id: profileDoc1._id
         });
 
+        let ShowReferral
+
+        if (profileDoc.isDeletedOnce) {
+          ShowReferral = false
+        } else {
+          ShowReferral = true
+        }
+
         return {
           profileDoc1,
           message: "Successfully_Created",
+          ShowReferral: ShowReferral,
           statusCode: 200
         };
 
-      } else {
+          } else {
 
-        return {
+            return {
 
-          userProfile,
-          message: 'USER_ALREADY_EXISTS',
-          statusCode: 403
+              userProfile,
+              message: 'USER_ALREADY_EXISTS',
+              statusCode: 403
 
-        };
+            };
+          };
+        } else {
+
+          throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+
+        }
       };
-    } else {
-
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-
-    }
-  };
 
   //DB Service to Get Profile By Phone Number
   static async getOthersProfile(user_id, user_ID) {
@@ -400,7 +409,7 @@ module.exports = class ProfileService {
         }
       });
 
-        await Credit.deleteOne({ user_id: user_ID });
+      await Credit.deleteOne({ user_id: user_ID });
       //   await Alert.deleteOne({ user_ID: user_ID });
       //   await Draft.deleteMany({ user_id: user_ID });
       //   // await Generic.deleteMany({ user_id: user_ID });

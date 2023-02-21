@@ -1,7 +1,7 @@
 const OtpService = require("../../services/OtpService");
 const User = require("../../models/Profile/User");
 const { createJwtToken } = require("../../utils/generateToken");
-const { INVALID_OTP_ERR } = require("../../error");
+const { INVALID_OTP_ERR } = require("../../validators/error");
 const SMSController = require("./sms.controller");
 const { track } = require("../../services/mixpanel-service");
 const Profile = require("../../models/Profile/Profile");

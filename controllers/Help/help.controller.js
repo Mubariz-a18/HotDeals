@@ -21,7 +21,6 @@ module.exports = class HelpController {
     try {
       const deleteHelp_doc = await HelpService.deleteHelp(req.body, req.user_ID);
       res.status(200).json({
-        message: "successfully deleted",
         deleteHelp_doc
       })
     } catch (e) {

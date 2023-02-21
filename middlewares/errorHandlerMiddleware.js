@@ -1,4 +1,4 @@
-const { SERVER_ERR } = require("../error");
+const { SERVER_ERR } = require("../validators/error");
 
 
 //Middleware For Error Handling

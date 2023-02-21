@@ -4,7 +4,7 @@ const moment = require('moment');
 const Credit = require("../models/creditSchema");
 const { expiry_date_func } = require("../utils/moment");
 const navigateToTabs = require("../utils/navigationTabs");
-const cloudMessage = require("../cloudMessaging");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
 const Profile = require("../models/Profile/Profile");
 const { ObjectId } = require("mongodb");
 
