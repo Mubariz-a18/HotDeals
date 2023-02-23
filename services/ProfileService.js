@@ -112,22 +112,22 @@ module.exports = class ProfileService {
           statusCode: 200
         };
 
-          } else {
+      } else {
 
-            return {
+        return {
 
-              userProfile,
-              message: 'USER_ALREADY_EXISTS',
-              statusCode: 403
+          userProfile,
+          message: 'USER_ALREADY_EXISTS',
+          statusCode: 403
 
-            };
-          };
-        } else {
-
-          throw ({ status: 404, message: 'USER_NOT_EXISTS' });
-
-        }
+        };
       };
+    } else {
+
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+
+    }
+  };
 
   //DB Service to Get Profile By Phone Number
   static async getOthersProfile(user_id, user_ID) {
@@ -389,7 +389,7 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
   };
-
+  //delete userProfile Service
   static async deleteUserService(user_ID) {
 
     // const defultProfile = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb";
@@ -410,13 +410,13 @@ module.exports = class ProfileService {
       });
 
       await Credit.deleteOne({ user_id: user_ID });
-      //   await Alert.deleteOne({ user_ID: user_ID });
-      //   await Draft.deleteMany({ user_id: user_ID });
+      await Alert.deleteOne({ user_ID: user_ID });
+      await Draft.deleteMany({ user_id: user_ID });
       //   // await Generic.deleteMany({ user_id: user_ID });
-      //   await GlobalSearch.deleteMany({ ad_id: { $in: userDeleted.my_ads } });
-      //   await HelpService.deleteMany({user_id:user_ID});
-      //   await Rating.deleteOne({user_id:user_ID});
-      //   await Referral.deleteOne({user_Id:user_ID});
+      await GlobalSearch.deleteMany({ ad_id: { $in: userDeleted.my_ads } });
+      await HelpService.deleteMany({ user_id: user_ID });
+      await Rating.deleteOne({ user_id: user_ID });
+      await Referral.deleteOne({ user_Id: user_ID });
 
       // if (userDeleted.profile_url !== defultProfile) {
       //   //firebase delete operation

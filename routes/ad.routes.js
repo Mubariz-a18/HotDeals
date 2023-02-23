@@ -55,10 +55,10 @@ router.get('/api/v1/getMyAds',
     verifyToken,
     AdController.apiGetMyAds);
 
-router.get('/api/v1/getMyAdsHistory',
-    rateLimiter(getMyAdTime, getMyAdHits),
-    verifyToken,
-    AdController.apiGetMyAdsHistory);
+// router.get('/api/v1/getMyAdsHistory',
+//     rateLimiter(getMyAdTime, getMyAdHits),
+//     verifyToken,
+//     AdController.apiGetMyAdsHistory);
 
 router.post('/api/vi/changeAdStatus',
     rateLimiter(changeAdStatusTime, changeAdStatusHits),

@@ -1,15 +1,20 @@
 const nodemailer = require('nodemailer');
 
 module.exports = class EmailController {
-    static async sendEmailWithNodemailer(email, otp) {
+    static async sendEmailWithNodemailer(email, otp, userName) {
         const msg = {
-            from: process.env.SMPT_MAIL,
+            from: "syedmubariz542@gmail.com",
             to: email,
-            subject: `TRUE LIST EMAIL VERIFICATION`,
-            text: `\n 
-            \n YOUR EMAIL VERIFICATION OTP IS : \n
-                    ${otp}
-            \n`
+            subject: "Please Verify Your Email Address",
+            html: `<b>Dear ${userName},\n</b>
+                    <p>    
+                    We appreciate that you have signed up for our service. Please verify your email address by using the 6-digit code provided below:  <b>${otp}</b><br><br>
+                    If you have any questions or need further assistance, please do not hesitate to contact us via our Help Center. Our support team will be happy to assist you.
+                    </p>
+                    <span>Thank you for choosing our service.</span><br>
+                    <span> Best regards,</span><br>
+                    <span> TrueList</span>`,
+
         }
 
         const emailSetup = nodemailer.createTransport({

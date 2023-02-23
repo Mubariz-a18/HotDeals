@@ -722,64 +722,64 @@ module.exports = class AdService {
     }
   };
 
-  // Get my Ads -- user is authenticated from token and  ads are fetched from db 
-  static async getMyAdsHistory(userId) {
-    //check if user exist or not
-    const findUsr = await Profile.findOne({
-      _id: ObjectId(userId)
-    });
-    //if not exist throw error 
-    if (!findUsr) {
-      // mixpanel -- track failed get my ads history
-      await track('failed !! get my ads', {
-        distinct_id: userId,
-        message: ` user_id : ${userId}  does not exist`
-      })
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
-    }
-    else {
-      /*
-      if user exist find ads with ad_Status delete , sold , expired
-      projecting the required feilds
-      */
-      const myAdsList = await Generic.find({
-        user_id: userId,
-        $or: [
-          { ad_status: "Delete" },
-          { ad_status: "Sold" },
-          { ad_status: "Expired" }
-        ]
-      }, {
-        _id: 1,
-        title: 1,
-        description: 1,
-        image_url: { $arrayElemAt: ["$image_url", 0] },
-        created_at: 1,
-        ad_status: 1,
-        price: 1,
-        ad_expire_date: 1,
-        ad_Deleted_Date: 1,
-        ad_Sold_Date: 1,
-      }
-      )
-      if (!myAdsList) {
-        // mixpanel -- track failed get my ads
-        await track('failed !! get my ads history ', {
-          distinct_id: userId,
-          message: ` user_id : ${userId}  does not have ads in My_Ads historry`
-        })
-        throw ({ status: 404, message: 'ADS_NOT_EXISTS' })
-      }
-      else {
-        // mixpanel track for Get My Ads
-        await track('get my ads history successfully !!', {
-          distinct_id: userId
-        });
-        return myAdsList;
-      }
+  // // Get my Ads -- user is authenticated from token and  ads are fetched from db 
+  // static async getMyAdsHistory(userId) {
+  //   //check if user exist or not
+  //   const findUsr = await Profile.findOne({
+  //     _id: ObjectId(userId)
+  //   });
+  //   //if not exist throw error 
+  //   if (!findUsr) {
+  //     // mixpanel -- track failed get my ads history
+  //     await track('failed !! get my ads', {
+  //       distinct_id: userId,
+  //       message: ` user_id : ${userId}  does not exist`
+  //     })
+  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+  //   }
+  //   else {
+  //     /*
+  //     if user exist find ads with ad_Status delete , sold , expired
+  //     projecting the required feilds
+  //     */
+  //     const myAdsList = await Generic.find({
+  //       user_id: userId,
+  //       $or: [
+  //         { ad_status: "Delete" },
+  //         { ad_status: "Sold" },
+  //         { ad_status: "Expired" }
+  //       ]
+  //     }, {
+  //       _id: 1,
+  //       title: 1,
+  //       description: 1,
+  //       image_url: { $arrayElemAt: ["$image_url", 0] },
+  //       created_at: 1,
+  //       ad_status: 1,
+  //       price: 1,
+  //       ad_expire_date: 1,
+  //       ad_Deleted_Date: 1,
+  //       ad_Sold_Date: 1,
+  //     }
+  //     )
+  //     if (!myAdsList) {
+  //       // mixpanel -- track failed get my ads
+  //       await track('failed !! get my ads history ', {
+  //         distinct_id: userId,
+  //         message: ` user_id : ${userId}  does not have ads in My_Ads historry`
+  //       })
+  //       throw ({ status: 404, message: 'ADS_NOT_EXISTS' })
+  //     }
+  //     else {
+  //       // mixpanel track for Get My Ads
+  //       await track('get my ads history successfully !!', {
+  //         distinct_id: userId
+  //       });
+  //       return myAdsList;
+  //     }
 
-    }
-  };
+  //   }
+  // };
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
@@ -1170,6 +1170,9 @@ module.exports = class AdService {
     if(bodyData.ad_status === "Pending"){
       return await Generic.findById({_id:ad_id});
     }
+    if(!lng || !lat || !maxDistance){
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
 
     const AdDetail = await Generic.aggregate([
       {
@@ -1274,6 +1277,9 @@ module.exports = class AdService {
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = 10;
+    if(!lng || !lat || !maxDistance){
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
     // let limitval = +query.limit || 20;
     /* 
     $geonear to find all the ads existing near the given coordinates
@@ -1396,9 +1402,13 @@ module.exports = class AdService {
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    let pageVal = +query.page;
+    let pageVal = +query.page || 1;
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
+
+    if(!lng || !lat || !maxDistance){
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
     /* 
 $geonear to find all the ads existing near the given coordinates
 $lookup for the relation between the profiles and Generics
@@ -1530,6 +1540,10 @@ $skip and limit for pagination
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 10;
+
+    if(!lng || !lat ){
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
 
     let RelatedAds = await Generic.aggregate([
       {
