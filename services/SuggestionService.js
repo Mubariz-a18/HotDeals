@@ -2,7 +2,7 @@ const suggestionSchema = require("../models/suggestionSchema");
 const moment = require('moment');
 
 module.exports = class SuggestionService {
-
+    // create suggestions by user
     static async createSuggestion(bodyData, user_id) {
         const {
             suggestion

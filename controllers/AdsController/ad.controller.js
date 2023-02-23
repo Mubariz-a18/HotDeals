@@ -48,19 +48,19 @@ module.exports = class AdController {
     };
   }
 
-  static async apiGetMyAdsHistory(req, res, next) {
-    try {
-      // My ads History  are fetched from db and sent to response
-      const getHistoryAds = await AdService.getMyAdsHistory(req.user_ID);
-      // Response code is send 
-      res.status(200).send({
-        message: "success!",
-        getHistoryAds
-      });
-    } catch (e) {
-      errorHandler(e, res)
-    };
-  }
+  // static async apiGetMyAdsHistory(req, res, next) {
+  //   try {
+  //     // My ads History  are fetched from db and sent to response
+  //     const getHistoryAds = await AdService.getMyAdsHistory(req.user_ID);
+  //     // Response code is send 
+  //     res.status(200).send({
+  //       message: "success!",
+  //       getHistoryAds
+  //     });
+  //   } catch (e) {
+  //     errorHandler(e, res)
+  //   };
+  // }
 
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
   static async apiChangeAdStatus(req, res, next) {

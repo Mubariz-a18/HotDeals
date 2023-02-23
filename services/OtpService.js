@@ -9,11 +9,11 @@ const { track } = require('./mixpanel-service');
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
   static async generateOTPAndCreateDocument(phoneNumber) {
-    
+
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
     });
-    
+
     if (otpDoc) {
 
       const otp = generateOTP(6);
@@ -21,7 +21,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
-        expire_at:Date.now()
+        expire_at: Date.now()
       });
 
       return newOtp;
@@ -33,7 +33,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
-        expire_at:Date.now()
+        expire_at: Date.now()
       });
 
       return newOtp;
@@ -80,12 +80,13 @@ module.exports = class OtpService {
       }
       else {
         // sent email to user 
-        await EmailController.sendEmailWithNodemailer(email, otp)
+        await EmailController.sendEmailWithNodemailer(email, otp, userExist.name)
           .then(async (res) => {
             await OtpModel.create({
               otp,
               email,
-              user_id: userId
+              user_id: userId,
+              expire_at: Date.now()
             });
           })
         // mixpanel track - email sent 
@@ -97,7 +98,7 @@ module.exports = class OtpService {
       };
     }
     else {
-      throw ({ status: 401, message: 'USER_NOT_EXIST' });
+      throw ({ status: 401, message: 'USER_NOT_EXIST' });//comment
     }
   };
 
@@ -129,6 +130,7 @@ module.exports = class OtpService {
           email: email,
           message: `sent email to user : ${userId}  `
         })
+        await OtpModel.deleteOne({_id:verify_otp._id});
         return "EMAIL_VERIFICATION_SUCCESSFULL"
       } else {
         throw ({ status: 401, message: INVALID_OTP_ERR });

@@ -11,6 +11,7 @@ const { ObjectId } = require("mongodb");
 
 
 module.exports = class ReferCodeService {
+    //values for promo or ReferCredits
     static  ReferralCredits = (isPromo)=>{
         if(isPromo){
             return 80;
@@ -18,6 +19,7 @@ module.exports = class ReferCodeService {
             return 50;
         }
     };
+    // Get Refferral Credits
     static async checkReferCodeService(bodyData, user_ID) {
         
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
