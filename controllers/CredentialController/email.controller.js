@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 module.exports = class EmailController {
     static async sendEmailWithNodemailer(email, otp, userName) {
         const msg = {
-            from: "syedmubariz542@gmail.com",
+            from: process.env.SMPT_MAIL,
             to: email,
             subject: "Please Verify Your Email Address",
             html: `<b>Dear ${userName},\n</b>
