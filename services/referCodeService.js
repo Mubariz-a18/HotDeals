@@ -1,5 +1,4 @@
 const Referral = require("../models/referelSchema");
-const { createCredit } = require("./CreditService");
 const moment = require('moment');
 const Credit = require("../models/creditSchema");
 const { expiry_date_func } = require("../utils/moment");
@@ -8,13 +7,11 @@ const cloudMessage = require("../Firebase operations/cloudMessaging");
 const Profile = require("../models/Profile/Profile");
 const { ObjectId } = require("mongodb");
 
-
-
 module.exports = class ReferCodeService {
     //values for promo or ReferCredits
     static  ReferralCredits = (isPromo)=>{
         if(isPromo){
-            return 80;
+            return 100;
         }else{
             return 50;
         }
@@ -25,7 +22,7 @@ module.exports = class ReferCodeService {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
-
+        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj=> obj.userId.toString() === user_ID);
         if (!referCodeExist) {
 
             throw ({ status: 404, message: 'INVALID_REFERRAL_CODE' });
@@ -33,8 +30,8 @@ module.exports = class ReferCodeService {
         } else {
 
             const if_user_already_has_referred = await Profile.findOne({_id:user_ID })
-
-            if(if_user_already_has_referred.referrered_user){
+            
+            if(if_user_already_has_referred.referrered_user || userId_exist_in_refer_doc){
 
                 throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
 
@@ -45,7 +42,10 @@ module.exports = class ReferCodeService {
             },
                 {
                     $addToSet: {
-                        used_by: user_ID,
+                        used_by: {
+                            userId:user_ID,
+                            used_Date:currentDate
+                        },
                     },
                 }
             );
@@ -82,15 +82,16 @@ module.exports = class ReferCodeService {
                     referrered_user:referCodeExist.user_Id
                 }
             });
-
             const messageBody = {
-                title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By Referral Code!!`,
+                title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${ this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
                 body: "Check Your Credit Info",
                 data: {
                     navigateTo: navigateToTabs.home
                 },
                 type: "Info"
             }
+
+            console.log(messageBody.title)
 
             await cloudMessage(user_ID.toString(), messageBody);
 
