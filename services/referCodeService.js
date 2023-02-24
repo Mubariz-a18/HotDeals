@@ -22,7 +22,9 @@ module.exports = class ReferCodeService {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
-        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj=> obj.userId.toString() === user_ID);
+
+        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj=> obj?.userId?.toString() === user_ID);
+        
         if (!referCodeExist) {
 
             throw ({ status: 404, message: 'INVALID_REFERRAL_CODE' });
