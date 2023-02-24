@@ -13,7 +13,6 @@ module.exports = function (validator) {
       req.body = validated;
       next();
     } catch (err) {
-      console.log(err.message)
       res.status(400).send({
         statusCode: 400,
         message: err.message

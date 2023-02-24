@@ -93,8 +93,6 @@ module.exports = class ReferCodeService {
                 type: "Info"
             }
 
-            console.log(messageBody.title)
-
             await cloudMessage(user_ID.toString(), messageBody);
 
             return "SUCCESSFULLY_REDEEMED_THE_REFERRALCODE"
