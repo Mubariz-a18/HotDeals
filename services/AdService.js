@@ -182,7 +182,7 @@ module.exports = class AdService {
 
   static ReferralCredits = (isPromo) => {
     if (isPromo) {
-      return 80;
+      return 100;
     } else {
       return 50;
     }
@@ -256,7 +256,7 @@ module.exports = class AdService {
 
 
         const messageBody = {
-          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By Referral Code!!`,
+          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${ this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
           body: "Check Your Credit Info",
           data: {
             navigateTo: navigateToTabs.home
@@ -2014,7 +2014,7 @@ $skip and limit for pagination
       throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
-
+  // delete Draft Ads
   static async deleteDraft(user_Id, ad_id) {
 
     const Ad = await Draft.findOne({ _id: ad_id, user_id: user_Id });
@@ -2031,5 +2031,5 @@ $skip and limit for pagination
       throw ({ status: 401, message: 'DRAFT_DOEST_NOT_EXIST' })
     }
     return "SUCCESSFULLY_DELETED"
-  }
+  };
 };

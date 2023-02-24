@@ -198,8 +198,6 @@ module.exports = class CreditService {
 
     const CategoryCreditBaseValue = credit_value[category];
 
-    console.log(CategoryCreditBaseValue)
-
     const tempArray = [];
 
     AdsArray.forEach(ad => {
@@ -219,7 +217,7 @@ module.exports = class CreditService {
 
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
 
-      console.log(requiredCredits)
+
 
       let tempRequiredCredits = requiredCredits;
 
