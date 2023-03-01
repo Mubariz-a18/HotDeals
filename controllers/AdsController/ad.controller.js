@@ -63,6 +63,7 @@ module.exports = class AdController {
   // }
 
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
+
   static async apiChangeAdStatus(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
@@ -71,7 +72,9 @@ module.exports = class AdController {
       //  Ad status is changed and sent to respose
       const updatedAd = await AdService.changeAdStatus(body, userId, ad_id);
       // Reponse code is sent
-      res.status(200).json({ data: updatedAd })
+      if (updatedAd) {
+        res.status(200).json({ message: "AD_STATUS_CHANGED_SUCCESSFULLY" })
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -83,12 +86,13 @@ module.exports = class AdController {
       const adID = req.body.ad_id;
       // Ad is saved in Favourite and sent to responce
       const updated_Ad = await AdService.favouriteAds(req.body, req.user_ID, adID);
-      res.status(200).send(
-        {
-          message: "success",
-          updated_Ad
-        }
-      )
+      if (updated_Ad) {
+        res.status(200).send(
+          {
+            message: "success"
+          }
+        )
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -265,11 +269,11 @@ module.exports = class AdController {
       // const { ad_id } = req.body;
       const user_id = req.user_ID;
       const Updated_Ad = await AdService.updateAd(req.body, user_id);
-      res.status(200).json({
-        message: "Successfully_Updated",
-        data: Updated_Ad
-      })
-
+      if (Updated_Ad) {
+        res.status(200).json({
+          message: "Successfully_Updated",
+        })
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -294,12 +298,13 @@ module.exports = class AdController {
       const adID = req.body.ad_id;
       // Ad is saved in Favourite and sent to responce
       const updated_Ad = await AdService.repostAd(adID, req.user_ID);
-      res.status(200).send(
-        {
-          message: "success",
-          updated_Ad
-        }
-      )
+      if (updated_Ad) {
+        res.status(200).send(
+          {
+            message: "success"
+          }
+        )
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -328,10 +333,11 @@ module.exports = class AdController {
     try {
       const user_id = req.user_ID;
       const Drafted_Ad = await AdService.updateDraft(req.body, user_id);
-      res.status(200).json({
-        message: "Successfully Drafted",
-        data: Drafted_Ad
-      })
+      if(Drafted_Ad){
+        res.status(200).json({
+          message: "Successfully_Updated_Draft",
+        })
+      }
     } catch (e) {
       errorHandler(e, res);
     };
@@ -355,9 +361,11 @@ module.exports = class AdController {
     try {
       const user_id = req.user_ID;
       const deleteDraft = await AdService.deleteDraft(user_id, req.body.ad_id);
-      res.status(200).json({
-        data: deleteDraft
-      })
+      if(deleteDraft){
+        res.status(200).json({
+          message:"Draft_Deleted_Successfully"
+        })
+      }
     } catch (e) {
       errorHandler(e, res);
     };

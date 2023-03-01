@@ -12,8 +12,11 @@ exports.generateOTP = (otp_length) => {
 };
 
 exports.referral_code_generator = (userName) => {
+
+  let letters = userName.split("").filter(char => char !== " ");
+
   // Get the first two letters of the username
-  const firstTwoLetters = userName.slice(0, 2);
+  const firstTwoLetters = letters[0]+letters[1];
 
   // Generate a random four-character hexadecimal value
 
