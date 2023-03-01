@@ -381,27 +381,27 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 
   Credits.forEach(async creditDoc => {
 
-    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    // const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-    await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
+    // await Credit.findOneAndUpdate({ _id: creditDoc._id }, {
 
-      $inc: { total_universal_credits: 100 },
+    //   $inc: { total_universal_credits: 100 },
 
-      $push: {
+    //   $push: {
 
-        universal_credit_bundles:
-        {
+    //     universal_credit_bundles:
+    //     {
 
-          number_of_credit: 100,
-          source_of_credit: "Admin-Monthly",
-          credit_status: "Active",
-          credit_created_date: currentDate,
-          credit_duration: 30,
-          credit_expiry_date: expiry_date_func(30)
+    //       number_of_credit: 100,
+    //       source_of_credit: "Admin-Monthly",
+    //       credit_status: "Active",
+    //       credit_created_date: currentDate,
+    //       credit_duration: 30,
+    //       credit_expiry_date: expiry_date_func(30)
 
-        }
-      }
-    }, { new: true });
+    //     }
+    //   }
+    // }, { new: true });
 
     /* 
  
