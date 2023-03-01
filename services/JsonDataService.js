@@ -1,6 +1,11 @@
 const { MongoClient } = require('mongodb');
 const URL = process.env.URL;
-const client = new MongoClient(URL);
+const client = new MongoClient(URL,{
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // optional, timeout for selecting a server
+    socketTimeoutMS: 60000 // 1 minute
+  });
 const dbName = process.env.DATABASENAME;
 module.exports = class JsonDataService {
 
