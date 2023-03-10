@@ -1,36 +1,15 @@
-const cluster = require("cluster");
-const totalCPUs = require("os").cpus().length;
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-
-if (cluster.isMaster) {
-  console.log(`Number of CPUs is ${totalCPUs}`);
-  console.log(`Master ${process.pid} is running`);
-
-  // Fork workers.
-  for (let i = 0; i < totalCPUs; i++) {
-    cluster.fork();
-  }
-
-  cluster.on("exit", (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died`);
-    console.log("Let's fork another worker!");
-    cluster.fork();
-  });
-}
-else {
   const app = express();
   const initializeApp = require('./firebaseAppSetup');
   initializeApp.app
-  //Router Imports
+  // Router Imports
   const authRouter = require("./routes/auth.routes");
   const profileRouter = require("./routes/profile.routes");
   const AdRouter = require("./routes/ad.routes");
   const AlertRouter = require("./routes/alert.routes");
-  // const ComplaintRouter = require("./routes/complaint.routes");
   const HelpRouter = require("./routes/help.routes");
   const CreditRouter = require("./routes/credit.routes");
   const RatingRouter = require("./routes/rating.routes");
@@ -60,7 +39,7 @@ else {
   app.use(cors());
   app.use(errorHandlerMiddleware)
 
-  //Routers
+  // Routers
   app.use(authRouter);
   app.use(profileRouter);
   app.use(AdRouter);
@@ -76,7 +55,12 @@ else {
   app.use(ReferCodeRouter);
   app.use(TransactionRouter);
   app.use(SuggestionRouter);
-
+  app.get('/',(req,res)=>{
+    res.send("server is up and running").status(200)
+  })
+  app.get('/health',(req,res)=>{
+    res.send("server is healthy").status(200)
+  })
   //server listener
   app.listen(PORT, () => {
     console.log(`server is running On port : ${PORT}`)
@@ -85,4 +69,3 @@ else {
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
-}

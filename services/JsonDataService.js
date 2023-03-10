@@ -1,38 +1,21 @@
-const { MongoClient } = require('mongodb');
-const URL = process.env.URL;
-const client = new MongoClient(URL,{
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // optional, timeout for selecting a server
-    socketTimeoutMS: 60000 // 1 minute
-  });
-const dbName = process.env.DATABASENAME;
+const JsonCreditModel = require("../models/jsonCreditScehma");
+const JsonLangMapModel = require("../models/jsonLanMap");
+const JsonVersionModel = require("../models/jsonVersions");
+const JsonDataModel = require("./../models/jsonDataSchema");
+
 module.exports = class JsonDataService {
 
-    static db = async ()=>{
-        await client.connect();
-        return client.db(dbName);
-    }
-    
     static async getJsonData() {
-        // Use connect method to connect to the server
-        const db = await this.db()
-        const collection = db.collection('Jsondata');
-        const JsonData = collection.findOne();
-        return JsonData
+        const JsonData = await JsonDataModel.findOne();
+        const JsonCredits = await JsonCreditModel.findOne();
+        const JsonLang = await JsonLangMapModel.findOne();
+        const Versions = await JsonVersionModel.findOne();
+        return {
+            JsonData,
+            JsonCredits,
+            JsonLang,
+            Versions
+        }
     }
 
-    static async getCreditsJson() {
-        const db = await this.db()
-        const collection = db.collection('Jsoncredits');
-        const JsonData = collection.findOne();
-        return JsonData
-    }
-
-    static async getAppVersion(){
-        const db = await this.db();
-        const collection = db.collection("versions");
-        const versions = collection.findOne();
-        return versions
-    }
 };
