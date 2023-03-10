@@ -5,13 +5,12 @@ module.exports = class JsonDataController {
   // Get Help
   static async apiGetJson(req, res, next) {
     try {
-      const JsonData = await JsonDataService.getJsonData();
-      const CreditJson = await JsonDataService.getCreditsJson();
-      const Versions = await JsonDataService.getAppVersion();
+      const {JsonData,JsonCredits,JsonLang,Versions} = await JsonDataService.getJsonData();
       res.status(200).send({
         JsonData,
-        CreditJson,
-        Versions
+        CreditJson:JsonCredits,
+        Versions:Versions,
+        JsonLang:JsonLang
       })
     } catch (e) {
       errorHandler(e, res)

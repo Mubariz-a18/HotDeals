@@ -82,7 +82,7 @@ router.get('/api/v1/getPremiumAds',
     verifyJwtTokenForAds,
     AdController.apiGetPremiumAds);
 router.get('/api/v1/getFeaturedAds',
-    rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
+    // rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetRecentAds);
 router.post('/api/v1/getRelatedAd',

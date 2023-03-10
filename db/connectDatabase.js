@@ -6,6 +6,7 @@ const connectDB = async () => {
       keepAlive: true,
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      socketTimeoutMS: 60000 // 1 minute
     }).then(() => {
       console.log("database is connected  ", db)
     })
