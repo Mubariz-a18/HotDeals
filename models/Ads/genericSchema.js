@@ -171,6 +171,14 @@ const genericSchema = mongoose.Schema({
     Highlight_Expiry_Date: {
         type: String
     },
+    isClaimed:{
+        type:Boolean
+    },
+    reviewStatus:{
+        type: String,
+        enum: ["InReview", "Rejected", "Approved"],
+        default:"InReview"
+    },
     created_at: {
         type: String,
     },
