@@ -28,7 +28,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
-const { createPayoutOrder } = require("./services/PayoutService");
+// const { createPayoutOrder } = require("./services/PayoutService");
   connectDB();
 
   app.set('trust proxy', 1)
@@ -71,4 +71,4 @@ const { createPayoutOrder } = require("./services/PayoutService");
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
 
-  createPayoutOrder()
+  // createPayoutOrder()

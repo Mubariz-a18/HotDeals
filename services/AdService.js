@@ -95,7 +95,7 @@ module.exports = class AdService {
     */
     const special_mention_string = special_mention.join(" ");
 
-    const isTextSafe = await safetext(title, description , special_mention_string);
+    const isTextSafe = await safetext(title, description, special_mention_string);
 
 
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
@@ -256,7 +256,7 @@ module.exports = class AdService {
 
 
         const messageBody = {
-          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${ this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
+          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
           body: "Check Your Credit Info",
           data: {
             navigateTo: navigateToTabs.home
@@ -362,7 +362,7 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id ,user_id:user_id });
+    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -409,8 +409,8 @@ module.exports = class AdService {
     
     */
     const special_mention_string = special_mention.join(" ");
-    
-    const isTextSafe = await safetext(" ", description , special_mention_string );
+
+    const isTextSafe = await safetext(" ", description, special_mention_string);
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
@@ -421,7 +421,7 @@ module.exports = class AdService {
           price,
           image_url,
           thumbnail_url,
-          ad_status:"Selling",
+          ad_status: "Selling",
           video_url,
           detection: batch,
           is_negotiable,
@@ -1160,17 +1160,17 @@ module.exports = class AdService {
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(bodyData, query, user_id) {
 
-    
+
     const ad_id = bodyData.ad_id;
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    
-    
-    if(bodyData.ad_status === "Pending"){
-      return await Generic.findById({_id:ad_id});
+
+
+    if (bodyData.ad_status === "Pending") {
+      return await Generic.findById({ _id: ad_id });
     }
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
 
@@ -1252,7 +1252,7 @@ module.exports = class AdService {
         "favourite_ads": {
           $elemMatch: { "ad_id": ad_id }
         }
-    });
+      });
 
     let isAdFav
     if (user) {
@@ -1277,7 +1277,7 @@ module.exports = class AdService {
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = 10;
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
     // let limitval = +query.limit || 20;
@@ -1406,7 +1406,7 @@ module.exports = class AdService {
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
 
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
     /* 
@@ -1541,7 +1541,7 @@ $skip and limit for pagination
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 10;
 
-    if(!lng || !lat ){
+    if (!lng || !lat) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
 
@@ -1842,6 +1842,120 @@ $skip and limit for pagination
     }
   };
 
+  static async getAdsForPayout(userId) {
+    const findUsr = await Profile.findOne({
+      _id: ObjectId(userId)
+    });
+
+    if (!findUsr) {
+      // mixpanel -- track failed get my ads
+      await track('failed !! get my ads', {
+        distinct_id: userId,
+        message: ` user_id : ${userId}  does not exist`
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+    }
+    else {
+      const myAdsList = await Generic.aggregate([
+        {
+          $match: { _id: { $in: findUsr.my_ads } }
+        },
+        {
+          $facet: {
+            "InReview": [
+              {
+                $match: {
+                  reviewStatus: "InReview"
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed:1,
+                  category: 1,
+                  sub_category:1,
+                  thumbnail_url: 1,
+                  created_at: 1
+                }
+              }
+            ],
+            "Approved": [
+              {
+                $match: {
+                  reviewStatus: "Approved"
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed:1,
+                  category: 1,
+                  sub_category:1,
+                  thumbnail_url: 1,
+                  created_at: 1
+                }
+              }
+            ],
+            "Rejected": [
+              {
+                $match: {
+                  reviewStatus: "Rejected"
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed:1,
+                  category: 1,
+                  sub_category:1,
+                  thumbnail_url: 1,
+                  created_at: 1
+                }
+              }
+            ],
+          }
+        }
+      ]);
+      if (!myAdsList) {
+        await track('failed !! get my ads', {
+          distinct_id: userId,
+          message: ` user_id : ${userId}  does not have ads in My_Ads`
+        })
+        throw ({ status: 404, message: 'ADS_NOT_EXISTS' })
+      }
+      else {
+        // mixpanel track for Get My Ads
+        await track('get my ads successfully !!', {
+          distinct_id: userId
+        });
+        // returning myads to controller
+        return myAdsList;
+      }
+
+    }
+  };
+  
   /* 
   DRAFT ADS API SERVICES HERE
   */

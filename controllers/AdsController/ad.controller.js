@@ -310,6 +310,23 @@ module.exports = class AdController {
     };
   }
 
+    // Get Ads -- Ads are Fetched and Returned from Adservice 
+    static async apiGetMyAds(req, res, next) {
+      try {
+        // My ads are fetched from db abd sent to response
+        const getDocument = await AdService.getAdsForPayout(req.user_ID);
+        // Response code is send 
+        res.status(200).send({
+          message: "success!",
+          InReview: getDocument[0].InReview,
+          Approved: getDocument[0].Approved,
+          Rejected: getDocument[0].Rejected,
+        });
+      } catch (e) {
+        errorHandler(e, res);
+      };
+    }
+
   /* 
     Draft Ad APIS From Here
   */
