@@ -1,4 +1,5 @@
 const moment = require("moment");
+const axios = require("axios")
 const Profile = require("../models/Profile/Profile");
 const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
@@ -1869,7 +1870,7 @@ $skip and limit for pagination
                 $match: {
                   $expr: { $eq: ["$_id", "$parent_id"] },
                   reviewStatus: "InReview",
-                  ad_status:"Selling"
+                  ad_status: "Selling"
                 }
               },
               {
@@ -1882,10 +1883,10 @@ $skip and limit for pagination
                   _id: 1,
                   parent_id: 1,
                   title: 1,
-                  isClaimed:1,
+                  isClaimed: 1,
                   category: 1,
-                  reviewStatus:1,
-                  sub_category:1,
+                  reviewStatus: 1,
+                  sub_category: 1,
                   thumbnail_url: 1,
                   ad_posted_address: 1,
                   created_at: 1
@@ -1897,7 +1898,7 @@ $skip and limit for pagination
                 $match: {
                   $expr: { $eq: ["$_id", "$parent_id"] },
                   reviewStatus: "Approved",
-                  ad_status:"Selling"
+                  ad_status: "Selling"
                 }
               },
               {
@@ -1910,9 +1911,9 @@ $skip and limit for pagination
                   _id: 1,
                   parent_id: 1,
                   title: 1,
-                  isClaimed:1,
+                  isClaimed: 1,
                   category: 1,
-                  sub_category:1,
+                  sub_category: 1,
                   thumbnail_url: 1,
                   ad_posted_address: 1,
                   created_at: 1
@@ -1924,7 +1925,7 @@ $skip and limit for pagination
                 $match: {
                   $expr: { $eq: ["$_id", "$parent_id"] },
                   reviewStatus: "Rejected",
-                  ad_status:"Selling"
+                  ad_status: "Selling"
                 }
               },
               {
@@ -1937,9 +1938,9 @@ $skip and limit for pagination
                   _id: 1,
                   parent_id: 1,
                   title: 1,
-                  isClaimed:1,
+                  isClaimed: 1,
                   category: 1,
-                  sub_category:1,
+                  sub_category: 1,
                   thumbnail_url: 1,
                   ad_posted_address: 1,
                   created_at: 1
@@ -1967,7 +1968,95 @@ $skip and limit for pagination
 
     }
   };
-  
+
+  static async claimPayout(userId, bodyData) {
+    const {
+      ad_id,
+      upi_id
+    } = bodyData;
+    if (!ad_id || !upi_id) {
+      throw ({ status: 401, message: 'Please Enter UPI And Ad Id' })
+    }
+    const userDetails = await Profile.findById({ _id: userId }, {
+      name: 1,
+      "userNumber.text": 1,
+      "email.text": 1
+    });
+    if (!userDetails) {
+      throw ({ status: 403, message: 'UnAuthorized' })
+    }
+    const Ad = await Generic.findOne({
+      _id: ObjectId(ad_id),
+      user_id: ObjectId(userDetails),
+      ad_status: "Selling",
+      reviewStatus: "Approved",
+      isClaimed: false
+    });
+
+    const amount = 200
+
+    if (!Ad) {
+      throw ({ status: 401, message: 'Bad Request' })
+    }
+    const username = process.env.test_pay_id;
+    const password = process.env.test_pay_secret;
+
+    const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+    const reference_id = ObjectId()
+    const data = {
+      "account_number": process.env.test_account_number,
+      "amount": amount,
+      "currency": "INR",
+      "mode": "UPI",
+      "purpose": "Reward",
+      "fund_account": {
+          "account_type": "vpa",
+          "vpa": {
+              "address": upi_id
+          },
+          "contact": {
+              "name":userDetails.name,
+              "contact":userDetails.userNumber.text,
+              "email": userDetails.email.text,
+              "type": "customer",
+              "reference_id": reference_id,
+              "notes": {
+                  "notes_key_1": "Tea, Earl Grey, Hot",
+                  "notes_key_2": "Tea, Earl Grey… decaf."
+              }
+          }
+      },
+      "queue_if_low_balance": true,
+      "reference_id": reference_id,
+      "narration": "Truelist Cash Reward",
+      "notes": {
+          "notes_key_1": "Beam me up Scotty",
+          "notes_key_2": "Engage"
+      }
+  }
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader
+      }
+    };
+
+    async function makePostRequest() {
+      try {
+        const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
+        return ( response.data);
+      } catch (error) {
+        throw ({ status: 401, message: error });
+      }
+    }
+
+    const Response = makePostRequest();
+
+    return Response
+
+  }
+
   /* 
   DRAFT ADS API SERVICES HERE
   */

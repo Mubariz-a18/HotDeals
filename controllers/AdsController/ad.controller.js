@@ -327,6 +327,19 @@ module.exports = class AdController {
       };
     }
 
+    static async apiClaimPayout(req, res, next) {
+      try {
+        const PayoutClaim = await AdService.claimPayout(req.user_ID,req.body);
+        // Response code is send 
+        res.status(200).send({
+          message: "successfully claimed",
+          // PayoutClaim
+        });
+      } catch (e) {
+        errorHandler(e, res);
+      };
+    }
+
   /* 
     Draft Ad APIS From Here
   */

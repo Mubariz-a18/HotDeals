@@ -103,6 +103,11 @@ router.get('/api/v1/getPayoutAds',
     verifyToken,
     AdController.apiGetMyAdsForPayout);
 
+router.post('/api/v1/claimPayout',
+    rateLimiter(getMyAdTime, getMyAdHits),
+    verifyToken,
+    AdController.apiClaimPayout);
+
 /* 
 Draft Ad Apis Here
 */
