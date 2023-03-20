@@ -1859,14 +1859,17 @@ $skip and limit for pagination
     else {
       const myAdsList = await Generic.aggregate([
         {
-          $match: { _id: { $in: findUsr.my_ads } }
+          $match: { _id: { $in: findUsr.my_ads }, }
+
         },
         {
           $facet: {
             "InReview": [
               {
                 $match: {
-                  reviewStatus: "InReview"
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "InReview",
+                  ad_status:"Selling"
                 }
               },
               {
@@ -1881,8 +1884,10 @@ $skip and limit for pagination
                   title: 1,
                   isClaimed:1,
                   category: 1,
+                  reviewStatus:1,
                   sub_category:1,
                   thumbnail_url: 1,
+                  ad_posted_address: 1,
                   created_at: 1
                 }
               }
@@ -1890,7 +1895,9 @@ $skip and limit for pagination
             "Approved": [
               {
                 $match: {
-                  reviewStatus: "Approved"
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "Approved",
+                  ad_status:"Selling"
                 }
               },
               {
@@ -1907,6 +1914,7 @@ $skip and limit for pagination
                   category: 1,
                   sub_category:1,
                   thumbnail_url: 1,
+                  ad_posted_address: 1,
                   created_at: 1
                 }
               }
@@ -1914,7 +1922,9 @@ $skip and limit for pagination
             "Rejected": [
               {
                 $match: {
-                  reviewStatus: "Rejected"
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "Rejected",
+                  ad_status:"Selling"
                 }
               },
               {
@@ -1931,6 +1941,7 @@ $skip and limit for pagination
                   category: 1,
                   sub_category:1,
                   thumbnail_url: 1,
+                  ad_posted_address: 1,
                   created_at: 1
                 }
               }

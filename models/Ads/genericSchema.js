@@ -179,6 +179,9 @@ const genericSchema = mongoose.Schema({
         enum: ["InReview", "Rejected", "Approved"],
         default:"InReview"
     },
+    reasonToReject:{
+        type:String
+    },
     reviewDate:{
         type: String,
     },
