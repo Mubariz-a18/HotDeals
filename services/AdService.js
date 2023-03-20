@@ -595,7 +595,8 @@ module.exports = class AdService {
                   // image_url: { $arrayElemAt: ["$image_url", 0] },
                   saved: 1,
                   views: 1,
-                  ad_expire_date: 1,
+                  "ad_Expired_Date": "$ad_expire_date",
+                  // ad_expire_date: 1,
                 }
               }
             ],

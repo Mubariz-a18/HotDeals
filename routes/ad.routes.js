@@ -101,7 +101,7 @@ router.post('/api/repostAd',
 router.get('/api/v1/getPayoutAds',
     rateLimiter(getMyAdTime, getMyAdHits),
     verifyToken,
-    AdController.apiGetMyAds);
+    AdController.apiGetMyAdsForPayout);
 
 /* 
 Draft Ad Apis Here
