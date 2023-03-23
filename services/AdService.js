@@ -1,5 +1,6 @@
 const moment = require("moment");
-const axios = require("axios")
+const axios = require("axios");
+const translate = require('translate-google');
 const Profile = require("../models/Profile/Profile");
 const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
@@ -16,6 +17,7 @@ const navigateToTabs = require("../utils/navigationTabs");
 const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
 const imageWaterMark = require("../Firebase operations/waterMarkImages");
+const PayoutModel = require("../models/payoutSchema");
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -296,7 +298,7 @@ module.exports = class AdService {
     await cloudMessage(userId.toString(), messageBody);
 
     await Draft.deleteOne({ _id: ad_id });
-  }
+  };
 
   static async AfterPendingAd(adDoc, userId) {
 
@@ -345,7 +347,51 @@ module.exports = class AdService {
     await cloudMessage(userId.toString(), messageBody);
 
     await Draft.deleteOne({ _id: ad_id });
-  }
+  };
+
+  static async translateToLng(textObj, ad_id) {
+
+    const { title, description, specialMentions } = textObj;
+
+    if (!title || !description || !specialMentions) {
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+
+    const tranObj = {
+      title,
+      description,
+      specialMentions
+    };
+
+    const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
+
+    async function translateStringToMultipleLanguages(tranObj, languages) {
+      const translations = await Promise.all(languages.map((language) => {
+        return translate(tranObj, { to: language });
+      }));
+
+      return Object.fromEntries(languages.map((language, index) => {
+        return [language, translations[index]];
+      }));
+    }
+
+    const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
+      .then((translations) => {
+        return translations
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+
+
+    await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
+      $set: {
+        textLanguages: translatedObj
+      }
+    });
+
+  };
 
   //Update Ad
   static async updateAd(bodyData, user_id) {
@@ -1851,7 +1897,7 @@ $skip and limit for pagination
 
     if (!findUsr) {
       // mixpanel -- track failed get my ads
-      await track('failed !! get my ads', {
+      await track('failed to get ads for payouts', {
         distinct_id: userId,
         message: ` user_id : ${userId}  does not exist`
       })
@@ -1902,6 +1948,22 @@ $skip and limit for pagination
                 }
               },
               {
+                '$lookup': {
+                  'from': 'payouts', 
+                  'localField': '_id', 
+                  'foreignField': 'ad_id', 
+                  'as': 'payoutDetails'
+                }
+              }, {
+                '$unwind': {
+                  'path': '$payoutDetails'
+                }
+              }, {
+                '$addFields': {
+                  'paymentstatus': '$payoutDetails.payment_status'
+                }
+              },
+              {
                 $sort: {
                   created_at: -1,
                 }
@@ -1912,6 +1974,7 @@ $skip and limit for pagination
                   parent_id: 1,
                   title: 1,
                   isClaimed: 1,
+                  "paymentstatus":1,
                   category: 1,
                   sub_category: 1,
                   thumbnail_url: 1,
@@ -1940,6 +2003,7 @@ $skip and limit for pagination
                   title: 1,
                   isClaimed: 1,
                   category: 1,
+                  reasonToReject: 1,
                   sub_category: 1,
                   thumbnail_url: 1,
                   ad_posted_address: 1,
@@ -1951,7 +2015,7 @@ $skip and limit for pagination
         }
       ]);
       if (!myAdsList) {
-        await track('failed !! get my ads', {
+        await track('failed to get ads for payouts', {
           distinct_id: userId,
           message: ` user_id : ${userId}  does not have ads in My_Ads`
         })
@@ -1959,7 +2023,7 @@ $skip and limit for pagination
       }
       else {
         // mixpanel track for Get My Ads
-        await track('get my ads successfully !!', {
+        await track('get ads for payouts successfully !!', {
           distinct_id: userId
         });
         // returning myads to controller
@@ -1975,6 +2039,11 @@ $skip and limit for pagination
       upi_id
     } = bodyData;
     if (!ad_id || !upi_id) {
+      // mixpanel track - Failed to Claim Payout
+      await track('Failed to Claim Payout !!', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
       throw ({ status: 401, message: 'Please Enter UPI And Ad Id' })
     }
     const userDetails = await Profile.findById({ _id: userId }, {
@@ -1983,6 +2052,11 @@ $skip and limit for pagination
       "email.text": 1
     });
     if (!userDetails) {
+      // mixpanel track - Failed to Claim Payout
+      await track('Failed to Claim Payout !!', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
       throw ({ status: 403, message: 'UnAuthorized' })
     }
     const Ad = await Generic.findOne({
@@ -1996,6 +2070,11 @@ $skip and limit for pagination
     const amount = 200
 
     if (!Ad) {
+      // mixpanel track - Failed to Claim Payout
+      await track('Failed to Claim Payout !!', {
+        distinct_id: userId,
+        ad_id: ad_id
+      })
       throw ({ status: 401, message: 'Bad Request' })
     }
     const username = process.env.test_pay_id;
@@ -2010,30 +2089,30 @@ $skip and limit for pagination
       "mode": "UPI",
       "purpose": "Reward",
       "fund_account": {
-          "account_type": "vpa",
-          "vpa": {
-              "address": upi_id
-          },
-          "contact": {
-              "name":userDetails.name,
-              "contact":userDetails.userNumber.text,
-              "email": userDetails.email.text,
-              "type": "customer",
-              "reference_id": reference_id,
-              "notes": {
-                  "notes_key_1": "Tea, Earl Grey, Hot",
-                  "notes_key_2": "Tea, Earl Grey… decaf."
-              }
+        "account_type": "vpa",
+        "vpa": {
+          "address": upi_id
+        },
+        "contact": {
+          "name": userDetails.name,
+          "contact": userDetails.userNumber.text,
+          "email": userDetails.email.text,
+          "type": "customer",
+          "reference_id": reference_id,
+          "notes": {
+            "notes_key_1": "Tea, Earl Grey, Hot",
+            "notes_key_2": "Tea, Earl Grey… decaf."
           }
+        }
       },
       "queue_if_low_balance": true,
       "reference_id": reference_id,
       "narration": "Truelist Cash Reward",
       "notes": {
-          "notes_key_1": "Beam me up Scotty",
-          "notes_key_2": "Engage"
+        "notes_key_1": "Beam me up Scotty",
+        "notes_key_2": "Engage"
       }
-  }
+    }
 
     const config = {
       headers: {
@@ -2045,17 +2124,54 @@ $skip and limit for pagination
     async function makePostRequest() {
       try {
         const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
-        return ( response.data);
+        const {
+          _id,
+          fund_account_id,
+          fund_account,
+          status,
+          failure_reason
+        } = response.data;
+
+        const { 
+          contact_id,
+          vpa,
+        } = fund_account;
+
+        await PayoutModel.create({
+          user_id:userId,
+          ad_id:ad_id,
+          payout_id:_id,
+          fund_account_id:fund_account_id,
+          contact_id:contact_id,
+          reference_id:reference_id,
+          amount:amount,
+          vpa:vpa,
+          failure_reason:failure_reason,
+          payment_status:status
+        });
+
+        if(status === "processing" || status === "success"){
+          await Generic.findOneAndUpdate({parent_id:Ad.parent_id},{
+            $set:{
+              isClaimed:true
+            }
+          })
+        }
+        // return (response.data);
       } catch (error) {
         throw ({ status: 401, message: error });
       }
     }
 
     const Response = makePostRequest();
-
+    // mixpanel track - Successfully  Claimed Payout
+    await track('Claim Payout Successfully !!', {
+      distinct_id: userId,
+      ad_id: ad_id
+    })
     return Response
 
-  }
+  };
 
   /* 
   DRAFT ADS API SERVICES HERE

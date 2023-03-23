@@ -9,6 +9,12 @@ module.exports = class AdController {
     try {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
+      await AdService.translateToLng({
+        title:adDocument.title,
+        description:adDocument.description,
+        specialMentions:adDocument.special_mention
+      },
+      adDocument._id)
       if (adDocument.ad_status == "Pending") {
         const AfterAdPosted = await AdService.AfterPendingAd(adDocument, req.user_ID)
       } else {

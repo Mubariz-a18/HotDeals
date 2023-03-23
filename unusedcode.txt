@@ -611,3 +611,15 @@ axios.post('https://reqres.in/api/users', data)
     }).catch((err) => {
         console.error(err);
     });
+
+
+    const translate = require('translate-google')
+const tranObj = {
+  title:"hello bro how are you"
+}
+
+translate(tranObj, { to: 'ta' }).then(res => {
+  console.log(res)
+}).catch(err => {
+  console.error(err)
+})

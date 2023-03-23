@@ -6,25 +6,36 @@ const payoutSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
         },
         ad_id: {
-            type: String
+            type: mongoose.Schema.Types.ObjectId,
         },
-        order_id: {
+        payout_id: {
             type: String,
         },
-        payment_id: {
+        fund_account_id: {
+            type:  String,
+        },
+        contact_id: {
+            type:  String,
+        },
+        reference_id:{
             type:  String,
         },
         amount: {
             type: Number
         },
-        review_status: {
+        vpa:{
+            type:Object
+        },
+        payment_status: {
             type: String,
             enum: [
-                'Pending',
-                'Checkout',
+                'processing',
                 'Paid',
                 'Failed',
             ]
+        },
+        failure_reason:{
+            type: String,
         },
         payment_initate_date: {
             type: String,
@@ -35,5 +46,5 @@ const payoutSchema = mongoose.Schema(
     }
 );
 
-const Payout = mongoose.model('payout', payoutSchema);
-module.exports = Payout;
+const PayoutModel = mongoose.model('payout', payoutSchema);
+module.exports = PayoutModel;

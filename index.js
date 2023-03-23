@@ -28,6 +28,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
+const AdService = require("./services/AdService");
   connectDB();
 
   app.set('trust proxy', 1)
@@ -68,3 +69,13 @@ var bodyParser = require("body-parser");
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
+
+
+  AdService.translateToLng({
+    title:"Very Fast Car",
+    description:"best car too Buy in Hyderabad",
+    specialMentions:[
+      "Best Buy",
+      "Very Smooth"
+    ]
+  })

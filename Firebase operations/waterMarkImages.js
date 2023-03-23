@@ -20,8 +20,8 @@ const imageWaterMark = async (imageArray) => {
         // Add watermark to the image
         const watermarkedImage = await sharp(image)
 
-            .composite([{ input: 'watermark.png', gravity: 'southeast' }])
-
+            .composite([{ input: 'watermark.png', left:50,top:50 }])
+            .png()
             .toBuffer();
 
 
