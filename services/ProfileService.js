@@ -17,6 +17,8 @@ const GlobalSearch = require("../models/GlobalSearch");
 const HelpService = require("./HelpService");
 const Report = require("../models/reportSchema");
 const { app, storage } = require("../firebaseAppSetup");
+const { getAdsForPayout } = require("./AdService");
+const OfferModel = require("../models/offerSchema");
 
 
 module.exports = class ProfileService {
@@ -268,15 +270,7 @@ module.exports = class ProfileService {
 
   // api get my profile service
   static async getMyProfile(user_ID) {
-    const userExist = await Profile.findById({ _id: user_ID })
-    if (!userExist) {
-      // mixpanel track get my profile failed
-      await track('Get My Profile Failed ', {
-        distinct_id: user_ID,
-      });
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
-    }
-    else {
+
       const MyProfile = await Profile.aggregate([
         {
           $match: { _id: mongoose.Types.ObjectId(user_ID) },
@@ -305,7 +299,12 @@ module.exports = class ProfileService {
             alert: 1
           }
         },
-      ])
+      ]);
+      if(MyProfile.length === 0){
+        throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+      }
+      const Offer = await OfferModel.findOne({});
+
       const referral_code = await Referral.findOne({
         user_Id: ObjectId(user_ID)
       });
@@ -315,8 +314,30 @@ module.exports = class ProfileService {
         distinct_id: user_ID,
       });
 
-      return { MyProfile, referral_code }
-    }
+      if (Offer.offerValid) {
+
+        return { MyProfile, referral_code }
+
+      } else {
+        const payoutAdList = await getAdsForPayout(user_ID);
+
+        const AdsInRevieW = payoutAdList[0].InReview;
+
+        const AdsInApproved = payoutAdList[0].Approved;
+
+        const claimableAds = AdsInApproved.find(obj => obj.paymentstatus === "Not_Claimed");
+
+        if (AdsInRevieW.length > 0 || claimableAds) {
+
+          MyProfile[0].payoutFlag = true
+        } else {
+
+          MyProfile[0].payoutFlag = false
+        }
+
+        return { MyProfile, referral_code }
+      }
+    
 
   };
 
