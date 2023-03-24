@@ -35,7 +35,8 @@ const globalWindowTime = {
     createRatingTime:1,
     getRatingTime:1,
     reportAdTime:1,
-    jsonDataTime:1
+    jsonDataTime:1,
+    claimPayoutTime:1
 }
 
 const globalApiHits = {
@@ -74,7 +75,8 @@ const globalApiHits = {
     createRatingHits:20,
     getRatingHits:20,
     reportAdHits:5,
-    jsonDataHits:10
+    jsonDataHits:10,
+    claimPayoutHits:5
 }
 
 

@@ -5,7 +5,7 @@ const Profile = require("../models/Profile/Profile");
 const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
 const Generic = require("../models/Ads/genericSchema");
-const { track } = require('./mixpanel-service.js');
+const { track, failedTrack } = require('./mixpanel-service.js');
 const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
@@ -18,6 +18,8 @@ const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
 const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
+const OfferModel = require("../models/offerSchema");
+
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -210,7 +212,16 @@ module.exports = class AdService {
       }
     }, { new: true, returnDocument: "after" });
 
-    const { category, sub_category, title, description, ad_posted_address, ad_posted_location, SelectFields } = adDoc;
+    const {
+      parent_id,
+      category,
+      sub_category,
+      title,
+      description,
+      ad_posted_address,
+      ad_posted_location,
+      SelectFields
+    } = adDoc;
 
     const body = {
       ad_id: ad_id,
@@ -272,6 +283,26 @@ module.exports = class AdService {
     } else {
 
     }
+
+    const Offer = await OfferModel.findOne({});
+
+    const {
+      offerValid,
+      firstAdReward,
+      nextAdReward
+    } = Offer
+
+    if (offerValid === true && ad_id.toString() === parent_id.toString()) {
+      await PayoutModel.create({
+        user_id: userId,
+        ad_id: ad_id,
+        amount: UpdatedUser.my_ads.length === 1 ? firstAdReward : nextAdReward,
+        payment_status: "Not_Claimed"
+      });
+    } else {
+
+    }
+
     /* 
  
     Cloud Notification To firebase
@@ -1949,9 +1980,9 @@ $skip and limit for pagination
               },
               {
                 '$lookup': {
-                  'from': 'payouts', 
-                  'localField': '_id', 
-                  'foreignField': 'ad_id', 
+                  'from': 'payouts',
+                  'localField': '_id',
+                  'foreignField': 'ad_id',
                   'as': 'payoutDetails'
                 }
               }, {
@@ -1960,7 +1991,8 @@ $skip and limit for pagination
                 }
               }, {
                 '$addFields': {
-                  'paymentstatus': '$payoutDetails.payment_status'
+                  'paymentstatus': '$payoutDetails.payment_status',
+                  'paymentDate':'$payoutDetails.payment_initate_date'
                 }
               },
               {
@@ -1974,7 +2006,8 @@ $skip and limit for pagination
                   parent_id: 1,
                   title: 1,
                   isClaimed: 1,
-                  "paymentstatus":1,
+                  "paymentstatus": 1,
+                  "paymentDate":1,
                   category: 1,
                   sub_category: 1,
                   thumbnail_url: 1,
@@ -2026,25 +2059,24 @@ $skip and limit for pagination
         await track('get ads for payouts successfully !!', {
           distinct_id: userId
         });
-        // returning myads to controller
-        return myAdsList;
       }
+      return myAdsList;
 
     }
   };
 
   static async claimPayout(userId, bodyData) {
+
     const {
       ad_id,
       upi_id
     } = bodyData;
+
     if (!ad_id || !upi_id) {
-      // mixpanel track - Failed to Claim Payout
-      await track('Failed to Claim Payout !!', {
-        distinct_id: userId,
-        ad_id: ad_id
-      })
-      throw ({ status: 401, message: 'Please Enter UPI And Ad Id' })
+
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+
+      throw ({ status: 401, message: 'Please Enter UPI And Ad Id' });
     }
     const userDetails = await Profile.findById({ _id: userId }, {
       name: 1,
@@ -2052,11 +2084,7 @@ $skip and limit for pagination
       "email.text": 1
     });
     if (!userDetails) {
-      // mixpanel track - Failed to Claim Payout
-      await track('Failed to Claim Payout !!', {
-        distinct_id: userId,
-        ad_id: ad_id
-      })
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
       throw ({ status: 403, message: 'UnAuthorized' })
     }
     const Ad = await Generic.findOne({
@@ -2067,63 +2095,72 @@ $skip and limit for pagination
       isClaimed: false
     });
 
-    const amount = 200
-
     if (!Ad) {
-      // mixpanel track - Failed to Claim Payout
-      await track('Failed to Claim Payout !!', {
-        distinct_id: userId,
-        ad_id: ad_id
-      })
-      throw ({ status: 401, message: 'Bad Request' })
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+      throw ({ status: 401, message: 'Bad Request' });
     }
+
     const username = process.env.test_pay_id;
     const password = process.env.test_pay_secret;
 
-    const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
-    const reference_id = ObjectId()
-    const data = {
-      "account_number": process.env.test_account_number,
-      "amount": amount,
-      "currency": "INR",
-      "mode": "UPI",
-      "purpose": "Reward",
-      "fund_account": {
-        "account_type": "vpa",
-        "vpa": {
-          "address": upi_id
-        },
-        "contact": {
-          "name": userDetails.name,
-          "contact": userDetails.userNumber.text,
-          "email": userDetails.email.text,
-          "type": "customer",
-          "reference_id": reference_id,
-          "notes": {
-            "notes_key_1": "Tea, Earl Grey, Hot",
-            "notes_key_2": "Tea, Earl Grey… decaf."
-          }
-        }
-      },
-      "queue_if_low_balance": true,
-      "reference_id": reference_id,
-      "narration": "Truelist Cash Reward",
-      "notes": {
-        "notes_key_1": "Beam me up Scotty",
-        "notes_key_2": "Engage"
-      }
+    const payoutDoc = await PayoutModel.findOneAndUpdate({
+      ad_id: ObjectId(ad_id),
+    });
+
+    const {
+      amount
+    } = payoutDoc;
+
+    if (payoutDoc.fund_account_id) {
+      throw ({ status: 403, message: 'Alread_Claimed' });
     }
 
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
-      }
-    };
-
     async function makePostRequest() {
+
       try {
+        const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+        const reference_id = ObjectId()
+        const data = {
+          "account_number": process.env.test_account_number,
+          "amount": amount,
+          "currency": "INR",
+          "mode": "UPI",
+          "purpose": "Reward",
+          "fund_account": {
+            "account_type": "vpa",
+            "vpa": {
+              "address": upi_id
+            },
+            "contact": {
+              "name": userDetails.name,
+              "contact": userDetails.userNumber.text,
+              "email": userDetails.email.text,
+              "type": "customer",
+              "reference_id": reference_id,
+              "notes": {
+                "notes_key_1": "Tea, Earl Grey, Hot",
+                "notes_key_2": "Tea, Earl Grey… decaf."
+              }
+            }
+          },
+          "queue_if_low_balance": true,
+          "reference_id": reference_id,
+          "narration": "Truelist Cash Reward",
+          "notes": {
+            "notes_key_1": "Beam me up Scotty",
+            "notes_key_2": "Engage"
+          }
+        };
+
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          }
+        };
+
         const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
+
         const {
           _id,
           fund_account_id,
@@ -2132,38 +2169,63 @@ $skip and limit for pagination
           failure_reason
         } = response.data;
 
-        const { 
+        const {
           contact_id,
           vpa,
         } = fund_account;
 
-        await PayoutModel.create({
-          user_id:userId,
-          ad_id:ad_id,
-          payout_id:_id,
-          fund_account_id:fund_account_id,
-          contact_id:contact_id,
-          reference_id:reference_id,
-          amount:amount,
-          vpa:vpa,
-          failure_reason:failure_reason,
-          payment_status:status
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+        await PayoutModel.findOneAndUpdate(
+          {
+            ad_id: ObjectId(ad_id),
+          }, {
+          $set: {
+            payout_id: _id,
+            fund_account_id: fund_account_id,
+            contact_id: contact_id,
+            reference_id: reference_id,
+            vpa: vpa,
+            failure_reason: failure_reason,
+            payment_status: status,
+            payment_initate_date: currentDate
+          }
         });
 
-        if(status === "processing" || status === "success"){
-          await Generic.findOneAndUpdate({parent_id:Ad.parent_id},{
-            $set:{
-              isClaimed:true
+        if (status === "processing" || status === "success") {
+          await Generic.findOneAndUpdate({ parent_id: Ad.parent_id }, {
+            $set: {
+              isClaimed: true
             }
           })
         }
-        // return (response.data);
+        return true;
+
       } catch (error) {
+
         throw ({ status: 401, message: error });
+
       }
     }
 
     const Response = makePostRequest();
+    /* 
+ 
+Cloud Notification To firebase
+ 
+*/
+    const messageBody = {
+      title: `⭐ You Have Successfully Claimed Your Reward ⭐`,
+      body: "Click here to check ...",
+      data: {
+        id: ad_id.toString(),
+        navigateTo: navigateToTabs.home
+      },
+      type: "Info"
+    }
+
+    await cloudMessage(userId.toString(), messageBody);
+
     // mixpanel track - Successfully  Claimed Payout
     await track('Claim Payout Successfully !!', {
       distinct_id: userId,

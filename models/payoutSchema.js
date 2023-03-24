@@ -29,6 +29,7 @@ const payoutSchema = mongoose.Schema(
         payment_status: {
             type: String,
             enum: [
+                'Not_Claimed',
                 'processing',
                 'Paid',
                 'Failed',
