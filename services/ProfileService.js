@@ -215,7 +215,7 @@ module.exports = class ProfileService {
               'Ads.price': 1,
               'Ads.ad_posted_address': 1,
               'Ads.isPrime': 1,
-              // 'Ads.image_url': 1,
+              'Ads.textLanguages':1,
               "Ads.thumbnail_url": 1,
               'Ads.created_at': 1,
               'Ads.ad_Premium_Date': 1
@@ -315,7 +315,7 @@ module.exports = class ProfileService {
       });
 
       if (Offer.offerValid) {
-
+        MyProfile[0].payoutFlag = true
         return { MyProfile, referral_code }
 
       } else {

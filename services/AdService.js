@@ -626,7 +626,7 @@ module.exports = class AdService {
                   Boosted_Date: 1,
                   is_Highlighted: 1,
                   Highlighted_Date: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                   created_at: 1,
                   ad_Premium_Date: 1
                 }
@@ -647,6 +647,7 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   ad_posted_address: 1,
+                  textLanguages:1,
                   thumbnail_url: 1,
                   saved: 1,
                   views: 1,
@@ -670,7 +671,7 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                   saved: 1,
                   views: 1,
                   "ad_Expired_Date": "$ad_expire_date",
@@ -695,7 +696,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] }
+                  textLanguages:1,
                 }
               }
             ],
@@ -715,7 +716,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                 }
               }
             ],
@@ -736,7 +737,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                 }
               }
             ],
@@ -755,6 +756,7 @@ module.exports = class AdService {
                   price: 1,
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
+                  textLanguages:1,
                   thumbnail_url: 1,
                 }
               }
@@ -772,6 +774,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   price: 1,
+                  textLanguages:1,
                   ad_posted_address: 1,
                   thumbnail_url: 1
                 }
@@ -1178,7 +1181,8 @@ module.exports = class AdService {
             'isPrime': '$firstResult.isPrime',
             'ad_posted_address': "$firstResult.ad_posted_address",
             'ad_present_address': "$firstResult.ad_present_address",
-            'ad_expire_date': "$firstResult.ad_expire_date"
+            'ad_expire_date': "$firstResult.ad_expire_date",
+            'textLanguages':"$firstResult.textLanguages",
           }
         },
         {
@@ -1200,7 +1204,7 @@ module.exports = class AdService {
             'ad_posted_address': 1,
             'ad_present_address': 1,
             'ad_expire_date': 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             "thumbnail_url": 1,
             'description': 1,
             'ad_status': 1,
@@ -1293,6 +1297,7 @@ module.exports = class AdService {
           'ad_present_address': 1,
           'ad_present_location': 1,
           'ad_posted_location': 1,
+          'textLanguages':1,
           'special_mention': 1,
           'description': 1,
           'is_negotiable': 1,
@@ -1425,7 +1430,7 @@ module.exports = class AdService {
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1566,7 +1571,7 @@ $skip and limit for pagination
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1693,7 +1698,7 @@ $skip and limit for pagination
           'views': 1,
           'saved': 1,
           'price': 1,
-          // 'image_url': 1,
+          'textLanguages':1,
           "thumbnail_url": 1,
           'ad_posted_address': 1,
           'ad_status': 1,
