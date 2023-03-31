@@ -96,7 +96,7 @@ module.exports = class GlobalSearchService {
             title: 1,
             thumbnail_url:1,
             parent_id: 1,
-            // image_url: 1,
+            textLanguages:1,
             price: 1,
             created_at: 1,
             isPrime: -1

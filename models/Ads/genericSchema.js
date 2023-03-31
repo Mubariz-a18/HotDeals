@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const genericSchema = mongoose.Schema({
-    parent_id:{
+    parent_id: {
         type: mongoose.Types.ObjectId,
     },
     user_id: {
@@ -33,9 +33,11 @@ const genericSchema = mongoose.Schema({
             type: String,
         },
     ],
-    title:
-    {
+    title: {
         type: String,
+    },
+    textLanguages: {
+        type: Object
     },
     price: {
         type: Number,
@@ -52,31 +54,39 @@ const genericSchema = mongoose.Schema({
         type: Array,
         default: [],
     },
-    thumbnail_url:{
-        type:Array,
-        default:[]
+    thumbnail_url: {
+        type: Array,
+        default: []
     },
     ad_present_location: {
         type: { type: String },
         coordinates: [],
-        default:{}
+        default: {}
     },
     ad_posted_location: {
         type: { type: String },
         coordinates: [],
-        default:{}
+        default: {}
     },
-    ad_posted_address:
-    {
+    ad_posted_address: {
         type: String,
     },
-    ad_present_address:
-    {
+    ad_present_address: {
         type: String,
     },
     ad_status: {
         type: String,
-        enum: ["Selling", "Archive", "Sold", "Delete", "Draft", "Expired", "Reposted", "Suspended" , "Pending"]
+        enum: [
+            "Selling",
+            "Archive",
+            "Sold",
+            "Delete",
+            "Draft",
+            "Expired",
+            "Reposted",
+            "Suspended",
+            "Pending"
+        ]
     },
     is_Reposted: {
         type: Boolean,
@@ -84,7 +94,10 @@ const genericSchema = mongoose.Schema({
     },
     ad_type: {
         type: String,
-        enum: ["Free", "Premium"],
+        enum: [
+            "Free",
+            "Premium"
+        ],
         default: "Free",
     },
     ad_expire_date: {
@@ -95,7 +108,10 @@ const genericSchema = mongoose.Schema({
     },
     ad_promoted_type: {
         type: String,
-        enum: ["Boost", "Premium", ""],
+        enum: [
+            "Boost", 
+            "Premium", 
+            ""],
         default: "",
     },
     ad_promoted_date: {
@@ -111,12 +127,12 @@ const genericSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    detection:[
+    detection: [
         {
-          type: Object,
-          default: {}
+            type: Object,
+            default: {}
         }
-      ],
+    ],
     ad_Premium_Date: {
         type: String
     },
@@ -170,6 +186,25 @@ const genericSchema = mongoose.Schema({
     },
     Highlight_Expiry_Date: {
         type: String
+    },
+    isClaimed: {
+        type: Boolean,
+        default: false
+    },
+    reviewStatus: {
+        type: String,
+        enum: [
+            "InReview", 
+            "Rejected", 
+            "Approved"
+        ],
+        default: "InReview"
+    },
+    reasonToReject: {
+        type: String
+    },
+    reviewDate: {
+        type: String,
     },
     created_at: {
         type: String,

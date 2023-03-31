@@ -13,6 +13,7 @@ const {
     createAdTime,
     updateAdTime,
     getMyAdTime,
+    claimPayoutTime,
     getFavouriteAdsTime,
     changeAdStatusTime,
     makeAdFavouriteTime,
@@ -23,6 +24,7 @@ const {
 const {
     getPremiumAdsHits,
     getFeaturedAdsHits,
+    claimPayoutHits,
     updateAdHits,
     createAdHits,
     getMyAdHits,
@@ -98,6 +100,15 @@ router.post('/api/repostAd',
     verifyToken,
     AdController.apiRepostAd);
 
+router.get('/api/v1/getPayoutAds',
+    rateLimiter(getMyAdTime, getMyAdHits),
+    verifyToken,
+    AdController.apiGetMyAdsForPayout);
+
+router.post('/api/v1/claimPayout',
+    rateLimiter(claimPayoutTime, claimPayoutHits),
+    verifyToken,
+    AdController.apiClaimPayout);
 
 /* 
 Draft Ad Apis Here

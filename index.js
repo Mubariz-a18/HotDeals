@@ -44,7 +44,6 @@ var bodyParser = require("body-parser");
   app.use(profileRouter);
   app.use(AdRouter);
   app.use(AlertRouter);
-  // app.use(ComplaintRouter);
   app.use(HelpRouter);
   app.use(CreditRouter);
   app.use(RatingRouter);

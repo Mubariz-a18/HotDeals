@@ -1,9 +1,11 @@
 const moment = require("moment");
+const axios = require("axios");
+const translate = require('translate-google');
 const Profile = require("../models/Profile/Profile");
 const Draft = require("../models/Ads/draftSchema");
 const ObjectId = require('mongodb').ObjectId;
 const Generic = require("../models/Ads/genericSchema");
-const { track } = require('./mixpanel-service.js');
+const { track, failedTrack } = require('./mixpanel-service.js');
 const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
@@ -15,6 +17,9 @@ const navigateToTabs = require("../utils/navigationTabs");
 const Referral = require("../models/referelSchema");
 const Credit = require("../models/creditSchema");
 const imageWaterMark = require("../Firebase operations/waterMarkImages");
+const PayoutModel = require("../models/payoutSchema");
+const OfferModel = require("../models/offerSchema");
+
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
@@ -95,7 +100,7 @@ module.exports = class AdService {
     */
     const special_mention_string = special_mention.join(" ");
 
-    const isTextSafe = await safetext(title, description , special_mention_string);
+    const isTextSafe = await safetext(title, description, special_mention_string);
 
 
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
@@ -207,7 +212,16 @@ module.exports = class AdService {
       }
     }, { new: true, returnDocument: "after" });
 
-    const { category, sub_category, title, description, ad_posted_address, ad_posted_location, SelectFields } = adDoc;
+    const {
+      parent_id,
+      category,
+      sub_category,
+      title,
+      description,
+      ad_posted_address,
+      ad_posted_location,
+      SelectFields
+    } = adDoc;
 
     const body = {
       ad_id: ad_id,
@@ -256,7 +270,7 @@ module.exports = class AdService {
 
 
         const messageBody = {
-          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${ this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
+          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
           body: "Check Your Credit Info",
           data: {
             navigateTo: navigateToTabs.home
@@ -269,6 +283,26 @@ module.exports = class AdService {
     } else {
 
     }
+
+    const Offer = await OfferModel.findOne({});
+
+    const {
+      offerValid,
+      firstAdReward,
+      nextAdReward
+    } = Offer
+
+    if (offerValid === true && ad_id.toString() === parent_id.toString()) {
+      await PayoutModel.create({
+        user_id: userId,
+        ad_id: ad_id,
+        amount: UpdatedUser.my_ads.length === 1 ? firstAdReward : nextAdReward,
+        payment_status: "Not_Claimed"
+      });
+    } else {
+
+    }
+
     /* 
  
     Cloud Notification To firebase
@@ -295,7 +329,7 @@ module.exports = class AdService {
     await cloudMessage(userId.toString(), messageBody);
 
     await Draft.deleteOne({ _id: ad_id });
-  }
+  };
 
   static async AfterPendingAd(adDoc, userId) {
 
@@ -344,7 +378,51 @@ module.exports = class AdService {
     await cloudMessage(userId.toString(), messageBody);
 
     await Draft.deleteOne({ _id: ad_id });
-  }
+  };
+
+  static async translateToLng(textObj, ad_id) {
+
+    const { title, description, specialMentions } = textObj;
+
+    if (!title || !description || !specialMentions) {
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+
+    const tranObj = {
+      title,
+      description,
+      specialMentions
+    };
+
+    const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
+
+    async function translateStringToMultipleLanguages(tranObj, languages) {
+      const translations = await Promise.all(languages.map((language) => {
+        return translate(tranObj, { to: language });
+      }));
+
+      return Object.fromEntries(languages.map((language, index) => {
+        return [language, translations[index]];
+      }));
+    }
+
+    const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
+      .then((translations) => {
+        return translations
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+
+
+    await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
+      $set: {
+        textLanguages: translatedObj
+      }
+    });
+
+  };
 
   //Update Ad
   static async updateAd(bodyData, user_id) {
@@ -362,7 +440,7 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id ,user_id:user_id });
+    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -409,8 +487,8 @@ module.exports = class AdService {
     
     */
     const special_mention_string = special_mention.join(" ");
-    
-    const isTextSafe = await safetext(" ", description , special_mention_string );
+
+    const isTextSafe = await safetext(" ", description, special_mention_string);
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
@@ -421,7 +499,7 @@ module.exports = class AdService {
           price,
           image_url,
           thumbnail_url,
-          ad_status:"Selling",
+          ad_status: "Selling",
           video_url,
           detection: batch,
           is_negotiable,
@@ -548,7 +626,7 @@ module.exports = class AdService {
                   Boosted_Date: 1,
                   is_Highlighted: 1,
                   Highlighted_Date: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                   created_at: 1,
                   ad_Premium_Date: 1
                 }
@@ -569,6 +647,7 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   ad_posted_address: 1,
+                  textLanguages:1,
                   thumbnail_url: 1,
                   saved: 1,
                   views: 1,
@@ -592,10 +671,11 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                   saved: 1,
                   views: 1,
-                  ad_expire_date: 1,
+                  "ad_Expired_Date": "$ad_expire_date",
+                  // ad_expire_date: 1,
                 }
               }
             ],
@@ -616,7 +696,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] }
+                  textLanguages:1,
                 }
               }
             ],
@@ -636,7 +716,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                 }
               }
             ],
@@ -657,7 +737,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
                   thumbnail_url: 1,
-                  // image_url: { $arrayElemAt: ["$image_url", 0] },
+                  textLanguages:1,
                 }
               }
             ],
@@ -676,6 +756,7 @@ module.exports = class AdService {
                   price: 1,
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
+                  textLanguages:1,
                   thumbnail_url: 1,
                 }
               }
@@ -693,6 +774,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   price: 1,
+                  textLanguages:1,
                   ad_posted_address: 1,
                   thumbnail_url: 1
                 }
@@ -1099,7 +1181,8 @@ module.exports = class AdService {
             'isPrime': '$firstResult.isPrime',
             'ad_posted_address': "$firstResult.ad_posted_address",
             'ad_present_address': "$firstResult.ad_present_address",
-            'ad_expire_date': "$firstResult.ad_expire_date"
+            'ad_expire_date': "$firstResult.ad_expire_date",
+            'textLanguages':"$firstResult.textLanguages",
           }
         },
         {
@@ -1121,7 +1204,7 @@ module.exports = class AdService {
             'ad_posted_address': 1,
             'ad_present_address': 1,
             'ad_expire_date': 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             "thumbnail_url": 1,
             'description': 1,
             'ad_status': 1,
@@ -1160,17 +1243,17 @@ module.exports = class AdService {
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(bodyData, query, user_id) {
 
-    
+
     const ad_id = bodyData.ad_id;
     let lng = +query.lng;
     let lat = +query.lat;
     let maxDistance = +query.maxDistance;
-    
-    
-    if(bodyData.ad_status === "Pending"){
-      return await Generic.findById({_id:ad_id});
+
+
+    if (bodyData.ad_status === "Pending") {
+      return await Generic.findById({ _id: ad_id });
     }
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
 
@@ -1214,6 +1297,7 @@ module.exports = class AdService {
           'ad_present_address': 1,
           'ad_present_location': 1,
           'ad_posted_location': 1,
+          'textLanguages':1,
           'special_mention': 1,
           'description': 1,
           'is_negotiable': 1,
@@ -1252,7 +1336,7 @@ module.exports = class AdService {
         "favourite_ads": {
           $elemMatch: { "ad_id": ad_id }
         }
-    });
+      });
 
     let isAdFav
     if (user) {
@@ -1277,7 +1361,7 @@ module.exports = class AdService {
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = 10;
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
     // let limitval = +query.limit || 20;
@@ -1346,7 +1430,7 @@ module.exports = class AdService {
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1406,7 +1490,7 @@ module.exports = class AdService {
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
 
-    if(!lng || !lat || !maxDistance){
+    if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
     /* 
@@ -1487,7 +1571,7 @@ $skip and limit for pagination
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            // 'image_url': 1,
+            'textLanguages':1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1541,7 +1625,7 @@ $skip and limit for pagination
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 10;
 
-    if(!lng || !lat ){
+    if (!lng || !lat) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }
 
@@ -1614,7 +1698,7 @@ $skip and limit for pagination
           'views': 1,
           'saved': 1,
           'price': 1,
-          // 'image_url': 1,
+          'textLanguages':1,
           "thumbnail_url": 1,
           'ad_posted_address': 1,
           'ad_status': 1,
@@ -1840,6 +1924,320 @@ $skip and limit for pagination
       await cloudMessage(user_id.toString(), messageBody);
       return newDoc
     }
+  };
+
+  static async getAdsForPayout(userId) {
+    const findUsr = await Profile.findOne({
+      _id: ObjectId(userId)
+    });
+
+    if (!findUsr) {
+      // mixpanel -- track failed get my ads
+      await track('failed to get ads for payouts', {
+        distinct_id: userId,
+        message: ` user_id : ${userId}  does not exist`
+      })
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
+    }
+    else {
+      const myAdsList = await Generic.aggregate([
+        {
+          $match: { _id: { $in: findUsr.my_ads }, }
+
+        },
+        {
+          $facet: {
+            "InReview": [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "InReview",
+                  ad_status: "Selling"
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed: 1,
+                  category: 1,
+                  reviewStatus: 1,
+                  sub_category: 1,
+                  thumbnail_url: 1,
+                  ad_posted_address: 1,
+                  created_at: 1
+                }
+              }
+            ],
+            "Approved": [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "Approved",
+                  ad_status: "Selling"
+                }
+              },
+              {
+                '$lookup': {
+                  'from': 'payouts',
+                  'localField': '_id',
+                  'foreignField': 'ad_id',
+                  'as': 'payoutDetails'
+                }
+              }, {
+                '$unwind': {
+                  'path': '$payoutDetails'
+                }
+              }, {
+                '$addFields': {
+                  'paymentstatus': '$payoutDetails.payment_status',
+                  'paymentDate':'$payoutDetails.payment_initate_date'
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed: 1,
+                  "paymentstatus": 1,
+                  "paymentDate":1,
+                  category: 1,
+                  sub_category: 1,
+                  thumbnail_url: 1,
+                  ad_posted_address: 1,
+                  created_at: 1
+                }
+              }
+            ],
+            "Rejected": [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$parent_id"] },
+                  reviewStatus: "Rejected",
+                  ad_status: "Selling"
+                }
+              },
+              {
+                $sort: {
+                  created_at: -1,
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  parent_id: 1,
+                  title: 1,
+                  isClaimed: 1,
+                  category: 1,
+                  reasonToReject: 1,
+                  sub_category: 1,
+                  thumbnail_url: 1,
+                  ad_posted_address: 1,
+                  created_at: 1
+                }
+              }
+            ],
+          }
+        }
+      ]);
+      if (!myAdsList) {
+        await track('failed to get ads for payouts', {
+          distinct_id: userId,
+          message: ` user_id : ${userId}  does not have ads in My_Ads`
+        })
+        throw ({ status: 404, message: 'ADS_NOT_EXISTS' })
+      }
+      else {
+        // mixpanel track for Get My Ads
+        await track('get ads for payouts successfully !!', {
+          distinct_id: userId
+        });
+      }
+      return myAdsList;
+
+    }
+  };
+
+  static async claimPayout(userId, bodyData) {
+
+    const {
+      ad_id,
+      upi_id
+    } = bodyData;
+
+    if (!ad_id || !upi_id) {
+
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+
+      throw ({ status: 401, message: 'Please Enter UPI And Ad Id' });
+    }
+    const userDetails = await Profile.findById({ _id: userId }, {
+      name: 1,
+      "userNumber.text": 1,
+      "email.text": 1
+    });
+    if (!userDetails) {
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+      throw ({ status: 403, message: 'UnAuthorized' })
+    }
+    const Ad = await Generic.findOne({
+      _id: ObjectId(ad_id),
+      user_id: ObjectId(userDetails),
+      ad_status: "Selling",
+      reviewStatus: "Approved",
+      isClaimed: false
+    });
+
+    if (!Ad) {
+      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+      throw ({ status: 401, message: 'Bad Request' });
+    }
+
+    const username = process.env.test_pay_id;
+    const password = process.env.test_pay_secret;
+
+    const payoutDoc = await PayoutModel.findOneAndUpdate({
+      ad_id: ObjectId(ad_id),
+    });
+
+    const {
+      amount
+    } = payoutDoc;
+
+    if (payoutDoc.fund_account_id) {
+      throw ({ status: 403, message: 'Alread_Claimed' });
+    }
+
+    async function makePostRequest() {
+
+      try {
+        const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+        const reference_id = ObjectId()
+        const data = {
+          "account_number": process.env.test_account_number,
+          "amount": amount,
+          "currency": "INR",
+          "mode": "UPI",
+          "purpose": "Reward",
+          "fund_account": {
+            "account_type": "vpa",
+            "vpa": {
+              "address": upi_id
+            },
+            "contact": {
+              "name": userDetails.name,
+              "contact": userDetails.userNumber.text,
+              "email": userDetails.email.text,
+              "type": "customer",
+              "reference_id": reference_id,
+              "notes": {
+                "notes_key_1": "Tea, Earl Grey, Hot",
+                "notes_key_2": "Tea, Earl Grey… decaf."
+              }
+            }
+          },
+          "queue_if_low_balance": true,
+          "reference_id": reference_id,
+          "narration": "Truelist Cash Reward",
+          "notes": {
+            "notes_key_1": "Beam me up Scotty",
+            "notes_key_2": "Engage"
+          }
+        };
+
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          }
+        };
+
+        const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
+
+        const {
+          _id,
+          fund_account_id,
+          fund_account,
+          status,
+          failure_reason
+        } = response.data;
+
+        const {
+          contact_id,
+          vpa,
+        } = fund_account;
+
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+        await PayoutModel.findOneAndUpdate(
+          {
+            ad_id: ObjectId(ad_id),
+          }, {
+          $set: {
+            payout_id: _id,
+            fund_account_id: fund_account_id,
+            contact_id: contact_id,
+            reference_id: reference_id,
+            vpa: vpa,
+            failure_reason: failure_reason,
+            payment_status: status,
+            payment_initate_date: currentDate
+          }
+        });
+
+        if (status === "processing" || status === "success") {
+          await Generic.findOneAndUpdate({ parent_id: Ad.parent_id }, {
+            $set: {
+              isClaimed: true
+            }
+          })
+        }
+        return true;
+
+      } catch (error) {
+
+        throw ({ status: 401, message: error });
+
+      }
+    }
+
+    const Response = makePostRequest();
+    /* 
+ 
+Cloud Notification To firebase
+ 
+*/
+    const messageBody = {
+      title: `⭐ You Have Successfully Claimed Your Reward ⭐`,
+      body: "Click here to check ...",
+      data: {
+        id: ad_id.toString(),
+        navigateTo: navigateToTabs.home
+      },
+      type: "Info"
+    }
+
+    await cloudMessage(userId.toString(), messageBody);
+
+    // mixpanel track - Successfully  Claimed Payout
+    await track('Claim Payout Successfully !!', {
+      distinct_id: userId,
+      ad_id: ad_id
+    })
+    return Response
+
   };
 
   /* 

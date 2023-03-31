@@ -17,6 +17,8 @@ const GlobalSearch = require("../models/GlobalSearch");
 const HelpService = require("./HelpService");
 const Report = require("../models/reportSchema");
 const { app, storage } = require("../firebaseAppSetup");
+const { getAdsForPayout } = require("./AdService");
+const OfferModel = require("../models/offerSchema");
 
 
 module.exports = class ProfileService {
@@ -213,7 +215,7 @@ module.exports = class ProfileService {
               'Ads.price': 1,
               'Ads.ad_posted_address': 1,
               'Ads.isPrime': 1,
-              // 'Ads.image_url': 1,
+              'Ads.textLanguages': 1,
               "Ads.thumbnail_url": 1,
               'Ads.created_at': 1,
               'Ads.ad_Premium_Date': 1
@@ -268,55 +270,74 @@ module.exports = class ProfileService {
 
   // api get my profile service
   static async getMyProfile(user_ID) {
-    const userExist = await Profile.findById({ _id: user_ID })
-    if (!userExist) {
-      // mixpanel track get my profile failed
-      await track('Get My Profile Failed ', {
-        distinct_id: user_ID,
-      });
-      throw ({ status: 404, message: 'USER_NOT_EXISTS' })
-    }
-    else {
-      const MyProfile = await Profile.aggregate([
-        {
-          $match: { _id: mongoose.Types.ObjectId(user_ID) },
-        },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            userNumber: 1,
-            email: 1,
-            city: 1,
-            about: 1,
-            gender: 1,
-            date_of_birth: 1,
-            user_type: 1,
-            about: 1,
-            is_email_verified: 1,
-            thumbnail_url: 1,
-            profile_url: 1,
-            language_preference: 1,
-            cover_photo_url: 1,
-            followers_count: 1,
-            followings_count: 1,
-            rate_average: 1,
-            rate_count: 1,
-            alert: 1
-          }
-        },
-      ])
-      const referral_code = await Referral.findOne({
-        user_Id: ObjectId(user_ID)
-      });
 
-      // mixpanel track get my profile 
-      await track('Get My Profile ', {
-        distinct_id: user_ID,
-      });
+    const MyProfile = await Profile.aggregate([
+      {
+        $match: { _id: mongoose.Types.ObjectId(user_ID) },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          userNumber: 1,
+          email: 1,
+          city: 1,
+          about: 1,
+          gender: 1,
+          date_of_birth: 1,
+          user_type: 1,
+          about: 1,
+          is_email_verified: 1,
+          thumbnail_url: 1,
+          profile_url: 1,
+          language_preference: 1,
+          cover_photo_url: 1,
+          followers_count: 1,
+          followings_count: 1,
+          rate_average: 1,
+          rate_count: 1,
+          alert: 1
+        }
+      },
+    ]);
+    if (MyProfile.length === 0) {
+      throw ({ status: 404, message: 'USER_NOT_EXISTS' });
+    }
+    const Offer = await OfferModel.findOne({});
+
+    const referral_code = await Referral.findOne({
+      user_Id: ObjectId(user_ID)
+    });
+
+    // mixpanel track get my profile 
+    await track('Get My Profile ', {
+      distinct_id: user_ID,
+    });
+
+    if (Offer.offerValid) {
+      MyProfile[0].payoutFlag = true
+      return { MyProfile, referral_code }
+
+    } else {
+      const payoutAdList = await getAdsForPayout(user_ID);
+
+      const AdsInRevieW = payoutAdList[0].InReview;
+
+      const AdsInApproved = payoutAdList[0].Approved;
+
+      const claimableAds = AdsInApproved.find(obj => obj.paymentstatus === "Not_Claimed");
+
+      if (AdsInRevieW.length > 0 || claimableAds) {
+
+        MyProfile[0].payoutFlag = true
+      } else {
+
+        MyProfile[0].payoutFlag = false
+      }
 
       return { MyProfile, referral_code }
     }
+
 
   };
 
@@ -355,7 +376,6 @@ module.exports = class ProfileService {
             cover_photo_url: bodyData.cover_photo_url,
             is_email_verified: userProfile.email.text !== bodyData.email.text ? false : userProfile.is_email_verified,
             date_of_birth: bodyData.date_of_birth,
-            // age: my_age(moment(bodyData.date_of_birth)),
             gender: bodyData.gender,
             language_preference: bodyData.language_preference,
             profile_url: bodyData.profile_url,
@@ -375,7 +395,28 @@ module.exports = class ProfileService {
         user_Id: ObjectId(userId)
       }, {
       });
-      return { updateUsr, referral_code };
+
+      const Offer = await OfferModel.findOne({});
+
+      if (Offer.offerValid) {
+
+        return { updateUsr, referral_code, payoutFlag: true }
+
+      } else {
+        const payoutAdList = await getAdsForPayout(userId);
+
+        const AdsInRevieW = payoutAdList[0].InReview;
+
+        const AdsInApproved = payoutAdList[0].Approved;
+
+        const claimableAds = AdsInApproved.find(obj => obj.paymentstatus === "Not_Claimed");
+
+        if (AdsInRevieW.length > 0 || claimableAds) {
+          return { updateUsr, referral_code, payoutFlag: true }
+        } else {
+          return { updateUsr, referral_code, payoutFlag: false }
+        }
+      }
     }
   };
 

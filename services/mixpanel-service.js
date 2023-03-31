@@ -8,4 +8,12 @@ async function track(event, properties) {
     await trackAsync(event, properties)
 }
 
-module.exports = { track }
+
+async function failedTrack(message,distinct_id,ad_id) {
+    // mixpanel track - Failed to Claim Payout
+    await track(message, {
+        distinct_id: distinct_id,
+        ad_id: ad_id
+    })
+}
+module.exports = { track,failedTrack }

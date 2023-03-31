@@ -9,6 +9,12 @@ module.exports = class AdController {
     try {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
+      await AdService.translateToLng({
+        title:adDocument.title,
+        description:adDocument.description,
+        specialMentions:adDocument.special_mention
+      },
+      adDocument._id)
       if (adDocument.ad_status == "Pending") {
         const AfterAdPosted = await AdService.AfterPendingAd(adDocument, req.user_ID)
       } else {
@@ -309,6 +315,34 @@ module.exports = class AdController {
       errorHandler(e, res);
     };
   }
+
+    // Get Ads -- Ads are Fetched and Returned from Adservice 
+    static async apiGetMyAdsForPayout(req, res, next) {
+      try {
+        const getDocument = await AdService.getAdsForPayout(req.user_ID);
+        res.status(200).send({
+          message: "success!",
+          InReview: getDocument[0].InReview,
+          Approved: getDocument[0].Approved,
+          Rejected: getDocument[0].Rejected,
+        });
+      } catch (e) {
+        errorHandler(e, res);
+      };
+    }
+
+    static async apiClaimPayout(req, res, next) {
+      try {
+        const PayoutClaim = await AdService.claimPayout(req.user_ID,req.body);
+        // Response code is send 
+        res.status(200).send({
+          message: "successfully claimed",
+          // PayoutClaim
+        });
+      } catch (e) {
+        errorHandler(e, res);
+      };
+    }
 
   /* 
     Draft Ad APIS From Here
