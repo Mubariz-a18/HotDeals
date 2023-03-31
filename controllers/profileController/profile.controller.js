@@ -56,11 +56,12 @@ module.exports = class ProfileController {
   // API Update Profile
   static async apiUpdateProfile(req, res, next) {
     try {
-      const { updateUsr, referral_code } = await ProfileService.updateProfile(req.body, req.user_ID);
+      const { updateUsr, referral_code,payoutFlag } = await ProfileService.updateProfile(req.body, req.user_ID);
       res.send({
         message: "success updated Profile",
         ProfileDoc: updateUsr,
-        referral_code
+        referral_code,
+        payoutFlag
       });
     } catch (e) {
       errorHandler(e, res)
