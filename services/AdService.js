@@ -1,5 +1,5 @@
 const moment = require("moment");
-const axios = require("axios");
+const { default: axios } = require("axios");
 const translate = require('translate-google');
 const Profile = require("../models/Profile/Profile");
 const Draft = require("../models/Ads/draftSchema");
@@ -2123,7 +2123,6 @@ $skip and limit for pagination
     }
 
     async function makePostRequest() {
-
       try {
         const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
         const reference_id = ObjectId()
@@ -2132,7 +2131,7 @@ $skip and limit for pagination
           "amount": amount,
           "currency": "INR",
           "mode": "UPI",
-          "purpose": "Reward",
+          "purpose": "cashback",
           "fund_account": {
             "account_type": "vpa",
             "vpa": {
@@ -2146,7 +2145,7 @@ $skip and limit for pagination
               "reference_id": reference_id,
               "notes": {
                 "notes_key_1": `You have Recieved Rs: ${amount} Reward`,
-                "note_key_2": `Ad ${Ad.title} , AD ID : ${ad_id.toString()}`
+                "note_key_2": `Ad ${Ad.title} , AD ID : ${ad_id}`
               }
             }
           },
@@ -2158,11 +2157,12 @@ $skip and limit for pagination
         const config = {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': authHeader
+            'Authorization': authHeader,
+            'Accept': 'application/json',
           }
         };
 
-        const response = await axios.post(process.env.RZPX_URL, data, config);
+        const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
 
         const {
           _id,
@@ -2226,7 +2226,7 @@ $skip and limit for pagination
       }
     }
 
-    const Response = makePostRequest();
+    const Response = await makePostRequest();
     /* 
  
 Cloud Notification To firebase
