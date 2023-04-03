@@ -35,6 +35,18 @@ const payoutSchema = mongoose.Schema(
                 'Failed',
             ]
         },
+        razorpayPayoutStatus:{
+            type:String,
+            enum:[
+                'pending',
+                'queued',
+                'processing',
+                'processed',
+                'reversed',
+                'cancelled',
+                'rejected'
+            ]
+        },
         failure_reason:{
             type: String,
         },

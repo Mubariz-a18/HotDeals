@@ -626,7 +626,7 @@ module.exports = class AdService {
                   Boosted_Date: 1,
                   is_Highlighted: 1,
                   Highlighted_Date: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                   created_at: 1,
                   ad_Premium_Date: 1
                 }
@@ -647,7 +647,7 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   ad_posted_address: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                   thumbnail_url: 1,
                   saved: 1,
                   views: 1,
@@ -671,7 +671,7 @@ module.exports = class AdService {
                   description: 1,
                   isPrime: 1,
                   thumbnail_url: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                   saved: 1,
                   views: 1,
                   "ad_Expired_Date": "$ad_expire_date",
@@ -696,7 +696,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Deleted_Date: 1,
                   thumbnail_url: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                 }
               }
             ],
@@ -716,7 +716,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Reposted_Date: 1,
                   thumbnail_url: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                 }
               }
             ],
@@ -737,7 +737,7 @@ module.exports = class AdService {
                   ad_posted_address: 1,
                   ad_Sold_Date: 1,
                   thumbnail_url: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                 }
               }
             ],
@@ -756,7 +756,7 @@ module.exports = class AdService {
                   price: 1,
                   ad_posted_address: 1,
                   ad_Suspended_Date: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                   thumbnail_url: 1,
                 }
               }
@@ -774,7 +774,7 @@ module.exports = class AdService {
                   parent_id: 1,
                   title: 1,
                   price: 1,
-                  textLanguages:1,
+                  textLanguages: 1,
                   ad_posted_address: 1,
                   thumbnail_url: 1
                 }
@@ -1182,7 +1182,7 @@ module.exports = class AdService {
             'ad_posted_address': "$firstResult.ad_posted_address",
             'ad_present_address': "$firstResult.ad_present_address",
             'ad_expire_date': "$firstResult.ad_expire_date",
-            'textLanguages':"$firstResult.textLanguages",
+            'textLanguages': "$firstResult.textLanguages",
           }
         },
         {
@@ -1204,7 +1204,7 @@ module.exports = class AdService {
             'ad_posted_address': 1,
             'ad_present_address': 1,
             'ad_expire_date': 1,
-            'textLanguages':1,
+            'textLanguages': 1,
             "thumbnail_url": 1,
             'description': 1,
             'ad_status': 1,
@@ -1297,7 +1297,7 @@ module.exports = class AdService {
           'ad_present_address': 1,
           'ad_present_location': 1,
           'ad_posted_location': 1,
-          'textLanguages':1,
+          'textLanguages': 1,
           'special_mention': 1,
           'description': 1,
           'is_negotiable': 1,
@@ -1430,7 +1430,7 @@ module.exports = class AdService {
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            'textLanguages':1,
+            'textLanguages': 1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1571,7 +1571,7 @@ $skip and limit for pagination
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
-            'textLanguages':1,
+            'textLanguages': 1,
             'isPrime': 1,
             "dist": 1,
             "is_Boosted": 1,
@@ -1698,7 +1698,7 @@ $skip and limit for pagination
           'views': 1,
           'saved': 1,
           'price': 1,
-          'textLanguages':1,
+          'textLanguages': 1,
           "thumbnail_url": 1,
           'ad_posted_address': 1,
           'ad_status': 1,
@@ -1997,7 +1997,7 @@ $skip and limit for pagination
               }, {
                 '$addFields': {
                   'paymentstatus': '$payoutDetails.payment_status',
-                  'paymentDate':'$payoutDetails.payment_initate_date'
+                  'paymentDate': '$payoutDetails.payment_initate_date'
                 }
               },
               {
@@ -2012,7 +2012,7 @@ $skip and limit for pagination
                   title: 1,
                   isClaimed: 1,
                   "paymentstatus": 1,
-                  "paymentDate":1,
+                  "paymentDate": 1,
                   category: 1,
                   sub_category: 1,
                   thumbnail_url: 1,
@@ -2074,12 +2074,14 @@ $skip and limit for pagination
 
     const {
       ad_id,
+      phoneNumber,
+      email,
       upi_id
     } = bodyData;
 
     if (!ad_id || !upi_id) {
 
-      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+      await failedTrack('Failed to Claim Payout !!', userId, ad_id)
 
       throw ({ status: 401, message: 'Please Enter UPI And Ad Id' });
     }
@@ -2089,7 +2091,7 @@ $skip and limit for pagination
       "email.text": 1
     });
     if (!userDetails) {
-      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
+      await failedTrack('Failed to Claim Payout !!', userId, ad_id)
       throw ({ status: 403, message: 'UnAuthorized' })
     }
     const Ad = await Generic.findOne({
@@ -2101,14 +2103,14 @@ $skip and limit for pagination
     });
 
     if (!Ad) {
-      await failedTrack('Failed to Claim Payout !!',userId,ad_id)
-      throw ({ status: 401, message: 'Bad Request' });
+      await failedTrack('Failed to Claim Payout !!', userId, ad_id)
+      throw ({ status: 403, message: 'Alread_Claimed' });
     }
 
-    const username = process.env.test_pay_id;
-    const password = process.env.test_pay_secret;
+    const username = process.env.LIVE_KEY_ID;
+    const password = process.env.LIVE_KEY_SECRET;
 
-    const payoutDoc = await PayoutModel.findOneAndUpdate({
+    const payoutDoc = await PayoutModel.findOne({
       ad_id: ObjectId(ad_id),
     });
 
@@ -2116,7 +2118,7 @@ $skip and limit for pagination
       amount
     } = payoutDoc;
 
-    if (payoutDoc.fund_account_id) {
+    if (payoutDoc.payment_status !== "Not_Claimed") {
       throw ({ status: 403, message: 'Alread_Claimed' });
     }
 
@@ -2126,7 +2128,7 @@ $skip and limit for pagination
         const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
         const reference_id = ObjectId()
         const data = {
-          "account_number": process.env.test_account_number,
+          "account_number": process.env.LIVE_ACC_NUMBER,
           "amount": amount,
           "currency": "INR",
           "mode": "UPI",
@@ -2138,23 +2140,19 @@ $skip and limit for pagination
             },
             "contact": {
               "name": userDetails.name,
-              "contact": userDetails.userNumber.text,
-              "email": userDetails.email.text,
+              "contact": phoneNumber ? phoneNumber : userDetails.userNumber.text,
+              "email": email ? email : userDetails.email.text,
               "type": "customer",
               "reference_id": reference_id,
               "notes": {
-                "notes_key_1": "Tea, Earl Grey, Hot",
-                "notes_key_2": "Tea, Earl Grey… decaf."
+                "notes_key_1": `You have Recieved Rs: ${amount} Reward`,
+                "note_key_2": `Ad ${Ad.title} , AD ID : ${ad_id.toString()}`
               }
             }
           },
           "queue_if_low_balance": true,
           "reference_id": reference_id,
-          "narration": "Truelist Cash Reward",
-          "notes": {
-            "notes_key_1": "Beam me up Scotty",
-            "notes_key_2": "Engage"
-          }
+          "narration": "Truelist Cash Reward"
         };
 
         const config = {
@@ -2164,7 +2162,7 @@ $skip and limit for pagination
           }
         };
 
-        const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
+        const response = await axios.post(process.env.RZPX_URL, data, config);
 
         const {
           _id,
@@ -2181,6 +2179,20 @@ $skip and limit for pagination
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
+        function statusFunc(status) {
+          switch (status) {
+            case "pending":
+            case "queued":
+            case "processing":
+              return "processing";
+            case 'processed':
+              return "Paid";
+            case 'reversed':
+            case "cancelled":
+            case "rejected":
+              return "Failed"
+          }
+        }
         await PayoutModel.findOneAndUpdate(
           {
             ad_id: ObjectId(ad_id),
@@ -2192,12 +2204,13 @@ $skip and limit for pagination
             reference_id: reference_id,
             vpa: vpa,
             failure_reason: failure_reason,
-            payment_status: status,
+            payment_status: statusFunc(status),
+            razorpayPayoutStatus: status,
             payment_initate_date: currentDate
           }
         });
 
-        if (status === "processing" || status === "success") {
+        if (status !== "Not_Claimed") {
           await Generic.findOneAndUpdate({ parent_id: Ad.parent_id }, {
             $set: {
               isClaimed: true
@@ -2220,7 +2233,7 @@ Cloud Notification To firebase
  
 */
     const messageBody = {
-      title: `⭐ You Have Successfully Claimed Your Reward ⭐`,
+      title: `⭐ Your Amount Will Be Credited Soon ⭐`,
       body: "Click here to check ...",
       data: {
         id: ad_id.toString(),
