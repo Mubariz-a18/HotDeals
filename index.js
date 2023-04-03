@@ -28,6 +28,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
+const { default: axios } = require("axios");
   connectDB();
 
   app.set('trust proxy', 1)
