@@ -1853,6 +1853,7 @@ $skip and limit for pagination
       throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" });
 
     }
+    const DateAfter30Days = expiry_date_func(30);
 
     const newDoc = await Generic.create({
 
@@ -1879,14 +1880,14 @@ $skip and limit for pagination
       is_negotiable,
       is_ad_posted,
       created_at: currentDate,
-      updated_at: currentDate
-
+      updated_at: currentDate,
+      ad_expire_date: DateAfter30Days,
     });
     if (newDoc) {
       //save the ad id in users profile in myads
       await Profile.findByIdAndUpdate({ _id: user_id }, {
         $push: {
-          my_ads: ObjectId(newDoc._id)
+          my_ads: new_id
         }
       });
       await Generic.findByIdAndUpdate(
@@ -1904,7 +1905,7 @@ $skip and limit for pagination
       // mixpanel track - when Status Of Ad changed reposted and new ad created
       await track('ad created successfully !!', {
         distinct_id: user_id,
-        ad_id: newDoc._id,
+        ad_id: new_id
       })
 
       /* 
@@ -1922,6 +1923,22 @@ $skip and limit for pagination
       }
 
       await cloudMessage(user_id.toString(), messageBody);
+
+
+
+      const body = {
+        ad_id: new_id,
+        category,
+        sub_category,
+        title,
+        description,
+        ad_posted_address,
+        ad_posted_location,
+        SelectFields
+      }
+
+      await createGlobalSearch(body)
+
       return newDoc
     }
   };
