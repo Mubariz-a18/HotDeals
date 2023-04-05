@@ -522,7 +522,7 @@ updateCredits()
         // */
         // const messageBody = {
         //   title: `Your Ad '${title}' Is Successfully Posted !!`,
-        //   body: "Click here to check ...",
+        //   body: "Click here to access it",
         //   data: {
         //     id: ad_id.toString(),
         //     navigateTo: navigateToTabs.particularAd
@@ -580,7 +580,7 @@ updateCredits()
         // */
         // const messageBody = {
         //   title: `Your Ad '${title}' Is Pending !!`,
-        //   body: "Click here to check ...",
+        //   body: "Click here to access it",
         //   data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
         //   type: "Info"
         // }

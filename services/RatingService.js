@@ -39,8 +39,8 @@ module.exports = class RatingService {
 
       // notification to user
       const messageBody = {
-        title: `You Got ${bodyData.RatingInfo.rating} Star Rating by ${user.name} !!`,
-        body: "Check Your Profile",
+        title: `Hey, you got ${bodyData.RatingInfo.rating} star rating by ${user.name}!`,
+        body: "Check your profile",
         data: {
           navigateTo: navigateToTabs.profile
         },

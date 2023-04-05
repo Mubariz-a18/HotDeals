@@ -185,11 +185,15 @@ module.exports = class AdService {
     }
   };
 
-  static ReferralCredits = (isPromo) => {
+  static ReferralCredits = async (isPromo) => {
+    const Offer = await OfferModel.findOne({});
+
     if (isPromo) {
-      return 100;
+      const promoVal = Offer.promoCodeCredits
+      return promoVal;
     } else {
-      return 50;
+      const referVal = Offer.referralCredits
+      return referVal;
     }
   };
 
@@ -243,12 +247,12 @@ module.exports = class AdService {
       if (reffered_by_user) {
 
         const isPromo = reffered_by_user?.isPromoCode;
-
+        const creditVal = await this.ReferralCredits(isPromo)
         const push = {
 
           universal_credit_bundles: {
 
-            number_of_credit: this.ReferralCredits(isPromo),
+            number_of_credit: creditVal,
             source_of_credit: "Refferal",
             credit_status: "Active",
             credit_duration: 30,
@@ -260,7 +264,7 @@ module.exports = class AdService {
 
         await Credit.findOneAndUpdate({ user_id: reffered_by_user.user_Id }, {
 
-          $inc: { total_universal_credits: this.ReferralCredits(isPromo) },
+          $inc: { total_universal_credits: creditVal },
 
           $push: push
 
@@ -268,21 +272,27 @@ module.exports = class AdService {
           new: true
         });
 
+        const messageFunction = async () => {
+          if (isPromo) {
+            return `Credits: You are awarded with '${creditVal}' by Promo Code!`
+          } else {
+            return `Credits: You are awarded with '${creditVal}' by Referral Code!`
+          }
+        }
+
 
         const messageBody = {
-          title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
-          body: "Check Your Credit Info",
+          title: await messageFunction(),
+          body: "Check your credit info",
           data: {
-            navigateTo: navigateToTabs.home
+            navigateTo: navigateToTabs.credits
           },
           type: "Info"
         }
 
         await cloudMessage(reffered_by_user.user_Id.toString(), messageBody);
       }
-    } else {
-
-    }
+    } else { }
 
     const Offer = await OfferModel.findOne({});
 
@@ -299,9 +309,7 @@ module.exports = class AdService {
         amount: UpdatedUser.my_ads.length === 1 ? firstAdReward : nextAdReward,
         payment_status: "Not_Claimed"
       });
-    } else {
-
-    }
+    } else { }
 
     /* 
  
@@ -309,8 +317,8 @@ module.exports = class AdService {
  
     */
     const messageBody = {
-      title: `Your Ad '${title}' Is Successfully Posted !!`,
-      body: "Click here to check ...",
+      title: `Ad: ${title} is successfully posted!`,
+      body: "Click here to access it",
       data: {
         id: ad_id.toString(),
         navigateTo: navigateToTabs.particularAd
@@ -369,8 +377,8 @@ module.exports = class AdService {
 
     */
     const messageBody = {
-      title: `Your Ad '${title}' Is Pending !!`,
-      body: "Click here to check ...",
+      title: `Ad: ${title} is pending`,
+      body: "Click here to access it",
       data: { id: ad_id.toString(), navigateTo: navigateToTabs.myads },
       type: "Info"
     }
@@ -514,9 +522,8 @@ module.exports = class AdService {
       
       */
       const messageBody = {
-
-        title: `Your Ad Is ${Ad.title} Successfully Updated !!`,
-        body: "Click here to check ...",
+        title: `Ad: ${Ad.title} is successfully posted!`,
+        body: "Click here to access it",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
 
@@ -554,12 +561,10 @@ module.exports = class AdService {
       
       */
       const messageBody = {
-
-        title: `Your Ad Is '${Ad.title}' Pending !!`,
-        body: "Click here to check ...",
+        title: `Ad: '${Ad.title}' is pending`,
+        body: "Click here to access it",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.myads },
         type: "Info"
-
       }
 
       await cloudMessage(user_id.toString(), messageBody);
@@ -1914,9 +1919,9 @@ $skip and limit for pagination
       
       */
       const messageBody = {
-
-        title: `Your Ad '${newDoc.title}' is Successfully Reposted!!`,
-        body: "Click here to check ...",
+       
+        title: `Ad: ${title} is successfully reposted!`,
+        body: "Click here to access it",
         data: { _id: new_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
 
@@ -2251,12 +2256,12 @@ Cloud Notification To firebase
 */
     const messageBody = {
       title: `⭐ Your Amount Will Be Credited Soon ⭐`,
-      body: "Click here to check ...",
+      body: "Click here to access it",
       data: {
         id: ad_id.toString(),
-        navigateTo: navigateToTabs.home
+        navigateTo: navigateToTabs.payout
       },
-      type: "Info"
+      type: "Alert"
     }
 
     await cloudMessage(userId.toString(), messageBody);

@@ -6,34 +6,41 @@ const navigateToTabs = require("../utils/navigationTabs");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
 const Profile = require("../models/Profile/Profile");
 const { ObjectId } = require("mongodb");
+const OfferModel = require("../models/offerSchema");
 
 module.exports = class ReferCodeService {
+
     //values for promo or ReferCredits
-    static  ReferralCredits = (isPromo)=>{
-        if(isPromo){
-            return 100;
-        }else{
-            return 50;
+    static ReferralCredits = async (isPromo) => {
+        const Offer = await OfferModel.findOne({});
+
+        if (isPromo) {
+            const promoVal = Offer.promoCodeCredits
+            return promoVal;
+        } else {
+            const referVal = Offer.referralCredits
+            return referVal;
         }
     };
+
     // Get Refferral Credits
     static async checkReferCodeService(bodyData, user_ID) {
-        
+
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
 
-        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj=> obj?.userId?.toString() === user_ID);
-        
+        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId?.toString() === user_ID);
+
         if (!referCodeExist) {
 
             throw ({ status: 404, message: 'INVALID_REFERRAL_CODE' });
 
         } else {
 
-            const if_user_already_has_referred = await Profile.findOne({_id:user_ID })
-            
-            if(if_user_already_has_referred.referrered_user || userId_exist_in_refer_doc){
+            const if_user_already_has_referred = await Profile.findOne({ _id: user_ID })
+
+            if (if_user_already_has_referred.referrered_user || userId_exist_in_refer_doc) {
 
                 throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
 
@@ -45,20 +52,20 @@ module.exports = class ReferCodeService {
                 {
                     $addToSet: {
                         used_by: {
-                            userId:user_ID,
-                            used_Date:currentDate
+                            userId: user_ID,
+                            used_Date: currentDate
                         },
                     },
                 }
             );
 
             const isPromo = referCodeExist.isPromoCode;
-
+            const creditCount = await this.ReferralCredits(isPromo)
             const push = {
 
                 universal_credit_bundles: {
 
-                    number_of_credit: this.ReferralCredits(isPromo),
+                    number_of_credit: creditCount,
                     source_of_credit: "Refferal",
                     credit_status: "Active",
                     credit_duration: 30,
@@ -70,7 +77,7 @@ module.exports = class ReferCodeService {
 
             const Referred_Credit_Doc = await Credit.findOneAndUpdate({ user_id: user_ID }, {
 
-                $inc: { total_universal_credits: this.ReferralCredits(isPromo) },
+                $inc: { total_universal_credits: creditCount },
 
                 $push: push
 
@@ -78,17 +85,19 @@ module.exports = class ReferCodeService {
                 new: true
             })
 
-            await Profile.findOneAndUpdate({_id:ObjectId(user_ID)},{
-                $set:{
-                    $inc:{availble_credit:this.ReferralCredits(isPromo)},
-                    referrered_user:referCodeExist.user_Id
+            const messageFunction = async () => {
+                if (isPromo) {
+                  return `Credits: You are awarded with '${creditCount}' by Promo Code!`
+                } else {
+                  return `Credits: You are awarded with '${creditCount}' by Referral Code!`
                 }
-            });
+              }
+
             const messageBody = {
-                title: `You Have Gained '${this.ReferralCredits(isPromo)}' Credits By ${ this.ReferralCredits(isPromo) === 50 ? "Referral" : "Promo"} Code!!`,
-                body: "Check Your Credit Info",
+                title: await messageFunction(),
+                body:"Check your credit info",
                 data: {
-                    navigateTo: navigateToTabs.home
+                    navigateTo: navigateToTabs.credits
                 },
                 type: "Info"
             }
