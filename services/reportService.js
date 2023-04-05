@@ -150,8 +150,8 @@ module.exports = class ReportService {
             new: true
         });
         const messageBody = {
-            title: `Your Ad '${title}' is Suspended`,
-            body: "Check Your Ad in My Ads",
+            title: `Warning: Ad '${title}' is Suspended`,
+            body: "Click here to check",
             data: {
                 navigateTo: navigateToTabs.myads
             },

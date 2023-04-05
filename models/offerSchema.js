@@ -9,7 +9,19 @@ const OfferSchema = new mongoose.Schema({
   },
   nextAdReward:{
     type:Number
-  }
+  },
+  monthlyCredits:{
+    type:Number
+  },
+  referralCredits: {
+    type:Number
+  },
+  promoCodeCredits:{
+    type:Number
+  },
+  onLoginCredits:{
+    type:Number
+  },
 });
 
 const OfferModel = mongoose.model("offer", OfferSchema);

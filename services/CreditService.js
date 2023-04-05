@@ -8,6 +8,7 @@ const Generic = require("../models/Ads/genericSchema");
 const Transaction = require("../models/transactionSchema");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
+const OfferModel = require("../models/offerSchema");
 
 const creditType = {
   Premium: "Premium",
@@ -73,18 +74,19 @@ module.exports = class CreditService {
 
     });
 
+    const Offer = await OfferModel.findOne({});
 
     /* 
- 
-  Cloud Notification To firebase
- 
-  */
+   
+    Cloud Notification To firebase
+   
+    */
 
     const messageBody = {
-      title: `You Earned 200 Free Credits !!`,
+      title: `Credits: Hurray you are credited with '${Offer.onLoginCredits}' credits for signup`,
       body: "Check Your Credit Info",
       data: {
-        navigateTo: navigateToTabs.home
+        navigateTo: navigateToTabs.credits
       },
       type: "Info"
     }
@@ -150,10 +152,11 @@ module.exports = class CreditService {
     })
 
     const messageBody = {
-      title: `You Have Purchased '${creditCount}' Credits !!`,
+
+      title:`Purchased: Thanks for purchasing '${creditCount}' credits!`,
       body: "Check Your Credit Info",
       data: {
-        navigateTo: navigateToTabs.home
+        navigateTo: navigateToTabs.credits
       },
       type: "Info"
     }

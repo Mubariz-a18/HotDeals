@@ -27,7 +27,7 @@ module.exports = class FollowUnfollowService {
 
                     // notification to user
                     const messageBody = {
-                        title: `${dbUser.name}  started Following You!!`,
+                        title: `${dbUser.name} started following you!`,
                         body: "Check Your Profile",
                         data: {
                             navigateTo: navigateToTabs.profile
