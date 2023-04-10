@@ -404,19 +404,70 @@ const payoutStatusChangeCron =
         }
       };
       const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}`, config);
-      const Data = response?.data?.items
+
+      const Data = response?.data?.items;
+
       const updates = Data.map(transaction => ({
         payout_id: transaction.source.id,
         paymentStatus: transaction.source.status
       }));
 
-      updates.forEach(async update => {
+      const filteredArr = updates.filter(obj => obj.paymentStatus !== undefined);
+
+
+      function statusFunc(status) {
+        switch (status) {
+          case "pending":
+          case "queued":
+          case "processing":
+            return "processing";
+          case 'processed':
+            return "Paid";
+          case 'reversed':
+          case "cancelled":
+          case "rejected":
+            return "Failed"
+        }
+      }
+
+      filteredArr.forEach(async update => {
+        const returnedStatus = statusFunc(update.paymentStatus);
+        if (returnedStatus === "Failed") {
+
+          const payoutDoc = await PayoutModel.findOne({payout_id: update.payout_id});
+
+          await PayoutModel.updateOne({
+            payout_id: update.payout_id,
+          }, {
+            $set: {
+              payment_status: 'Not_Claimed'
+            },
+            $unset: {
+              "contact_id": "",
+              "failure_reason": "",
+              "fund_account_id": "",
+              "razorpayPayoutStatus": "",
+              "reference_id": "",
+              "payout_id":"",
+              "payment_initate_date":"",
+              "vpa": ""
+            }
+          });
+          if(payoutDoc){
+            await Generic.updateOne({_id:payoutDoc.ad_id},{
+              $set:{
+                isClaimed:false
+              }
+            })
+          }
+        }
         await PayoutModel.updateOne({
           payout_id: update.payout_id,
           payment_status: "processing"
         }, {
           $set: {
-            payment_status: update.paymentStatus ? update.paymentStatus : "processing"
+            razorpayPayoutStatus: update.paymentStatus ? update.paymentStatus : "processing",
+            payment_status: returnedStatus
           }
         });
       })
@@ -434,5 +485,5 @@ module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
   Schedule_Task_Monthly_credits,
   // banuser
-  // payoutStatusChangeCron
+  payoutStatusChangeCron
 }
