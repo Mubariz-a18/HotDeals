@@ -3,9 +3,11 @@ const Generic = require('../models/Ads/genericSchema');
 const Alert = require('../models/alertSchema');
 const Credit = require('../models/creditSchema');
 const { app } = require('../firebaseAppSetup');
+const { default: axios } = require("axios");
 const cloudMessage = require('../Firebase operations/cloudMessaging');
 const navigateToTabs = require('../utils/navigationTabs');
 const OfferModel = require('../models/offerSchema');
+const PayoutModel = require('../models/payoutSchema');
 const db = app.database(process.env.DATABASEURL);
 
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
@@ -236,7 +238,7 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 });
 
 
-                                //'0 0 0 * * *'
+//'0 0 0 * * *'
 // const banuser = cron.schedule("* * * * * *", async () => {
 
 //   const Reports = await Report.find({ flag: { $ne: "Green" } })
@@ -384,8 +386,53 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 
 //************************************************************** */
 
+
+const payoutStatusChangeCron =
+  // cron.schedule("0 * * * *",
+  async () => {
+    try {
+
+      const username = process.env.LIVE_KEY_ID;
+      const password = process.env.LIVE_KEY_SECRET;
+
+      const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+          'Accept': 'application/json',
+        }
+      };
+      const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}`, config);
+      const Data = response?.data?.items
+      const updates = Data.map(transaction => ({
+        payout_id: transaction.source.id,
+        paymentStatus: transaction.source.status
+      }));
+
+      updates.forEach(async update => {
+        await PayoutModel.updateOne({
+          payout_id: update.payout_id,
+          payment_status: "processing"
+        }, {
+          $set: {
+            payment_status: update.paymentStatus ? update.paymentStatus : "processing"
+          }
+        });
+      })
+
+    } catch (e) {
+      console.log(e)
+    }
+  }
+// })
+
+
+
+
 module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
   Schedule_Task_Monthly_credits,
   // banuser
+  // payoutStatusChangeCron
 }

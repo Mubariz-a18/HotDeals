@@ -2187,13 +2187,12 @@ $skip and limit for pagination
         const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
 
         const {
-          _id,
+          id,
           fund_account_id,
           fund_account,
           status,
           failure_reason
         } = response.data;
-
         const {
           contact_id,
           vpa,
@@ -2220,7 +2219,7 @@ $skip and limit for pagination
             ad_id: ObjectId(ad_id),
           }, {
           $set: {
-            payout_id: _id,
+            payout_id: id,
             fund_account_id: fund_account_id,
             contact_id: contact_id,
             reference_id: reference_id,
