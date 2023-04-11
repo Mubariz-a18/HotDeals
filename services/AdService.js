@@ -661,7 +661,7 @@ module.exports = class AdService {
               }
             ],
             "Expired": [
-              { $match: { ad_status: "Expired" } },
+              { $match: { ad_status: "Expired", is_ad_Historic_Duration_Flag: false } },
               {
                 $sort: {
                   ad_expire_date: -1,
@@ -685,7 +685,7 @@ module.exports = class AdService {
               }
             ],
             "Deleted": [
-              { $match: { ad_status: "Delete" } },
+              { $match: { ad_status: "Delete", is_ad_Historic_Duration_Flag: false } },
               {
                 $sort: {
                   ad_Deleted_Date: -1,
@@ -706,7 +706,7 @@ module.exports = class AdService {
               }
             ],
             "Reposted": [
-              { $match: { ad_status: "Reposted" } },
+              { $match: { ad_status: "Reposted", is_ad_Historic_Duration_Flag: false } },
               {
                 $sort: {
                   ad_Reposted_Date: -1,
@@ -726,7 +726,7 @@ module.exports = class AdService {
               }
             ],
             "Sold": [
-              { $match: { ad_status: "Sold" } },
+              { $match: { ad_status: "Sold", is_ad_Historic_Duration_Flag: false } },
               {
                 $sort: {
                   ad_Sold_Date: -1,
@@ -747,7 +747,7 @@ module.exports = class AdService {
               }
             ],
             "Suspended": [
-              { $match: { ad_status: "Suspended" } },
+              { $match: { ad_status: "Suspended", is_ad_Historic_Duration_Flag: false } },
               {
                 $sort: {
                   ad_Suspended_Date: -1,
@@ -1919,7 +1919,7 @@ $skip and limit for pagination
       
       */
       const messageBody = {
-       
+
         title: `Ad: ${title} is successfully reposted!`,
         body: "Click here to access it",
         data: { _id: new_id.toString(), navigateTo: navigateToTabs.particularAd },
@@ -2187,13 +2187,12 @@ $skip and limit for pagination
         const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
 
         const {
-          _id,
+          id,
           fund_account_id,
           fund_account,
           status,
           failure_reason
         } = response.data;
-
         const {
           contact_id,
           vpa,
@@ -2220,7 +2219,7 @@ $skip and limit for pagination
             ad_id: ObjectId(ad_id),
           }, {
           $set: {
-            payout_id: _id,
+            payout_id: id,
             fund_account_id: fund_account_id,
             contact_id: contact_id,
             reference_id: reference_id,
