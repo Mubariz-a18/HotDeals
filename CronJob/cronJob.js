@@ -403,7 +403,7 @@ const payoutStatusChangeCron =
           'Accept': 'application/json',
         }
       };
-      const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}`, config);
+      const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}&count=100`, config);
 
       const Data = response?.data?.items;
 
