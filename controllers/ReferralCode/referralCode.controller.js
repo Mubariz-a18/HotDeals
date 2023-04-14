@@ -13,5 +13,29 @@ module.exports = class ReferralCodeController {
     } catch (e) {
       errorHandler(e, res)
     };
+  };
+
+  static async apiGetReferralForPayouts(req, res, next) {
+    try {
+      const message = await ReferCodeService.getReferralForPayouts(req.user_ID);
+      res.status(200).json({
+        message
+      })
+    } catch (e) {
+      errorHandler(e, res)
+    };
+  };
+
+  static async apiClaimReferralPayout(req, res, next) {
+    try {
+      const message = await ReferCodeService.claimReferralPayout(req.user_ID, req.body);
+      if (message) {
+        res.status(200).json({
+          message: "Successfully Claimed the Reward"
+        });
+      }
+    } catch (e) {
+      errorHandler(e, res)
+    };
   }
 };

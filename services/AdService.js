@@ -436,7 +436,7 @@ module.exports = class AdService {
 
     const { title, description, special_mention } = textObj;
 
-    if (!title || !description || ! special_mention) {
+    if (!title || !description || !special_mention) {
       throw ({ status: 400, message: 'Bad Request' });
     }
 
@@ -460,7 +460,7 @@ module.exports = class AdService {
 
     const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
 
-      return translatedObj
+    return translatedObj
   };
 
   //Update Ad
@@ -614,13 +614,13 @@ module.exports = class AdService {
 
       const ad_id = primaryDetails[i]["ad_id"];
 
-      const AdExist = await Generic.findById({_id:ad_id});
+      const AdExist = await Generic.findById({ _id: ad_id });
 
-      if(AdExist){
+      if (AdExist) {
         throw ({ status: 401, message: "AD_ALREADY_EXIST" });
       }
     }
-    
+
     if (!primaryDetails || primaryDetails.length === 0) {
       throw ({ status: 401, message: "Details Not Found" });
     }
@@ -648,7 +648,7 @@ module.exports = class AdService {
     } = bodyData;
 
 
-    
+
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
@@ -670,10 +670,10 @@ module.exports = class AdService {
 
     let new_adStatus;
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
-      
-      new_adStatus = ad_status   
 
-    }else{
+      new_adStatus = ad_status
+
+    } else {
       new_adStatus = "Pending"
     }
     const textObj = {
@@ -684,7 +684,7 @@ module.exports = class AdService {
     const translatedObj = await this.languageTranslation(textObj);
 
     for (let i = 0; i < primaryDetails.length; i++) {
-      let adDetail = primaryDetails[i]; 
+      let adDetail = primaryDetails[i];
       const {
         ad_id,
         ad_posted_location,
@@ -720,7 +720,7 @@ module.exports = class AdService {
         title,
         price,
         image_url,
-        thumbnail_url:  thumbnail_url ? thumbnail_url : DefaultThumbnail,
+        thumbnail_url: thumbnail_url ? thumbnail_url : DefaultThumbnail,
         video_url,
         ad_present_location,
         ad_present_address,
@@ -729,9 +729,9 @@ module.exports = class AdService {
         isPrime: isPrime,
         ad_type: isPrime == false ? "Free" : "Premium",
         ad_Premium_Date: isPrime == true ? currentDate : "",
-        ad_status:new_adStatus,
+        ad_status: new_adStatus,
         detection: batch,
-        textLanguages:translatedObj? translatedObj : {},
+        textLanguages: translatedObj ? translatedObj : {},
         is_negotiable,
         created_at: currentDate,
         ad_expire_date: DateAfter30Days,
@@ -748,12 +748,12 @@ module.exports = class AdService {
           }
         })
       }
-      if(new_adStatus === "Pending"){
+      if (new_adStatus === "Pending") {
         await AdService.AfterPendingAd(ad, userId)
-      }else{
+      } else {
         await AdService.AfterAdIsPosted(ad, userId)
       }
-        
+
     }
     return true;
 
@@ -2261,6 +2261,10 @@ $skip and limit for pagination
       ad_id: ObjectId(ad_id),
     });
 
+    if (!payoutDoc) {
+      await failedTrack('Failed to Claim Payout !!', userId, ad_id)
+      throw ({ status: 403, message: 'UnAuthorized' })
+    }
     const {
       amount
     } = payoutDoc;
