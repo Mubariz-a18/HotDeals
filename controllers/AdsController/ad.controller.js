@@ -10,11 +10,11 @@ module.exports = class AdController {
       // created ad is saved in db and sent to response 
       const adDocument = await AdService.createAd(req.body, req.user_ID);
       await AdService.translateToLng({
-        title:adDocument.title,
-        description:adDocument.description,
-        specialMentions:adDocument.special_mention
+        title: adDocument.title,
+        description: adDocument.description,
+        specialMentions: adDocument.special_mention
       },
-      adDocument._id)
+        adDocument._id)
       if (adDocument.ad_status == "Pending") {
         const AfterAdPosted = await AdService.AfterPendingAd(adDocument, req.user_ID)
       } else {
@@ -28,7 +28,21 @@ module.exports = class AdController {
     } catch (e) {
       errorHandler(e, res)
     };
-  }
+  };
+
+  static async apiPostAd(req, res, next) {
+    try {
+      const PostedAd = await AdService.postAd(req.body, req.user_ID);
+      if (PostedAd) {
+        // response code is send 
+        res.status(200).send({
+          message: "Ad Successfully created!"
+        })
+      }
+    } catch (e) {
+      errorHandler(e, res);
+    }
+  };
 
   // Get Ads -- Ads are Fetched and Returned from Adservice 
   static async apiGetMyAds(req, res, next) {
@@ -53,20 +67,6 @@ module.exports = class AdController {
       errorHandler(e, res);
     };
   }
-
-  // static async apiGetMyAdsHistory(req, res, next) {
-  //   try {
-  //     // My ads History  are fetched from db and sent to response
-  //     const getHistoryAds = await AdService.getMyAdsHistory(req.user_ID);
-  //     // Response code is send 
-  //     res.status(200).send({
-  //       message: "success!",
-  //       getHistoryAds
-  //     });
-  //   } catch (e) {
-  //     errorHandler(e, res)
-  //   };
-  // }
 
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
 
@@ -316,33 +316,33 @@ module.exports = class AdController {
     };
   }
 
-    // Get Ads -- Ads are Fetched and Returned from Adservice 
-    static async apiGetMyAdsForPayout(req, res, next) {
-      try {
-        const getDocument = await AdService.getAdsForPayout(req.user_ID);
-        res.status(200).send({
-          message: "success!",
-          InReview: getDocument[0].InReview,
-          Approved: getDocument[0].Approved,
-          Rejected: getDocument[0].Rejected,
-        });
-      } catch (e) {
-        errorHandler(e, res);
-      };
-    }
+  // Get Ads -- Ads are Fetched and Returned from Adservice 
+  static async apiGetMyAdsForPayout(req, res, next) {
+    try {
+      const getDocument = await AdService.getAdsForPayout(req.user_ID);
+      res.status(200).send({
+        message: "success!",
+        InReview: getDocument[0].InReview,
+        Approved: getDocument[0].Approved,
+        Rejected: getDocument[0].Rejected,
+      });
+    } catch (e) {
+      errorHandler(e, res);
+    };
+  }
 
-    static async apiClaimPayout(req, res, next) {
-      try {
-        const PayoutClaim = await AdService.claimPayout(req.user_ID,req.body);
-        // Response code is send 
-        res.status(200).send({
-          message: "successfully claimed",
-          // PayoutClaim
-        });
-      } catch (e) {
-        errorHandler(e, res);
-      };
-    }
+  static async apiClaimPayout(req, res, next) {
+    try {
+      const PayoutClaim = await AdService.claimPayout(req.user_ID, req.body);
+      // Response code is send 
+      res.status(200).send({
+        message: "successfully claimed",
+        // PayoutClaim
+      });
+    } catch (e) {
+      errorHandler(e, res);
+    };
+  }
 
   /* 
     Draft Ad APIS From Here
@@ -367,7 +367,7 @@ module.exports = class AdController {
     try {
       const user_id = req.user_ID;
       const Drafted_Ad = await AdService.updateDraft(req.body, user_id);
-      if(Drafted_Ad){
+      if (Drafted_Ad) {
         res.status(200).json({
           message: "Successfully_Updated_Draft",
         })
@@ -395,9 +395,9 @@ module.exports = class AdController {
     try {
       const user_id = req.user_ID;
       const deleteDraft = await AdService.deleteDraft(user_id, req.body.ad_id);
-      if(deleteDraft){
+      if (deleteDraft) {
         res.status(200).json({
-          message:"Draft_Deleted_Successfully"
+          message: "Draft_Deleted_Successfully"
         })
       }
     } catch (e) {

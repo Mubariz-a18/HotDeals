@@ -42,6 +42,10 @@ router.post('/api/createAd',
     verifyToken, Validator("genericSchemaValidator"),
     AdController.apiCreateAd);
 
+router.post('/api/postAd',
+    verifyToken,
+    AdController.apiPostAd);
+
 router.post('/api/v1/updateAd',
     rateLimiter(updateAdTime, updateAdHits),
     verifyToken,

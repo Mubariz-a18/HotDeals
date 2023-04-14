@@ -211,7 +211,7 @@ module.exports = class AdService {
 
     //save the ad_id in users profile in myads
     const UpdatedUser = await Profile.findByIdAndUpdate({ _id: userId }, {
-      $push: {
+      $addToSet: {
         my_ads: ObjectId(ad_id)
       }
     }, { new: true, returnDocument: "after" });
@@ -352,7 +352,7 @@ module.exports = class AdService {
 
     //save the ad_id in users profile in myads
     await Profile.findByIdAndUpdate({ _id: userId }, {
-      $push: {
+      $addToSet: {
         my_ads: ObjectId(ad_id)
       }
     });
@@ -430,6 +430,37 @@ module.exports = class AdService {
       }
     });
 
+  };
+
+  static async languageTranslation(textObj) {
+
+    const { title, description, special_mention } = textObj;
+
+    if (!title || !description || ! special_mention) {
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+
+    const tranObj = {
+      title,
+      description,
+      special_mention
+    };
+
+    const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
+
+    async function translateStringToMultipleLanguages(tranObj, languages) {
+      const translations = await Promise.all(languages.map((language) => {
+        return translate(tranObj, { to: language });
+      }));
+
+      return Object.fromEntries(languages.map((language, index) => {
+        return [language, translations[index]];
+      }));
+    }
+
+    const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
+
+      return translatedObj
   };
 
   //Update Ad
@@ -572,6 +603,159 @@ module.exports = class AdService {
       return updateAd
     }
 
+
+  };
+
+  static async postAd(bodyData, userId) {
+
+    const { primaryDetails } = bodyData;
+
+    for (let i = 0; i < primaryDetails.length; i++) {
+
+      const ad_id = primaryDetails[i]["ad_id"];
+
+      const AdExist = await Generic.findById({_id:ad_id});
+
+      if(AdExist){
+        throw ({ status: 401, message: "AD_ALREADY_EXIST" });
+      }
+    }
+    
+    if (!primaryDetails || primaryDetails.length === 0) {
+      throw ({ status: 401, message: "Details Not Found" });
+    }
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+    const DateAfter30Days = expiry_date_func(30);
+
+    const DefaultThumbnail = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"
+    let {
+      parent_id,
+      category,
+      sub_category,
+      description,
+      SelectFields,
+      special_mention,
+      title,
+      price,
+      image_url,
+      video_url,
+      ad_present_location,
+      ad_present_address,
+      ad_status,
+      is_negotiable,
+    } = bodyData;
+
+
+    
+    if (image_url.length == 0) {
+      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
+    }
+
+    const thumbnail_url = await imgCom(image_url[0]);
+
+
+    await imageWaterMark(image_url);
+
+
+
+    const { health, batch } = await detectSafeSearch(image_url);
+
+
+    const special_mention_string = special_mention.join(" ");
+
+    const isTextSafe = await safetext(title, description, special_mention_string);
+
+
+    let new_adStatus;
+    if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
+      
+      new_adStatus = ad_status   
+
+    }else{
+      new_adStatus = "Pending"
+    }
+    const textObj = {
+      title,
+      description,
+      special_mention
+    }
+    const translatedObj = await this.languageTranslation(textObj);
+
+    for (let i = 0; i < primaryDetails.length; i++) {
+      let adDetail = primaryDetails[i]; 
+      const {
+        ad_id,
+        ad_posted_location,
+        ad_posted_address,
+        isPrime,
+        AdsArray
+      } = adDetail;
+
+      const creditDuctConfig = {
+
+        title: title,
+        category: category,
+        AdsArray: AdsArray
+
+      }
+      const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
+
+      if (message === "NOT_ENOUGH_CREDITS") {
+
+        throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
+
+      }
+
+      const ad = await Generic.create({
+        user_id: ObjectId(userId),
+        _id: ObjectId(ad_id),
+        parent_id,
+        category,
+        sub_category,
+        description,
+        SelectFields,
+        special_mention,
+        title,
+        price,
+        image_url,
+        thumbnail_url:  thumbnail_url ? thumbnail_url : DefaultThumbnail,
+        video_url,
+        ad_present_location,
+        ad_present_address,
+        ad_posted_location: ad_posted_location || {},
+        ad_posted_address: ad_posted_address,
+        isPrime: isPrime,
+        ad_type: isPrime == false ? "Free" : "Premium",
+        ad_Premium_Date: isPrime == true ? currentDate : "",
+        ad_status:new_adStatus,
+        detection: batch,
+        textLanguages:translatedObj? translatedObj : {},
+        is_negotiable,
+        created_at: currentDate,
+        ad_expire_date: DateAfter30Days,
+        updated_at: currentDate,
+      });
+
+      if (AdsArray.isHighlighted === true && new_adStatus === "Selling") {
+        await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+          $set: {
+            is_Highlighted: true,
+            Highlight_Days: 15,
+            Highlighted_Date: currentDate,
+            Highlight_Expiry_Date: expiry_date_func(15),
+          }
+        })
+      }
+      if(new_adStatus === "Pending"){
+        await AdService.AfterPendingAd(ad, userId)
+      }else{
+        await AdService.AfterAdIsPosted(ad, userId)
+      }
+        
+    }
+    return true;
 
   };
 
@@ -808,65 +992,6 @@ module.exports = class AdService {
 
     }
   };
-
-  // // Get my Ads -- user is authenticated from token and  ads are fetched from db 
-  // static async getMyAdsHistory(userId) {
-  //   //check if user exist or not
-  //   const findUsr = await Profile.findOne({
-  //     _id: ObjectId(userId)
-  //   });
-  //   //if not exist throw error 
-  //   if (!findUsr) {
-  //     // mixpanel -- track failed get my ads history
-  //     await track('failed !! get my ads', {
-  //       distinct_id: userId,
-  //       message: ` user_id : ${userId}  does not exist`
-  //     })
-  //     throw ({ status: 404, message: 'USER_NOT_EXISTS' })
-  //   }
-  //   else {
-  //     /*
-  //     if user exist find ads with ad_Status delete , sold , expired
-  //     projecting the required feilds
-  //     */
-  //     const myAdsList = await Generic.find({
-  //       user_id: userId,
-  //       $or: [
-  //         { ad_status: "Delete" },
-  //         { ad_status: "Sold" },
-  //         { ad_status: "Expired" }
-  //       ]
-  //     }, {
-  //       _id: 1,
-  //       title: 1,
-  //       description: 1,
-  //       image_url: { $arrayElemAt: ["$image_url", 0] },
-  //       created_at: 1,
-  //       ad_status: 1,
-  //       price: 1,
-  //       ad_expire_date: 1,
-  //       ad_Deleted_Date: 1,
-  //       ad_Sold_Date: 1,
-  //     }
-  //     )
-  //     if (!myAdsList) {
-  //       // mixpanel -- track failed get my ads
-  //       await track('failed !! get my ads history ', {
-  //         distinct_id: userId,
-  //         message: ` user_id : ${userId}  does not have ads in My_Ads historry`
-  //       })
-  //       throw ({ status: 404, message: 'ADS_NOT_EXISTS' })
-  //     }
-  //     else {
-  //       // mixpanel track for Get My Ads
-  //       await track('get my ads history successfully !!', {
-  //         distinct_id: userId
-  //       });
-  //       return myAdsList;
-  //     }
-
-  //   }
-  // };
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
