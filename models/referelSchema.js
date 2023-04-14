@@ -16,10 +16,7 @@ const referralCodeSchema = mongoose.Schema(
     ],
     isPromoCode:{
       type:Boolean
-    },
-    // used_Date: {
-    //   type: String
-    // }
+    }
   }
 );
 
