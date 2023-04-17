@@ -18,6 +18,9 @@ const referralCodeSchema = mongoose.Schema(
         used_Date: {
           type: String,
         },
+        phoneNumber: {
+          type: String
+        },
         isClaimed: {
           type: Boolean,
           default: false

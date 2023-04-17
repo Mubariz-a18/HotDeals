@@ -50,6 +50,12 @@ module.exports = class ReferCodeService {
 
             }
 
+            const {
+                userNumber
+            } = if_user_already_has_referred;
+
+            const phoneNumber = userNumber.text;
+
             await Referral.findOneAndUpdate({
                 referral_code: bodyData.referral_code
             },
@@ -57,7 +63,8 @@ module.exports = class ReferCodeService {
                     $addToSet: {
                         used_by: {
                             userId: user_ID,
-                            used_Date: currentDate
+                            used_Date: currentDate,
+                            phoneNumber:phoneNumber
                         },
                     },
                 }
@@ -210,6 +217,7 @@ module.exports = class ReferCodeService {
                     // 'reviewStatus': '$used_by.reviewStatus',
                     'isClaimed': '$used_by.isClaimed',
                     'used_Date': '$used_by.used_Date',
+                    'phoneNumber':'$used_by.phoneNumber',
                     'paymentstatus': 1,
                     'paymentDate': 1,
                     'amount': 1
