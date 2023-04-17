@@ -9,8 +9,8 @@ module.exports = class TransactionService {
     static async getOrderService(bodyData, user_ID) {
 
         const razorPayConfig = new Razorpay({
-            key_id: process.env.key_id,
-            key_secret: process.env.key_secret,
+            key_id: process.env.LIVE_KEY_ID,
+            key_secret: process.env.LIVE_KEY_SECRET,
         });
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -60,14 +60,11 @@ module.exports = class TransactionService {
 
         const crypto = require("crypto");
 
-        const key_secret = process.env.key_secret;
-
-
+        const key_secret = process.env.LIVE_KEY_SECRET;
 
         const paymentId = bodyData.paymentId
 
         const paymentSignature = bodyData.paymentSignature;
-
 
         const text = orderId + "|" + paymentId;
 
