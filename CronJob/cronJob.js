@@ -527,9 +527,9 @@ async function installpayoutStatus() {
       const returnedStatus = statusFunc(update.paymentStatus);
       if (returnedStatus === "Failed") {
 
-        const payoutDoc = await InstallPayoutModel.findOne({ payout_id: update.payout_id });
+        const payoutDocs = await InstallPayoutModel.find({ payout_id: update.payout_id });
 
-        await InstallPayoutModel.updateOne({
+        await InstallPayoutModel.updateMany({
           payout_id: update.payout_id,
         }, {
           $set: {
@@ -546,16 +546,18 @@ async function installpayoutStatus() {
             "vpa": ""
           }
         });
-        if (payoutDoc) {
-
-          await Referral.updateOne({ user_Id:  payoutDoc.user_id, "used_by.userId": payoutDoc.referredTo }, {
-            $set: {
-              "used_by.$.isClaimed": false
-            }
-          })
+        if (payoutDocs || payoutDocs.length > 0) {
+          for(let i=0; i< payoutDocs.length; i++){
+            let payoutDoc = payoutDocs[i];
+            await Referral.updateOne({ user_Id:  payoutDoc.user_id, "used_by.userId": payoutDoc.referredTo }, {
+              $set: {
+                "used_by.$.isClaimed": false
+              }
+            })
+          }
         }
       }
-      await InstallPayoutModel.updateOne({
+      await InstallPayoutModel.updateMany({
         payout_id: update.payout_id,
         payment_status: "processing"
       }, {
@@ -579,5 +581,5 @@ module.exports = {
   Schedule_Task_Monthly_credits,
   // banuser
   // payoutStatusChangeCron
-  // installpayoutStatus
+  installpayoutStatus
 }

@@ -28,7 +28,7 @@ module.exports = class ReferralCodeController {
 
   static async apiClaimReferralPayout(req, res, next) {
     try {
-      const message = await ReferCodeService.claimReferralPayout(req.user_ID, req.body);
+      const message = await ReferCodeService.claimReferralPayouts(req.user_ID, req.body);
       if (message) {
         res.status(200).json({
           message: "Successfully Claimed the Reward"

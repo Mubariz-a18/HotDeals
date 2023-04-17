@@ -9,6 +9,7 @@ const OfferModel = require("../models/offerSchema");
 const InstallPayoutModel = require("../models/InstallsPayoutSchema");
 const { ObjectId } = require("mongodb");
 const { default: axios } = require("axios");
+const User = require("../models/Profile/User");
 
 module.exports = class ReferCodeService {
 
@@ -162,70 +163,75 @@ module.exports = class ReferCodeService {
                     'path': '$used_by',
                     'preserveNullAndEmptyArrays': true
                 }
+            },
+            // {
+            // '$facet': {
+            // 'InReview': [
+            //     {
+            //         '$match': {
+            //             'used_by.reviewStatus': 'InReview'
+            //         }
+            //     }, {
+            //         '$project': {
+            //             "_id": 0,
+            //             'referredToUser': '$used_by.userId',
+            //             'reviewStatus': '$used_by.reviewStatus',
+            //             'isClaimed': '$used_by.isClaimed'
+            //         }
+            //     }
+            // ],
+            // 'Approved': [
+            // {
+            //     '$match': {
+            //         'used_by.reviewStatus': 'Approved'
+            //     }
+            // }, 
+            {
+                '$lookup': {
+                    'from': 'payout.installs',
+                    'localField': 'used_by.userId',
+                    'foreignField': 'referredTo',
+                    'as': 'payoutDetails'
+                }
             }, {
-                '$facet': {
-                    'InReview': [
-                        {
-                            '$match': {
-                                'used_by.reviewStatus': 'InReview'
-                            }
-                        }, {
-                            '$project': {
-                                "_id": 0,
-                                'referredToUser': '$used_by.userId',
-                                'reviewStatus': '$used_by.reviewStatus',
-                                'isClaimed': '$used_by.isClaimed'
-                            }
-                        }
-                    ],
-                    'Approved': [
-                        {
-                            '$match': {
-                                'used_by.reviewStatus': 'Approved'
-                            }
-                        }, {
-                            '$lookup': {
-                                'from': 'payout.installs',
-                                'localField': 'used_by.userId',
-                                'foreignField': 'referredTo',
-                                'as': 'payoutDetails'
-                            }
-                        }, {
-                            '$unwind': {
-                                'path': '$payoutDetails'
-                            }
-                        }, {
-                            '$addFields': {
-                                'paymentstatus': '$payoutDetails.payment_status',
-                                'paymentDate': '$payoutDetails.payment_initate_date'
-                            }
-                        }, {
-                            '$project': {
-                                "_id": 0,
-                                'referredToUser': '$used_by.userId',
-                                'reviewStatus': '$used_by.reviewStatus',
-                                'isClaimed': '$used_by.isClaimed',
-                                'paymentstatus': 1,
-                                'paymentDate': 1
-                            }
-                        }
-                    ],
-                    'Rejected': [
-                        {
-                            '$match': {
-                                'used_by.reviewStatus': 'Rejected'
-                            }
-                        }, {
-                            '$project': {
-                                "_id": 0,
-                                'referredToUser': '$used_by.userId',
-                                'reviewStatus': '$used_by.reviewStatus',
-                                'isClaimed': '$used_by.isClaimed'
-                            }
-                        }
-                    ]
+                '$unwind': {
+                    'path': '$payoutDetails'
+                }
+            }, {
+                '$addFields': {
+                    'paymentstatus': '$payoutDetails.payment_status',
+                    'paymentDate': '$payoutDetails.payment_initate_date',
+                    'amount': '$payoutDetails.amount'
+                }
+            }, {
+                '$project': {
+                    "_id": 0,
+                    'referredToUser': '$used_by.userId',
+                    // 'reviewStatus': '$used_by.reviewStatus',
+                    'isClaimed': '$used_by.isClaimed',
+                    'used_Date': '$used_by.used_Date',
+                    'paymentstatus': 1,
+                    'paymentDate': 1,
+                    'amount': 1
                 }
             }
+            // ],
+            // 'Rejected': [
+            //     {
+            //         '$match': {
+            //             'used_by.reviewStatus': 'Rejected'
+            //         }
+            //     }, {
+            //         '$project': {
+            //             "_id": 0,
+            //             'referredToUser': '$used_by.userId',
+            //             'reviewStatus': '$used_by.reviewStatus',
+            //             'isClaimed': '$used_by.isClaimed'
+            //         }
+            //     }
+            // ]
+            // }
+            // }
         ]);
 
         if (!Referral_list) {
@@ -235,17 +241,20 @@ module.exports = class ReferCodeService {
         return Referral_list
     };
 
-    static async claimReferralPayout(userId, bodyData) {
+    static async claimReferralPayouts(userId, bodyData) {
         const {
-            referredTo,
+            referUsersList,
             phoneNumber,
             email,
             upi_id
         } = bodyData;
 
-        if (!referredTo || !upi_id) {
+        const username = process.env.LIVE_KEY_ID;
+        const password = process.env.LIVE_KEY_SECRET;
 
-            throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId' });
+        if (!referUsersList || referUsersList.length === 0 || !upi_id) {
+
+            throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId List' });
         }
 
         const userDetails = await Profile.findById({ _id: userId }, {
@@ -254,9 +263,7 @@ module.exports = class ReferCodeService {
             "email.text": 1
         });
 
-        const ReferredTo_userExist = await Profile.findById({ _id: ObjectId(referredTo) });
-
-        if (!userDetails || !ReferredTo_userExist) {
+        if (!userDetails) {
             throw ({ status: 403, message: 'UnAuthorized' })
         }
 
@@ -265,39 +272,49 @@ module.exports = class ReferCodeService {
         if (!referCodeExist) {
             throw ({ status: 403, message: 'UnAuthorized' })
         }
+        let totalAmount = 0
+        for (let i = 0; i < referUsersList.length; i++) {
 
-        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId.toString() === referredTo && obj?.reviewStatus === "Approved");
+            let referredTo = referUsersList[i];
+            const ReferredTo_userExist = await User.findById({ _id: ObjectId(referredTo), isDeletedOnce: false });
 
+            if (!ReferredTo_userExist) {
+                continue
+            }
 
-        if (!userId_exist_in_refer_doc) {
-            throw ({ status: 403, message: 'UnAuthorized' })
+            const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId.toString() === referredTo && obj?.isClaimed === false);
+            if (!userId_exist_in_refer_doc) {
+                continue
+            }
+
+            const payoutDoc = await InstallPayoutModel.findOne({
+                referredTo: ObjectId(referredTo),
+            });
+
+            if (!payoutDoc) {
+                continue
+            }
+
+            const {
+                amount
+            } = payoutDoc;
+
+            totalAmount = totalAmount + amount;
+
+            if (payoutDoc.payment_status !== "Not_Claimed") {
+                continue
+            }
+        };
+        if (totalAmount === 0) {
+            throw ({ status: 401, message: 'Bad Request' })
         }
-
-        const username = process.env.LIVE_KEY_ID;
-        const password = process.env.LIVE_KEY_SECRET;
-
-        const payoutDoc = await InstallPayoutModel.findOne({
-            referredTo: ObjectId(referredTo),
-        });
-
-        if (!payoutDoc) {
-            throw ({ status: 403, message: 'UnAuthorized' })
-        }
-        const {
-            amount
-        } = payoutDoc;
-
-        if (payoutDoc.payment_status !== "Not_Claimed") {
-            throw ({ status: 403, message: 'Alread_Claimed' });
-        }
-
-        async function makePostRequest() {
+        async function makePaymentRequest() {
             try {
                 const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
                 const reference_id = ObjectId()
                 const data = {
                     "account_number": process.env.LIVE_ACC_NUMBER,
-                    "amount": amount,
+                    "amount": totalAmount,
                     "currency": "INR",
                     "mode": "UPI",
                     "purpose": "cashback",
@@ -313,7 +330,7 @@ module.exports = class ReferCodeService {
                             "type": "customer",
                             "reference_id": reference_id,
                             "notes": {
-                                "notes_key_1": `You have Recieved Rs: ${amount} Reward`
+                                "notes_key_1": `You have Recieved Rs: ${totalAmount} Reward`
                             }
                         }
                     },
@@ -344,22 +361,57 @@ module.exports = class ReferCodeService {
                     vpa,
                 } = fund_account;
 
-                const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-                function statusFunc(status) {
-                    switch (status) {
-                        case "pending":
-                        case "queued":
-                        case "processing":
-                            return "processing";
-                        case 'processed':
-                            return "Paid";
-                        case 'reversed':
-                        case "cancelled":
-                        case "rejected":
-                            return "Failed"
-                    }
+                const paymentDetails = {
+                    id,
+                    fund_account_id,
+                    fund_account,
+                    status,
+                    failure_reason,
+                    contact_id,
+                    vpa,
+                    reference_id
                 }
+
+
+
+                return paymentDetails;
+
+            } catch (error) {
+
+                throw ({ status: 401, message: error });
+
+            }
+        }
+
+        async function updateInstallDoc(paymentDetails) {
+            const {
+                id,
+                fund_account_id,
+                status,
+                failure_reason,
+                contact_id,
+                vpa,
+                reference_id
+            } = paymentDetails
+
+            const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+            function statusFunc(status) {
+                switch (status) {
+                    case "pending":
+                    case "queued":
+                    case "processing":
+                        return "processing";
+                    case 'processed':
+                        return "Paid";
+                    case 'reversed':
+                    case "cancelled":
+                    case "rejected":
+                        return "Failed"
+                }
+            }
+            for (let i = 0; i < referUsersList.length; i++) {
+                let referredTo = referUsersList[i];
                 await InstallPayoutModel.findOneAndUpdate(
                     {
                         referredTo: ObjectId(referredTo),
@@ -376,7 +428,6 @@ module.exports = class ReferCodeService {
                         payment_initate_date: currentDate
                     }
                 });
-
                 if (status !== "Not_Claimed") {
                     await Referral.findOneAndUpdate({ "used_by.userId": ObjectId(referredTo) }, {
                         $set: {
@@ -384,32 +435,28 @@ module.exports = class ReferCodeService {
                         }
                     })
                 }
-                return true;
-
-            } catch (error) {
-
-                throw ({ status: 401, message: error });
-
             }
+
         }
 
-        const Response = await makePostRequest();
-        /* 
+        const Response = await makePaymentRequest();
+
+        await updateInstallDoc(Response)
+        /*
+        
+        Cloud Notification To firebase
      
-    Cloud Notification To firebase
-     
-    */
+        */
         const messageBody = {
             title: `⭐ Your Amount Will Be Credited Soon ⭐`,
             body: "Click here to access it",
             data: {
-                id: referredTo.toString(),
                 navigateTo: navigateToTabs.payout
             },
             type: "Alert"
         }
-
+        
         await cloudMessage(userId.toString(), messageBody);
-        return Response
+        return true
     }
 }
