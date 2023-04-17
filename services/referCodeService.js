@@ -62,6 +62,12 @@ module.exports = class ReferCodeService {
                 }
             );
 
+            await Profile.findByIdAndUpdate({ _id: ObjectId(user_ID) }, {
+                $set: {
+                    referrered_user: referCodeExist.user_Id
+                }
+            })
+
             const isPromo = referCodeExist.isPromoCode;
             const creditCount = await this.ReferralCredits(isPromo)
             const push = {
@@ -78,7 +84,7 @@ module.exports = class ReferCodeService {
                 }
             }
 
-            const Referred_Credit_Doc = await Credit.findOneAndUpdate({ user_id: user_ID }, {
+            await Credit.findOneAndUpdate({ user_id: user_ID }, {
 
                 $inc: { total_universal_credits: creditCount },
 
@@ -97,6 +103,12 @@ module.exports = class ReferCodeService {
 
             // if offer is valid then create a installpayout document
             if (referralOfferValid === true) {
+                const installPayoutExist = await InstallPayoutModel.findOne({ referredTo: user_ID });
+
+                if (installPayoutExist) {
+                    throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
+                }
+
                 await InstallPayoutModel.create({
                     user_id: referCodeExist.user_Id,
                     referredTo: user_ID,

@@ -8,6 +8,8 @@ const cloudMessage = require('../Firebase operations/cloudMessaging');
 const navigateToTabs = require('../utils/navigationTabs');
 const OfferModel = require('../models/offerSchema');
 const PayoutModel = require('../models/payoutSchema');
+const InstallPayoutModel = require('../models/InstallsPayoutSchema');
+const Referral = require('../models/referelSchema');
 const db = app.database(process.env.DATABASEURL);
 
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
@@ -434,7 +436,7 @@ const payoutStatusChangeCron =
         const returnedStatus = statusFunc(update.paymentStatus);
         if (returnedStatus === "Failed") {
 
-          const payoutDoc = await PayoutModel.findOne({payout_id: update.payout_id});
+          const payoutDoc = await PayoutModel.findOne({ payout_id: update.payout_id });
 
           await PayoutModel.updateOne({
             payout_id: update.payout_id,
@@ -448,15 +450,15 @@ const payoutStatusChangeCron =
               "fund_account_id": "",
               "razorpayPayoutStatus": "",
               "reference_id": "",
-              "payout_id":"",
-              "payment_initate_date":"",
+              "payout_id": "",
+              "payment_initate_date": "",
               "vpa": ""
             }
           });
-          if(payoutDoc){
-            await Generic.updateOne({_id:payoutDoc.ad_id},{
-              $set:{
-                isClaimed:false
+          if (payoutDoc) {
+            await Generic.updateOne({ _id: payoutDoc.ad_id }, {
+              $set: {
+                isClaimed: false
               }
             })
           }
@@ -478,6 +480,97 @@ const payoutStatusChangeCron =
   }
 // })
 
+async function installpayoutStatus() {
+  try {
+
+    const username = process.env.LIVE_KEY_ID;
+    const password = process.env.LIVE_KEY_SECRET;
+
+    const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+        'Accept': 'application/json',
+      }
+    };
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const yesterdayTimestamp = currentTimestamp - 86400;
+    const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}&count=100&from=${yesterdayTimestamp}&to=${currentTimestamp}`, config);
+
+    const Data = response?.data?.items;
+
+    const updates = Data.map(transaction => ({
+      payout_id: transaction.source.id,
+      paymentStatus: transaction.source.status
+    }));
+
+    const paymentArray = updates.filter(obj => obj.paymentStatus !== undefined);
+
+
+    function statusFunc(status) {
+      switch (status) {
+        case "pending":
+        case "queued":
+        case "processing":
+          return "processing";
+        case 'processed':
+          return "Paid";
+        case 'reversed':
+        case "cancelled":
+        case "rejected":
+          return "Failed"
+      }
+    }
+
+    paymentArray.forEach(async update => {
+      const returnedStatus = statusFunc(update.paymentStatus);
+      if (returnedStatus === "Failed") {
+
+        const payoutDoc = await InstallPayoutModel.findOne({ payout_id: update.payout_id });
+
+        await InstallPayoutModel.updateOne({
+          payout_id: update.payout_id,
+        }, {
+          $set: {
+            payment_status: 'Not_Claimed'
+          },
+          $unset: {
+            "contact_id": "",
+            "failure_reason": "",
+            "fund_account_id": "",
+            "razorpayPayoutStatus": "",
+            "reference_id": "",
+            "payout_id": "",
+            "payment_initate_date": "",
+            "vpa": ""
+          }
+        });
+        if (payoutDoc) {
+
+          await Referral.updateOne({ user_Id:  payoutDoc.user_id, "used_by.userId": payoutDoc.referredTo }, {
+            $set: {
+              "used_by.$.isClaimed": false
+            }
+          })
+        }
+      }
+      await InstallPayoutModel.updateOne({
+        payout_id: update.payout_id,
+        payment_status: "processing"
+      }, {
+        $set: {
+          razorpayPayoutStatus: update.paymentStatus ? update.paymentStatus : "processing",
+          payment_status: returnedStatus
+        }
+      });
+    })
+
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 
 
 
@@ -485,5 +578,6 @@ module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
   Schedule_Task_Monthly_credits,
   // banuser
-  payoutStatusChangeCron
+  // payoutStatusChangeCron
+  // installpayoutStatus
 }

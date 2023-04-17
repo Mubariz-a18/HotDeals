@@ -29,7 +29,7 @@ const referralCodeSchema = mongoose.Schema(
             "Rejected",
             "Approved"
           ],
-          default: "InReview"
+          default: "Approved"
         },
         reasonToReject: {
           type: String
