@@ -1,3 +1,5 @@
+
+
 const mongoose = require("mongoose");
 
 const referralCodeSchema = mongoose.Schema(
@@ -10,13 +12,33 @@ const referralCodeSchema = mongoose.Schema(
     },
     used_by: [
       {
-        userId: mongoose.Schema.Types.ObjectId,
-        used_Date:String,
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+        },
+        used_Date: {
+          type: String,
+        },
+        isClaimed: {
+          type: Boolean,
+          default: false
+        },
+        reviewStatus: {
+          type: String,
+          enum: [
+            "InReview",
+            "Rejected",
+            "Approved"
+          ],
+          default: "Approved"
+        },
+        reasonToReject: {
+          type: String
+        }
       }
     ],
-    isPromoCode:{
-      type:Boolean
-    }
+    isPromoCode: {
+      type: Boolean
+    },
   }
 );
 
