@@ -51,7 +51,8 @@ module.exports = class ReferCodeService {
             }
 
             const {
-                userNumber
+                userNumber,
+                name
             } = if_user_already_has_referred;
 
             const phoneNumber = userNumber.text;
@@ -64,7 +65,8 @@ module.exports = class ReferCodeService {
                         used_by: {
                             userId: user_ID,
                             used_Date: currentDate,
-                            phoneNumber:phoneNumber
+                            phoneNumber:phoneNumber,
+                            name:name
                         },
                     },
                 }
@@ -214,10 +216,10 @@ module.exports = class ReferCodeService {
                 '$project': {
                     "_id": 0,
                     'referredToUser': '$used_by.userId',
-                    // 'reviewStatus': '$used_by.reviewStatus',
                     'isClaimed': '$used_by.isClaimed',
                     'used_Date': '$used_by.used_Date',
                     'phoneNumber':'$used_by.phoneNumber',
+                    'name':'$used_by.name',
                     'paymentstatus': 1,
                     'paymentDate': 1,
                     'amount': 1
