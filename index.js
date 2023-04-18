@@ -21,6 +21,7 @@ var bodyParser = require("body-parser");
   const ReferCodeRouter = require("./routes/referral.routes");
   const TransactionRouter = require("./routes/transaction.routes");
   const SuggestionRouter = require('./routes/suggestion.routes');
+  const PlacesRouter = require('./routes/googleApi.routes')
   //Middlewares
   const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -54,6 +55,7 @@ var bodyParser = require("body-parser");
   app.use(ReferCodeRouter);
   app.use(TransactionRouter);
   app.use(SuggestionRouter);
+  app.use(PlacesRouter)
   app.get('/',(req,res)=>{
     res.send("server is up and running").status(200)
   })
