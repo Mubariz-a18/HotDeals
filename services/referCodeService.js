@@ -292,7 +292,8 @@ module.exports = class ReferCodeService {
                 continue
             }
 
-            const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId.toString() === referredTo && obj?.isClaimed === false);
+            const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId?.toString() === referredTo && obj?.isClaimed === false);
+
             if (!userId_exist_in_refer_doc) {
                 continue
             }
