@@ -259,10 +259,12 @@ module.exports = class ReferCodeService {
             upi_id
         } = bodyData;
 
+        const newReferList = [...new Set(referUsersList)];
+
         const username = process.env.LIVE_KEY_ID;
         const password = process.env.LIVE_KEY_SECRET;
 
-        if (!referUsersList || referUsersList.length === 0 || !upi_id) {
+        if (!newReferList || newReferList.length === 0 || !upi_id) {
 
             throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId List' });
         }
@@ -283,9 +285,9 @@ module.exports = class ReferCodeService {
             throw ({ status: 403, message: 'UnAuthorized' })
         }
         let totalAmount = 0
-        for (let i = 0; i < referUsersList.length; i++) {
+        for (let i = 0; i < newReferList.length; i++) {
 
-            let referredTo = referUsersList[i];
+            let referredTo = newReferList[i];
             const ReferredTo_userExist = await User.findById({ _id: ObjectId(referredTo), isDeletedOnce: false });
 
             if (!ReferredTo_userExist) {
@@ -306,9 +308,9 @@ module.exports = class ReferCodeService {
                 continue
             }
 
-            const {
+          const {
                 amount
-            } = payoutDoc;
+            } = payoutDoc  ;
 
             totalAmount = totalAmount + amount;
 
@@ -421,8 +423,8 @@ module.exports = class ReferCodeService {
                         return "Failed"
                 }
             }
-            for (let i = 0; i < referUsersList.length; i++) {
-                let referredTo = referUsersList[i];
+            for (let i = 0; i < newReferList.length; i++) {
+                let referredTo = newReferList[i];
                 await InstallPayoutModel.findOneAndUpdate(
                     {
                         referredTo: ObjectId(referredTo),
