@@ -38,4 +38,18 @@ module.exports = class ReferralCodeController {
       errorHandler(e, res)
     };
   }
+
+  static async apiGetRandomAmount(req, res, next) {
+    try {
+      const amount = await ReferCodeService.generateRandomAmountAndSave(req.user_ID, req.body.friend_ID);
+      if (amount) {
+        res.status(200).json({
+          message: "Successfully Claimed the Reward",
+          amount
+        });
+      }
+    } catch (e) {
+      errorHandler(e, res)
+    };
+  }
 };
