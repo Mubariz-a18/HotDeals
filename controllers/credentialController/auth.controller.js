@@ -127,7 +127,7 @@ module.exports = class AuthController {
       })
       return res.status(500).send({
         error: {
-          message: ` something went wrong try again : ${e.message} `
+          message: ` something went wrong try again : ${error.message} `
         }
       });
     }

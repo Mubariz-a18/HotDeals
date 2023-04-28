@@ -19,6 +19,7 @@ const Credit = require("../models/creditSchema");
 const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
+const AdDurationModel = require("../models/durationSchema");
 
 
 module.exports = class AdService {
@@ -32,7 +33,7 @@ module.exports = class AdService {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-    const DateAfter30Days = expiry_date_func(30);
+    const durationForExpiryDate = await AdDurationModel.findOne()
 
     // Generic AdDoc is created 
     let {
@@ -134,7 +135,7 @@ module.exports = class AdService {
         is_ad_posted,
         detection: batch,
         created_at: currentDate,
-        ad_expire_date: DateAfter30Days,
+        ad_expire_date: isPrime === true? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
         updated_at: currentDate,
       });
 
@@ -166,9 +167,9 @@ module.exports = class AdService {
         await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
           $set: {
             is_Highlighted: true,
-            Highlight_Days: 15,
+            Highlight_Days: durationForExpiryDate.highlightAdDuration,
             Highlighted_Date: currentDate,
-            Highlight_Expiry_Date: expiry_date_func(15),
+            Highlight_Expiry_Date: expiry_date_func(durationForExpiryDate.highlightAdDuration),
           }
         })
       }
@@ -1557,6 +1558,7 @@ module.exports = class AdService {
             'sub_category': 1,
             'ad_status': 1,
             'title': 1,
+            'SelectFields':1,
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
@@ -1697,6 +1699,7 @@ $skip and limit for pagination
             'category': 1,
             'sub_category': 1,
             'ad_status': 1,
+            'SelectFields':1,
             'title': 1,
             "created_at": 1,
             'price': 1,
@@ -1832,6 +1835,7 @@ $skip and limit for pagination
           "thumbnail_url": 1,
           'ad_posted_address': 1,
           'ad_status': 1,
+          'SelectFields':1,
           'ad_type': 1,
           'created_at': 1,
           'isPrime': 1,
@@ -1933,6 +1937,7 @@ $skip and limit for pagination
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
+    const durationForExpiryDate = await AdDurationModel.findOne()
 
     const {
 
@@ -1983,7 +1988,7 @@ $skip and limit for pagination
       throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" });
 
     }
-    const DateAfter30Days = expiry_date_func(30);
+
 
     const newDoc = await Generic.create({
 
@@ -2011,7 +2016,7 @@ $skip and limit for pagination
       is_ad_posted,
       created_at: currentDate,
       updated_at: currentDate,
-      ad_expire_date: DateAfter30Days,
+      ad_expire_date: isPrime === true? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
     });
     if (newDoc) {
       //save the ad id in users profile in myads

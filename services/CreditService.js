@@ -9,6 +9,7 @@ const Transaction = require("../models/transactionSchema");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const OfferModel = require("../models/offerSchema");
+const AdDurationModel = require("../models/durationSchema");
 
 const creditType = {
   Premium: "Premium",
@@ -52,7 +53,8 @@ module.exports = class CreditService {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
-    const Free_credit_Expiry = expiry_date_func(180);
+    const AdDuration = await AdDurationModel.findOne()
+    const Free_credit_Expiry = expiry_date_func(AdDuration.freeCreditDuration);
 
     // creating a document
 
@@ -572,6 +574,8 @@ module.exports = class CreditService {
         })
       });
 
+      let Days = await AdDurationModel.findOne()
+
       await Credit.updateOne({
 
         user_id: ObjectId(user_Id),
@@ -587,16 +591,16 @@ module.exports = class CreditService {
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
-            Boost_expiry_date: boost_duration === "Days7" ? expiry_date_func(7) : expiry_date_func(14)
+            Boost_expiry_date: boost_duration === "Days7" ? expiry_date_func(Days.boostAdDuration7Days) : expiry_date_func(Days.boostAdDuration14Days)
           }
         }
       })
 
-      let Days = 0
+
       if (boost_duration == "Days7") {
-        Days = 7
+        Days = Days.boostAdDuration7Days
       } else {
-        Days = 14
+        Days = Days.boostAdDuration14Days
       }
 
       await Generic.findOneAndUpdate({ _id: ad_id }, {
@@ -902,6 +906,7 @@ module.exports = class CreditService {
           }
         })
       });
+      let Days = await AdDurationModel.findOne()
 
       await Credit.updateOne({
 
@@ -918,7 +923,7 @@ module.exports = class CreditService {
             number_of_credit: creditValue_for_usage,
             category: category,
             credited_on: currentDate,
-            Highlight_expiry_date: expiry_date_func(HighLight_Duration),
+            Highlight_expiry_date: expiry_date_func(Days.highlightAdDuration),
           }
         }
       })
@@ -928,7 +933,7 @@ module.exports = class CreditService {
           is_Highlighted: true,
           Highlight_Days: HighLight_Duration,
           Highlighted_Date: currentDate,
-          Highlight_Expiry_Date: expiry_date_func(HighLight_Duration),
+          Highlight_Expiry_Date: expiry_date_func(Days.highlightAdDuration),
         }
       })
     }
