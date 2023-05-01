@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-
+const crypto = require('crypto');
 const { JWT_SECRET_KEY } = process.env;
 
 // Verification Of Token 
@@ -55,3 +55,22 @@ exports.verifyJwtTokenForAds = async (req, res, next) => {
   }
   return next();
 };
+
+exports.verifyWebHook = async (req, res, next) => {
+  try{
+    const signature = req.headers['x-razorpay-signature'];
+    const rawBody = JSON.stringify(req.body);
+    const webhookSecret = process.env.WEB_HOOK_SECRETKEY_RAZORPAYX;
+    const expectedSignature =crypto.createHmac('sha256', webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+  
+    if (signature !== expectedSignature) {
+      return res.status(400).send('Invalid signature');
+    }
+
+    return next();
+  }catch(e){
+    console.log(e)
+  }
+}

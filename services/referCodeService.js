@@ -306,20 +306,15 @@ module.exports = class ReferCodeService {
                 $set: {
                     showAmount: true
                 }
-            }).projection({
-                amount: 1
             })
 
         if (payoutDoc) {
-            return payoutDoc;
+            return payoutDoc.amount;
         } else {
             throw ({ status: 401, message: 'Bad Request' });
         }
 
     };
-
-
-
 
     static async claimReferralPayouts(userId, bodyData) {
 
@@ -354,13 +349,13 @@ module.exports = class ReferCodeService {
         }
 
         const FriendDoc = await User.findById({ _id: ObjectId(friend_ID), isDeletedOnce: false });
-
+        const FriendProfile = await Profile.findById({ _id: friend_ID });
         if (!FriendDoc) {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
         }
 
         const threeDaysAgo = daysAgo(3)
-        if (moment(FriendDoc.created_date).isAfter(threeDaysAgo)) {
+        if (moment(FriendProfile.created_date).isAfter(threeDaysAgo)) {
             throw ({ status: 400, message: 'Friend account is not old enough' });
         }
 
@@ -545,5 +540,36 @@ module.exports = class ReferCodeService {
 
         await cloudMessage(userId.toString(), messageBody);
         return true
+    };
+
+    static async updatePayoutDoc(payload) {
+
+        const { id, status } = payload;
+        function statusFunc(status) {
+            switch (status) {
+                case "pending":
+                case "queued":
+                case "processing":
+                    return "processing";
+                case 'processed':
+                    return "Paid";
+                case 'reversed':
+                case "cancelled":
+                case "rejected":
+                    return "Failed"
+            }
+        }
+
+        const updateDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id }, {
+            $set: {
+                payment_status: statusFunc(status),
+                razorpayPayoutStatus:status
+            }
+        });
+        if(updateDoc){
+            return true
+        }else{
+            return false
+        }
     }
 }
