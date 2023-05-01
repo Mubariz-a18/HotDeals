@@ -8,6 +8,6 @@ const { verifyJwtToken } = require("../utils/verifyToken.js");
 router.post("/api/v1/referralcode", verifyJwtToken, ReferralCodeController.apiReferralCode);
 router.get("/api/v1/getReferralList", verifyJwtToken, ReferralCodeController.apiGetReferralForPayouts);
 router.post("/api/v1/claimReferralpayout", verifyJwtToken, ReferralCodeController.apiClaimReferralPayout);
-router.post("/api/generateRandomAmount",verifyJwtToken,ReferralCodeController.apiGetRandomAmount);
+router.post("/api/v1/GetRandomAmount",verifyJwtToken,ReferralCodeController.apiGetRandomAmount);
 
 module.exports = router;
