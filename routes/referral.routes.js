@@ -9,5 +9,5 @@ router.post("/api/v1/referralcode", verifyJwtToken, ReferralCodeController.apiRe
 router.get("/api/v1/getReferralList", verifyJwtToken, ReferralCodeController.apiGetReferralForPayouts);
 router.post("/api/v1/claimReferralpayout", verifyJwtToken, ReferralCodeController.apiClaimReferralPayout);
 router.post("/api/v1/GetRandomAmount", verifyJwtToken, ReferralCodeController.apiGetRandomAmount);
-router.post('/webhook/updatePaymentstatus', verifyWebHook, ReferralCodeController.apiChangePaymentStatus);
+// router.post('/webhook/updatePaymentstatus', verifyWebHook, ReferralCodeController.apiChangePaymentStatus);
 module.exports = router;
