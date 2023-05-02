@@ -19,6 +19,7 @@ const Report = require("../models/reportSchema");
 const { app, storage } = require("../firebaseAppSetup");
 const { getAdsForPayout } = require("./AdService");
 const OfferModel = require("../models/offerSchema");
+const { getReferralForPayouts } = require("./referCodeService");
 
 
 module.exports = class ProfileService {
@@ -307,6 +308,8 @@ module.exports = class ProfileService {
 
     const referral_code = await Referral.findOne({
       user_Id: ObjectId(user_ID)
+    }, {
+      "referral_code": 1
     });
 
     // mixpanel track get my profile 
@@ -314,31 +317,35 @@ module.exports = class ProfileService {
       distinct_id: user_ID,
     });
 
-    if (Offer.offerValid) {
-      MyProfile[0].payoutFlag = true
-      return { MyProfile, referral_code }
+    let adsPayout = false;
+    let referralPayout = false;
 
+    if (Offer.offerValid) {
+      adsPayout = true;
     } else {
       const payoutAdList = await getAdsForPayout(user_ID);
-
       const AdsInRevieW = payoutAdList[0].InReview;
-
       const AdsInApproved = payoutAdList[0].Approved;
-
       const claimableAds = AdsInApproved.find(obj => obj.paymentstatus === "Not_Claimed");
-
       if (AdsInRevieW.length > 0 || claimableAds) {
-
-        MyProfile[0].payoutFlag = true
-      } else {
-
-        MyProfile[0].payoutFlag = false
+        adsPayout = true
       }
-
-      return { MyProfile, referral_code }
     }
 
+    if (Offer.referralOfferValid) {
+      referralPayout = true;
+    } else {
+      const payoutReferralList = await getReferralForPayouts(user_ID);
+      const claimablePayouts = payoutReferralList.find(obj => obj.paymentstatus === "Not_Claimed")
+      if (claimablePayouts) {
+        referralPayout = true
+      }
+    }
 
+    MyProfile[0].adsPayoutFlag = adsPayout;
+    MyProfile[0].referralPayoutFlag = referralPayout;
+
+    return { MyProfile, referral_code }
   };
 
   // Updating Profile
@@ -394,29 +401,38 @@ module.exports = class ProfileService {
       const referral_code = await Referral.findOne({
         user_Id: ObjectId(userId)
       }, {
+        "referral_code": 1
       });
-
       const Offer = await OfferModel.findOne({});
-
+      let adsPayout = false;
+      let referralPayout = false;
+  
       if (Offer.offerValid) {
-
-        return { updateUsr, referral_code, payoutFlag: true }
-
+        adsPayout = true;
       } else {
         const payoutAdList = await getAdsForPayout(userId);
-
         const AdsInRevieW = payoutAdList[0].InReview;
-
         const AdsInApproved = payoutAdList[0].Approved;
-
         const claimableAds = AdsInApproved.find(obj => obj.paymentstatus === "Not_Claimed");
-
         if (AdsInRevieW.length > 0 || claimableAds) {
-          return { updateUsr, referral_code, payoutFlag: true }
-        } else {
-          return { updateUsr, referral_code, payoutFlag: false }
+          adsPayout = true
         }
       }
+  
+      if (Offer.referralOfferValid) {
+        referralPayout = true;
+      } else {
+        const payoutReferralList = await getReferralForPayouts(userId);
+        const claimablePayouts = payoutReferralList.find(obj => obj.paymentstatus === "Not_Claimed")
+        if (claimablePayouts) {
+          referralPayout = true
+        }
+      }
+
+      let adsPayoutFlag = adsPayout;
+      let referralPayoutFlag = referralPayout;
+  
+      return { updateUsr, referral_code, adsPayoutFlag, referralPayoutFlag }
     }
   };
 

@@ -30,7 +30,10 @@ module.exports = class ReferCodeService {
     static async checkReferCodeService(bodyData, user_ID) {
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
+        const isUserExist = await User.findById({ _id: user_ID, isDeletedOnce: false })
+        if (!isUserExist) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
 
         if (!referCodeExist) {
@@ -120,9 +123,9 @@ module.exports = class ReferCodeService {
                     throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
                 }
 
-                const min = minReferralReward;
-                const max = maxReferralReward;
-                const amount = Math.floor(Math.random() * (max - min + 1)) + min;
+                const min = minReferralReward / 100;
+                const max = maxReferralReward / 100;
+                const amount = (Math.floor(Math.random() * (max - min + 1)) + min) * 100;
 
                 await InstallPayoutModel.create({
                     user_id: referCodeExist.user_Id,
@@ -155,6 +158,7 @@ module.exports = class ReferCodeService {
         }
     };
 
+    // Get Referral for payout docs
     static async getReferralForPayouts(user_ID) {
         const UserExist = await Profile.findOne({ _id: user_ID });
         if (!UserExist) {
@@ -263,6 +267,7 @@ module.exports = class ReferCodeService {
         return Referral_list
     };
 
+    // Get Amount
     static async generateRandomAmountAndSave(user_ID, friend_ID) {
 
         const Offer = await OfferModel.findOne();
@@ -277,25 +282,27 @@ module.exports = class ReferCodeService {
         }
 
         const FriendDoc = await Profile.findById({ _id: friend_ID });
-
-        const threeDaysAgo = daysAgo(3)
-        if (moment(FriendDoc.created_date).isAfter(threeDaysAgo)) {
-            throw ({ status: 400, message: 'Friend account is not old enough' });
-        }
-
         if (!FriendDoc) {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
+        }
+
+        const UserRefferal = await Referral.findOne({
+            user_Id: ObjectId(user_ID),
+            "used_by.userId": ObjectId(friend_ID),
+            "used_by.isClaimed": false
+        });
+
+        const threeDaysAgo = daysAgo(3);
+
+        const isReferralOld = UserRefferal?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
+        console.log(isReferralOld)
+        if (moment(FriendDoc.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
+            throw ({ status: 400, message: 'Referral is not Old Enough' });
         }
 
         if (FriendDoc?.referrered_user?.toString() !== user_ID) {
             throw ({ status: 401, message: 'Bad Request' });
         }
-
-        // const UserRefferal = await Referral.findOne({
-        //     user_Id: ObjectId(user_ID),
-        //     "used_by.userId": ObjectId(friend_ID),
-        //     "used_by.isClaimed": false
-        // });
 
         const payoutDoc = await InstallPayoutModel.findOneAndUpdate({
             user_id: ObjectId(user_ID),
@@ -316,6 +323,7 @@ module.exports = class ReferCodeService {
 
     };
 
+    // claim Reward
     static async claimReferralPayouts(userId, bodyData) {
 
         const Offer = await OfferModel.findOne();
@@ -354,22 +362,21 @@ module.exports = class ReferCodeService {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
         }
 
-        const threeDaysAgo = daysAgo(3)
-        if (moment(FriendProfile.created_date).isAfter(threeDaysAgo)) {
-            throw ({ status: 400, message: 'Friend account is not old enough' });
-        }
-
-        const referCodeExist = await Referral.findOne({ user_Id: userId });
+        const referCodeExist = await Referral.findOne({
+            user_Id: userId,
+            "used_by.userId": ObjectId(friend_ID),
+            "used_by.isClaimed": false
+        });
 
         if (!referCodeExist) {
             throw ({ status: 401, message: 'Bad request' })
         }
 
+        const threeDaysAgo = daysAgo(3);
 
-        const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId?.toString() === friend_ID && obj?.isClaimed === false);
-
-        if (!userId_exist_in_refer_doc) {
-            throw ({ status: 401, message: 'Bad request' })
+        const isReferralOld = referCodeExist?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
+        if (moment(FriendProfile.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
+            throw ({ status: 400, message: 'Referral is not Old Enough' });
         }
 
         const payoutDoc = await InstallPayoutModel.findOne({
@@ -542,6 +549,7 @@ module.exports = class ReferCodeService {
         return true
     };
 
+    // update Payout doc
     static async updatePayoutDoc(payload) {
 
         const { id, status } = payload;
@@ -563,13 +571,13 @@ module.exports = class ReferCodeService {
         const updateDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id }, {
             $set: {
                 payment_status: statusFunc(status),
-                razorpayPayoutStatus:status
+                razorpayPayoutStatus: status
             }
         });
-        if(updateDoc){
+        if (updateDoc) {
             return true
-        }else{
+        } else {
             return false
         }
-    }
+    };
 }
