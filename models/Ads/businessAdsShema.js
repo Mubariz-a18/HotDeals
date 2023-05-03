@@ -9,11 +9,11 @@ const businessAdsSchema = mongoose.Schema({
     },
     title: {
         type: String,
-        required:true
+        required: true
     },
     description: {
         type: String,
-        required:true
+        required: true
     },
     impressions: {
         type: Number,
@@ -32,20 +32,25 @@ const businessAdsSchema = mongoose.Schema({
             "banner",
             "interstitial"
         ],
-        required:true
+        required: true
     },
     location: {
-        type: { type: String },
-        coordinates: [],
-        required:true
+        type: {
+            type: String,
+            required: true
+        },
+        coordinates: {
+            type: Array,
+            required: true
+        },
     },
     address: {
         type: String,
-        required:true
+        required: true
     },
     imageUrl: {
         type: String,
-        required:true
+        required: true
     },
     adStatus: {
         type: String,
@@ -83,13 +88,13 @@ const businessAdsSchema = mongoose.Schema({
     activatedAt: {
         type: String
     },
-    deletedAt:{
+    deletedAt: {
         type: String
     },
-    archivedAt:{
+    archivedAt: {
         type: String
     },
-    suspendedAt:{
+    suspendedAt: {
         type: String
     },
     createdAt: {
