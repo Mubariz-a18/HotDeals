@@ -603,7 +603,7 @@ module.exports = class ReferCodeService {
         }
         if (payoutStat === "PayoutFailed") {
             if (statusVal === "Failed") {
-                await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] }}, {
+                const payoutDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] }}, {
                     $set: {
                         payment_status: 'Not_Claimed',
                     },
@@ -618,6 +618,12 @@ module.exports = class ReferCodeService {
                         "vpa": ""
                     }
                 });
+
+                const updateReferralDoc = await Referral.updateOne({user_Id: payoutDoc.user_id, 'used_by.userId':payoutDoc.referredTo},{
+                    $set:{
+                        "used_by.$.isClaimed": false
+                    }
+                })
             }
         }
 
