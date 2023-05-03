@@ -16,6 +16,20 @@ module.exports = class BusinessAdsController {
         }
     };
 
+    static async updateBusinessProfile(req, res, next) {
+        try {
+            const { user_ID, body } = req;
+            const BusinessProfile = await BusinessAdService.updateBusinesProfileService(user_ID, body);
+            if (BusinessProfile) {
+                res.status(200).send({
+                    message: "Successfully Updated Business Profile"
+                })
+            }
+        } catch (e) {
+            errorHandler(e, res)
+        }
+    };
+
     static async createBusinessAd(req, res, next) {
         try {
             const { user_ID, body } = req;
@@ -43,7 +57,6 @@ module.exports = class BusinessAdsController {
             errorHandler(e, res)
         }
     };
-
 
     static async updateBusinessAd(req, res, next) {
         try {
