@@ -55,7 +55,7 @@ module.exports = class ReferralCodeController {
 
   static async apiChangePaymentStatus(req, res, next){
     try{
-      const payload = req.body.payload;
+      const payload = req.body;
       const updateDoc = await ReferCodeService.updatePayoutDoc(JSON.stringify(payload))
       if(updateDoc){
         res.status(200).json({success:"OK"})

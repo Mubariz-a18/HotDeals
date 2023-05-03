@@ -295,7 +295,6 @@ module.exports = class ReferCodeService {
         const threeDaysAgo = daysAgo(3);
 
         const isReferralOld = UserRefferal?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
-        console.log(isReferralOld)
         if (moment(FriendDoc.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
             throw ({ status: 400, message: 'Referral is not Old Enough' });
         }
@@ -550,9 +549,11 @@ module.exports = class ReferCodeService {
     };
 
     // update Payout doc
-    static async updatePayoutDoc(payload) {
-
-        const { id, status } = payload;
+    static async updatePayoutDoc(rawbody) {
+        const body = JSON.parse(rawbody)
+        const event = body?.event
+        const status = body?.payload?.payout?.entity?.status;
+        const id = body?.payload?.payout?.entity.id
         function statusFunc(status) {
             switch (status) {
                 case "pending":
@@ -567,17 +568,59 @@ module.exports = class ReferCodeService {
                     return "Failed"
             }
         }
-
-        const updateDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id }, {
-            $set: {
-                payment_status: statusFunc(status),
-                razorpayPayoutStatus: status
+        const payoutTransactionStatus = (event) => {
+            switch (event) {
+                case 'payout.rejected':
+                case "payout.reversed":
+                case "payout.failed":
+                    return "PayoutFailed";
+                case "payout.processed":
+                    return "payoutSuccess";
+                case "payout.pending":
+                case "payout.queued":
+                case "payout.initiated":
+                case "payout.updated":
+                    return "PayoutProcessing"
             }
-        });
-        if (updateDoc) {
-            return true
-        } else {
-            return false
         }
+        const statusVal = statusFunc(status);
+        const payoutStat = payoutTransactionStatus(event)
+        if (payoutStat === "payoutSuccess") {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid", "Failed"] }}, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
+        }
+        if (payoutStat === "PayoutProcessing") {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid"] }}, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
+        }
+        if (payoutStat === "PayoutFailed") {
+            if (statusVal === "Failed") {
+                await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] }}, {
+                    $set: {
+                        payment_status: 'Not_Claimed',
+                    },
+                    $unset: {
+                        "contact_id": "",
+                        "failure_reason": "",
+                        "fund_account_id": "",
+                        "razorpayPayoutStatus": "",
+                        "reference_id": "",
+                        "payout_id": "",
+                        "payment_initate_date": "",
+                        "vpa": ""
+                    }
+                });
+            }
+        }
+
+        return true
     };
 }
