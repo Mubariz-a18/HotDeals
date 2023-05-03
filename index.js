@@ -21,7 +21,8 @@ var bodyParser = require("body-parser");
   const ReferCodeRouter = require("./routes/referral.routes");
   const TransactionRouter = require("./routes/transaction.routes");
   const SuggestionRouter = require('./routes/suggestion.routes');
-  const PlacesRouter = require('./routes/googleApi.routes')
+  const PlacesRouter = require('./routes/googleApi.routes');
+  const BuinessAdRouter = require('./routes/businessAd.routes')
   //Middlewares
   const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -29,7 +30,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
-  connectDB();
+
 
   app.set('trust proxy', 1)
 
@@ -55,18 +56,26 @@ var bodyParser = require("body-parser");
   app.use(ReferCodeRouter);
   app.use(TransactionRouter);
   app.use(SuggestionRouter);
-  app.use(PlacesRouter)
+  app.use(PlacesRouter);
+  app.use(BuinessAdRouter);
+
   app.get('/',(req,res)=>{
     res.send("server is up and running").status(200)
-  })
-  app.get('/health',(req,res)=>{
-    res.send("server is healthy").status(200)
-  })
-  //server listener
-  app.listen(PORT, () => {
-    console.log(`server is running On port : ${PORT}`)
   });
 
+  app.get('/health',(req,res)=>{
+    res.send("server is healthy").status(200)
+  });
+
+  async function startServer() {
+    //connect db
+    await connectDB()
+    //server listener
+    app.listen(PORT, () => {
+      console.log(`server is running On port : ${PORT}`)
+    });
+  }
+  startServer()
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
