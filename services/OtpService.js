@@ -8,18 +8,34 @@ const moment = require('moment');
 
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
-  static async generateOTPAndCreateDocument(phoneNumber) {
-    
-    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+  static async generateOTPAndCreateDocument(phoneNumber, ip) {
+
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
+    const otpDocWithPhoneNumber = await OtpModel.countDocuments({
+      phoneNumber
+    });
+    const otpWithIpAddress = await OtpModel.countDocuments({
+      ipAddress: ip.toString()
+    });
+
+    if (otpWithIpAddress >= 10) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
+    if (otpDocWithPhoneNumber >= 3) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
     const otpDoc = await OtpModel.findOne({
-      phoneNumber,
+      phoneNumber: phoneNumber,
+      isVerified: false,
+      expireAt: {
+        $gte: currentDate,
+      }
     });
 
     if (otpDoc) {
+      const twoMinutesAfter = moment().utcOffset("+05:30").subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
 
-      const twoMinutesAfter = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-
-      if (moment(otpDoc.sentAt, 'YYYY-MM-DD HH:mm:ss').isSameOrBefore(twoMinutesAfter)) {
+      if (moment(otpDoc.sentAt, 'YYYY-MM-DD HH:mm:ss.SSS').isSameOrBefore(twoMinutesAfter)) {
         const newDoc = await OtpModel.findOneAndUpdate({
           phoneNumber,
         }, {
@@ -31,26 +47,17 @@ module.exports = class OtpService {
       } else {
         throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
       }
-      // throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
-      // const otp = generateOTP(6);
-
-      // const newOtp = await OtpModel.create({
-      //   otp,
-      //   phoneNumber,
-      //   expire_at: Date.now()
-      // });
-
-      // return newOtp;
-
     } else {
 
       const otp = generateOTP(6);
-
+      const fiveMinutesLater = moment().utcOffset("+05:30").add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
+        ipAddress: ip,
         sentAt: currentDate,
-        expire_at: Date.now()
+        createdAt: Date.now(),
+        expireAt: fiveMinutesLater
       });
 
       return newOtp;
@@ -59,15 +66,24 @@ module.exports = class OtpService {
 
   //Verify Otp and Delete Document 
   static async verifyOTPAndDeleteDocument(phoneNumber, otp) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
       otp,
+      isVerified: false,
+      expireAt: {
+        $gte: currentDate,
+      }
     });
     // Deleting Doc
     if (otpDoc) {
-      await OtpModel.deleteOne({
+      await OtpModel.updateOne({
         phoneNumber,
         otp,
+      }, {
+        $set: {
+          isVerified: true
+        }
       });
       return "approved";
     }
