@@ -1,7 +1,7 @@
 const Referral = require("../models/referelSchema");
 const moment = require('moment');
 const Credit = require("../models/creditSchema");
-const { expiry_date_func } = require("../utils/moment");
+const { expiry_date_func, daysAgo } = require("../utils/moment");
 const navigateToTabs = require("../utils/navigationTabs");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
 const Profile = require("../models/Profile/Profile");
@@ -30,7 +30,10 @@ module.exports = class ReferCodeService {
     static async checkReferCodeService(bodyData, user_ID) {
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
+        const isUserExist = await User.findById({ _id: user_ID, isDeletedOnce: false })
+        if (!isUserExist) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const referCodeExist = await Referral.findOne({ referral_code: bodyData.referral_code });
 
         if (!referCodeExist) {
@@ -108,7 +111,8 @@ module.exports = class ReferCodeService {
 
             const {
                 referralOfferValid,
-                referralReward,
+                minReferralReward,
+                maxReferralReward,
             } = Offer;
 
             // if offer is valid then create a installpayout document
@@ -119,10 +123,14 @@ module.exports = class ReferCodeService {
                     throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
                 }
 
+                const min = minReferralReward / 100;
+                const max = maxReferralReward / 100;
+                const amount = (Math.floor(Math.random() * (max - min + 1)) + min) * 100;
+
                 await InstallPayoutModel.create({
                     user_id: referCodeExist.user_Id,
                     referredTo: user_ID,
-                    // amount: referralReward,
+                    amount: amount,
                     payment_status: "Not_Claimed"
                 });
             } else { }
@@ -150,6 +158,7 @@ module.exports = class ReferCodeService {
         }
     };
 
+    // Get Referral for payout docs
     static async getReferralForPayouts(user_ID) {
         const UserExist = await Profile.findOne({ _id: user_ID });
         if (!UserExist) {
@@ -210,7 +219,8 @@ module.exports = class ReferCodeService {
                 '$addFields': {
                     'paymentstatus': '$payoutDetails.payment_status',
                     'paymentDate': '$payoutDetails.payment_initate_date',
-                    'amount': '$payoutDetails.amount'
+                    'amount': '$payoutDetails.amount',
+                    'showAmount': "$payoutDetails.showAmount"
                 }
             }, {
                 '$project': {
@@ -222,7 +232,13 @@ module.exports = class ReferCodeService {
                     'name': '$used_by.name',
                     'paymentstatus': 1,
                     'paymentDate': 1,
-                    'amount': 1
+                    'amount': {
+                        $cond: {
+                            if: { $eq: ["$showAmount", true] },
+                            then: "$amount",
+                            else: "$$REMOVE"
+                        }
+                    }
                 }
             }
             // ],
@@ -251,6 +267,7 @@ module.exports = class ReferCodeService {
         return Referral_list
     };
 
+    // Get Amount
     static async generateRandomAmountAndSave(user_ID, friend_ID) {
 
         const Offer = await OfferModel.findOne();
@@ -269,271 +286,347 @@ module.exports = class ReferCodeService {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
         }
 
-        if (FriendDoc?.referrered_user?.toString() !== user_ID) {
-            throw ({ status: 401, message: 'Bad Request' });
-        }
-
         const UserRefferal = await Referral.findOne({
             user_Id: ObjectId(user_ID),
             "used_by.userId": ObjectId(friend_ID),
             "used_by.isClaimed": false
         });
 
-        const payoutDoc = await InstallPayoutModel.findOne({
+        const threeDaysAgo = daysAgo(3);
+
+        const isReferralOld = UserRefferal?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
+        if (moment(FriendDoc.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
+            throw ({ status: 400, message: 'Referral is not Old Enough' });
+        }
+
+        if (FriendDoc?.referrered_user?.toString() !== user_ID) {
+            throw ({ status: 401, message: 'Bad Request' });
+        }
+
+        const payoutDoc = await InstallPayoutModel.findOneAndUpdate({
             user_id: ObjectId(user_ID),
             referredTo: ObjectId(friend_ID),
             payment_status: "Not_Claimed"
-        });
+        },
+            {
+                $set: {
+                    showAmount: true
+                }
+            })
 
-        if (UserRefferal && payoutDoc) {
-            if (payoutDoc.amount) {
-                throw ({ status: 401, message: 'Already Generated the amount' });
-            }
-            // Api here
-            const min = 3;
-            const max = 10;
-            const amount = Math.floor(Math.random() * (max - min + 1)) + min;
-            const UpdatedPayoutDoc = await InstallPayoutModel.findOneAndUpdate({
-                user_id: ObjectId(user_ID),
-                referredTo: ObjectId(friend_ID),
-            }, {
-                amount: amount
-            }).projection({
-                amount: 1
-            });
-
-            return UpdatedPayoutDoc;
+        if (payoutDoc) {
+            return payoutDoc.amount;
         } else {
             throw ({ status: 401, message: 'Bad Request' });
         }
 
-    }
+    };
 
-    //     const threeDaysAgo = moment().subtract(3, 'days').format('YYYY-MM-DD HH:mm:ss');
-    // if (moment(friend.createdAt).isAfter(threeDaysAgo)) {
-    //   return res.status(400).send('Friend account is not old enough');
-    // }
+    // claim Reward
+    static async claimReferralPayouts(userId, bodyData) {
 
+        const Offer = await OfferModel.findOne();
 
-    // static async claimReferralPayouts(userId, bodyData) {
-    //     let {
-    //         referUsersList,
-    //         phoneNumber,
-    //         email,
-    //         upi_id
-    //     } = bodyData;
+        if (Offer.referralOfferValid === false) {
+            throw ({ status: 401, message: 'OFFER NOT VALID' });
+        }
 
-    //      referUsersList = [...new Set(referUsersList)];
+        let {
+            friend_ID,
+            phoneNumber,
+            email,
+            upi_id
+        } = bodyData;
 
-    //     const username = process.env.LIVE_KEY_ID;
-    //     const password = process.env.LIVE_KEY_SECRET;
+        if (!friend_ID || !upi_id) {
 
-    //     if (!newReferList || newReferList.length === 0 || !upi_id) {
+            throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId ' });
+        }
 
-    //         throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId List' });
-    //     }
-
-    //     const userDetails = await Profile.findById({ _id: userId }, {
-    //         name: 1,
-    //         "userNumber.text": 1,
-    //         "email.text": 1
-    //     });
-
-    //     if (!userDetails) {
-    //         throw ({ status: 403, message: 'UnAuthorized' })
-    //     }
-
-    //     const referCodeExist = await Referral.findOne({ user_Id: userId });
-
-    //     if (!referCodeExist) {
-    //         throw ({ status: 403, message: 'UnAuthorized' })
-    //     }
-    //     let totalAmount = 0
-    //     for (let i = 0; i < newReferList.length; i++) {
-
-    //         let referredTo = newReferList[i];
-    //         const ReferredTo_userExist = await User.findById({ _id: ObjectId(referredTo), isDeletedOnce: false });
-
-    //         if (!ReferredTo_userExist) {
-    //             continue
-    //         }
-
-    //         const userId_exist_in_refer_doc = referCodeExist.used_by.find(obj => obj?.userId?.toString() === referredTo && obj?.isClaimed === false);
-
-    //         if (!userId_exist_in_refer_doc) {
-    //             continue
-    //         }
-
-    //         const payoutDoc = await InstallPayoutModel.findOne({
-    //             referredTo: ObjectId(referredTo),
-    //         });
-
-    //         if (!payoutDoc) {
-    //             continue
-    //         }
-
-    //       const {
-    //             amount
-    //         } = payoutDoc  ;
-
-    //         totalAmount = totalAmount + amount;
-
-    //         if (payoutDoc.payment_status !== "Not_Claimed") {
-    //             continue
-    //         }
-    //     };
-    //     if (totalAmount === 0) {
-    //         throw ({ status: 401, message: 'Bad Request' })
-    //     }
-    //     async function makePaymentRequest() {
-    //         try {
-    //             const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
-    //             const reference_id = ObjectId()
-    //             const data = {
-    //                 "account_number": process.env.LIVE_ACC_NUMBER,
-    //                 "amount": totalAmount,
-    //                 "currency": "INR",
-    //                 "mode": "UPI",
-    //                 "purpose": "cashback",
-    //                 "fund_account": {
-    //                     "account_type": "vpa",
-    //                     "vpa": {
-    //                         "address": upi_id
-    //                     },
-    //                     "contact": {
-    //                         "name": userDetails.name,
-    //                         "contact": phoneNumber ? phoneNumber : userDetails.userNumber.text,
-    //                         "email": email ? email : userDetails.email.text,
-    //                         "type": "customer",
-    //                         "reference_id": reference_id,
-    //                         "notes": {
-    //                             "notes_key_1": `You have Recieved Rs: ${totalAmount} Reward`
-    //                         }
-    //                     }
-    //                 },
-    //                 "queue_if_low_balance": true,
-    //                 "reference_id": reference_id,
-    //                 "narration": "Truelist Cash Reward"
-    //             };
-
-    //             const config = {
-    //                 headers: {
-    //                     'Content-Type': 'application/json',
-    //                     'Authorization': authHeader,
-    //                     'Accept': 'application/json',
-    //                 }
-    //             };
-
-    //             const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
-
-    //             const {
-    //                 id,
-    //                 fund_account_id,
-    //                 fund_account,
-    //                 status,
-    //                 failure_reason
-    //             } = response.data;
-    //             const {
-    //                 contact_id,
-    //                 vpa,
-    //             } = fund_account;
-
-    //             const paymentDetails = {
-    //                 id,
-    //                 fund_account_id,
-    //                 fund_account,
-    //                 status,
-    //                 failure_reason,
-    //                 contact_id,
-    //                 vpa,
-    //                 reference_id
-    //             }
+        const userDetails = await Profile.findById({ _id: userId }, {
+            name: 1,
+            "userNumber.text": 1,
+            "email.text": 1
+        });
 
 
 
-    //             return paymentDetails;
+        if (!userDetails) {
+            throw ({ status: 401, message: 'UNAUTHORIZED' });
+        }
 
-    //         } catch (error) {
+        const FriendDoc = await User.findById({ _id: ObjectId(friend_ID), isDeletedOnce: false });
+        const FriendProfile = await Profile.findById({ _id: friend_ID });
+        if (!FriendDoc) {
+            throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
+        }
 
-    //             throw ({ status: 401, message: error });
+        const referCodeExist = await Referral.findOne({
+            user_Id: userId,
+            "used_by.userId": ObjectId(friend_ID),
+            "used_by.isClaimed": false
+        });
 
-    //         }
-    //     }
+        if (!referCodeExist) {
+            throw ({ status: 401, message: 'Bad request' })
+        }
 
-    //     async function updateInstallDoc(paymentDetails) {
-    //         const {
-    //             id,
-    //             fund_account_id,
-    //             status,
-    //             failure_reason,
-    //             contact_id,
-    //             vpa,
-    //             reference_id
-    //         } = paymentDetails
+        const threeDaysAgo = daysAgo(3);
 
-    //         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+        const isReferralOld = referCodeExist?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
+        if (moment(FriendProfile.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
+            throw ({ status: 400, message: 'Referral is not Old Enough' });
+        }
 
-    //         function statusFunc(status) {
-    //             switch (status) {
-    //                 case "pending":
-    //                 case "queued":
-    //                 case "processing":
-    //                     return "processing";
-    //                 case 'processed':
-    //                     return "Paid";
-    //                 case 'reversed':
-    //                 case "cancelled":
-    //                 case "rejected":
-    //                     return "Failed"
-    //             }
-    //         }
-    //         for (let i = 0; i < newReferList.length; i++) {
-    //             let referredTo = newReferList[i];
-    //             await InstallPayoutModel.findOneAndUpdate(
-    //                 {
-    //                     referredTo: ObjectId(referredTo),
-    //                 }, {
-    //                 $set: {
-    //                     payout_id: id,
-    //                     fund_account_id: fund_account_id,
-    //                     contact_id: contact_id,
-    //                     reference_id: reference_id,
-    //                     vpa: vpa,
-    //                     failure_reason: failure_reason,
-    //                     payment_status: statusFunc(status),
-    //                     razorpayPayoutStatus: status,
-    //                     payment_initate_date: currentDate
-    //                 }
-    //             });
-    //             if (status !== "Not_Claimed") {
-    //                 await Referral.findOneAndUpdate({ "used_by.userId": ObjectId(referredTo) }, {
-    //                     $set: {
-    //                         "used_by.$.isClaimed": true
-    //                     }
-    //                 })
-    //             }
-    //         }
+        const payoutDoc = await InstallPayoutModel.findOne({
+            user_id: ObjectId(userId),
+            referredTo: ObjectId(friend_ID),
+            payment_status: "Not_Claimed",
+            showAmount: true
+        });
 
-    //     }
+        if (!payoutDoc) {
+            throw ({ status: 401, message: 'Payout Doc not found' })
+        }
 
-    //     const Response = await makePaymentRequest();
+        const {
+            amount
+        } = payoutDoc;
 
-    //     await updateInstallDoc(Response)
-    //     /*
 
-    //     Cloud Notification To firebase
+        async function makePaymentRequest(amount) {
+            try {
+                const username = process.env.LIVE_KEY_ID;
+                const password = process.env.LIVE_KEY_SECRET;
+                const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+                const reference_id = ObjectId()
+                const data = {
+                    "account_number": process.env.LIVE_ACC_NUMBER,
+                    "amount": amount,
+                    "currency": "INR",
+                    "mode": "UPI",
+                    "purpose": "cashback",
+                    "fund_account": {
+                        "account_type": "vpa",
+                        "vpa": {
+                            "address": upi_id
+                        },
+                        "contact": {
+                            "name": userDetails.name,
+                            "contact": phoneNumber ? phoneNumber : userDetails.userNumber.text,
+                            "email": email ? email : userDetails.email.text,
+                            "type": "customer",
+                            "reference_id": reference_id,
+                            "notes": {
+                                "notes_key_1": `You have Recieved Rs: ${amount} Reward`
+                            }
+                        }
+                    },
+                    "queue_if_low_balance": true,
+                    "reference_id": reference_id,
+                    "narration": "Truelist Cash Reward"
+                };
 
-    //     */
-    //     const messageBody = {
-    //         title: `⭐ Your Amount Will Be Credited Soon ⭐`,
-    //         body: "Click here to access it",
-    //         data: {
-    //             navigateTo: navigateToTabs.payout
-    //         },
-    //         type: "Alert"
-    //     }
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authHeader,
+                        'Accept': 'application/json',
+                    }
+                };
 
-    //     await cloudMessage(userId.toString(), messageBody);
-    //     return true
-    // }
+                const response = await axios.post('https://api.razorpay.com/v1/payouts', data, config);
+
+                const {
+                    id,
+                    fund_account_id,
+                    fund_account,
+                    status,
+                    failure_reason
+                } = response.data;
+                const {
+                    contact_id,
+                    vpa,
+                } = fund_account;
+
+                const paymentDetails = {
+                    id,
+                    fund_account_id,
+                    fund_account,
+                    status,
+                    failure_reason,
+                    contact_id,
+                    vpa,
+                    reference_id
+                }
+
+
+
+                return paymentDetails;
+
+            } catch (error) {
+
+                throw ({ status: 401, message: error });
+
+            }
+        }
+
+        async function updateInstallDoc(paymentDetails) {
+            const {
+                id,
+                fund_account_id,
+                status,
+                failure_reason,
+                contact_id,
+                vpa,
+                reference_id
+            } = paymentDetails
+
+            const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+            function statusFunc(status) {
+                switch (status) {
+                    case "pending":
+                    case "queued":
+                    case "processing":
+                        return "processing";
+                    case 'processed':
+                        return "Paid";
+                    case 'reversed':
+                    case "cancelled":
+                    case "rejected":
+                        return "Failed"
+                }
+            }
+
+            await InstallPayoutModel.findOneAndUpdate(
+                {
+                    user_id: ObjectId(userId),
+                    referredTo: ObjectId(friend_ID),
+                }, {
+                $set: {
+                    payout_id: id,
+                    fund_account_id: fund_account_id,
+                    contact_id: contact_id,
+                    reference_id: reference_id,
+                    vpa: vpa,
+                    failure_reason: failure_reason,
+                    payment_status: statusFunc(status),
+                    razorpayPayoutStatus: status,
+                    payment_initate_date: currentDate
+                }
+            });
+            if (status !== "Not_Claimed") {
+                await Referral.findOneAndUpdate({ user_Id: userId, "used_by.userId": ObjectId(friend_ID) }, {
+                    $set: {
+                        "used_by.$.isClaimed": true
+                    }
+                })
+            }
+
+
+        }
+
+        const Response = await makePaymentRequest(amount);
+
+        await updateInstallDoc(Response)
+        /*
+
+        Cloud Notification To firebase
+
+        */
+        const messageBody = {
+            title: `⭐ Your Amount Will Be Credited Soon ⭐`,
+            body: "Click here to access it",
+            data: {
+                navigateTo: navigateToTabs.payout
+            },
+            type: "Alert"
+        }
+
+        await cloudMessage(userId.toString(), messageBody);
+        return true
+    };
+
+    // update Payout doc
+    static async updatePayoutDoc(rawbody) {
+        const body = JSON.parse(rawbody)
+        const event = body?.event
+        const status = body?.payload?.payout?.entity?.status;
+        const id = body?.payload?.payout?.entity.id
+        function statusFunc(status) {
+            switch (status) {
+                case "pending":
+                case "queued":
+                case "processing":
+                    return "processing";
+                case 'processed':
+                    return "Paid";
+                case 'reversed':
+                case "cancelled":
+                case "rejected":
+                    return "Failed"
+            }
+        }
+        const payoutTransactionStatus = (event) => {
+            switch (event) {
+                case 'payout.rejected':
+                case "payout.reversed":
+                case "payout.failed":
+                    return "PayoutFailed";
+                case "payout.processed":
+                    return "payoutSuccess";
+                case "payout.pending":
+                case "payout.queued":
+                case "payout.initiated":
+                case "payout.updated":
+                    return "PayoutProcessing"
+            }
+        }
+        const statusVal = statusFunc(status);
+        const payoutStat = payoutTransactionStatus(event)
+        if (payoutStat === "payoutSuccess") {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid", "Failed"] }}, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
+        }
+        if (payoutStat === "PayoutProcessing") {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid"] }}, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
+        }
+        if (payoutStat === "PayoutFailed") {
+            if (statusVal === "Failed") {
+                const payoutDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] }}, {
+                    $set: {
+                        payment_status: 'Not_Claimed',
+                    },
+                    $unset: {
+                        "contact_id": "",
+                        "failure_reason": "",
+                        "fund_account_id": "",
+                        "razorpayPayoutStatus": "",
+                        "reference_id": "",
+                        "payout_id": "",
+                        "payment_initate_date": "",
+                        "vpa": ""
+                    }
+                });
+
+                const updateReferralDoc = await Referral.updateOne({user_Id: payoutDoc.user_id, 'used_by.userId':payoutDoc.referredTo},{
+                    $set:{
+                        "used_by.$.isClaimed": false
+                    }
+                })
+            }
+        }
+
+        return true
+    };
 }

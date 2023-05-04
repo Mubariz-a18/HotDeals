@@ -34,12 +34,18 @@ const expiry_date_func = (days)=>{
   return expiryDate_String
 }
 
+const daysAgo = (days)=>{
+  const pastDate = moment().subtract(days, 'days').format('YYYY-MM-DD HH:mm:ss');
+  return pastDate
+}
+
 module.exports = {
   age_func,
   nearestExpiryDateFunction,
   durationInDays,
   my_age,
-  expiry_date_func
+  expiry_date_func,
+  daysAgo
 };
 
 

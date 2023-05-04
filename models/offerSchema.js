@@ -25,7 +25,10 @@ const OfferSchema = new mongoose.Schema({
   referralOfferValid: {
     type: Boolean
   },
-  referralReward: {
+  minReferralReward: {
+    type: Number
+  },
+  maxReferralReward: {
     type: Number
   }
 });

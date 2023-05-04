@@ -11,48 +11,54 @@ const errorHandler = require("../../middlewares/errorHandler");
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
-    const { phoneNumber, smsToken } = req.body;
-    // Creating OTP for phoneNumber
-    if (!phoneNumber.text) {
-      throw ({ status: 401, message: 'PHONE_NUMBER_REQUIRED' });
-    } else {
-      if (phoneNumber.text == "0123456789") {
-        res.status(200).json({
-          message: "OTP Sent Successfully",
-        });
-      }
-      else {
-        let msgResponse = {};
-        const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text);
-        if (otpDoc) {
-          msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber, smsToken);
-          if (msgResponse.status === "success") {
-            // mixpanel track - email sent 
-            await track('Otp Sent to Phone number successfully !! ', {
-              phoneNumber: phoneNumber,
-              message: `otp sent to  ${phoneNumber}`
-            })
-            res.status(200).json({
-              message: "OTP Sent Successfully",
-            });
+    try {
+      const ip = req.ip;
+      const { phoneNumber, smsToken } = req.body;
+      // Creating OTP for phoneNumber
+      if (!phoneNumber.text) {
+        throw ({ status: 401, message: 'PHONE_NUMBER_REQUIRED' });
+      } else {
+        if (phoneNumber.text == "0123456789") {
+          res.status(200).json({
+            message: "OTP Sent Successfully",
+          });
+        }
+        else {
+          let msgResponse = {};
+          const otpDoc = await OtpService.generateOTPAndCreateDocument(phoneNumber.text, ip);
+          if (otpDoc) {
+            msgResponse = await SMSController.sendSMS(otpDoc.otp, phoneNumber, smsToken);
+            if (msgResponse.status === "success") {
+              // mixpanel track - email sent 
+              await track('Otp Sent to Phone number successfully !! ', {
+                phoneNumber: phoneNumber,
+                message: `otp sent to  ${phoneNumber}`
+              })
+              res.status(200).json({
+                message: "OTP Sent Successfully",
+              });
+            } else {
+              res.status(400).json({
+                message: msgResponse.data,
+              });
+            }
           } else {
-            res.status(400).json({
-              message: msgResponse.data,
-            });
+            throw ({ status: 500, message: 'SOMETHING_WENT_WRONG' });
           }
-        } else {
-          throw ({ status: 500, message: 'SOMETHING_WENT_WRONG' });
         }
       }
+    } catch (e) {
+      errorHandler(e, res)
     }
   }
 
   static async apiVerifyOTP(req, res, next) {
     const { phoneNumber, otp } = req.body;
+
     try {
       if (phoneNumber.text == "0123456789") {
 
-        const dummyExist = await Profile.findById({_id:ObjectId("63ca69c1bed13a9dd55702fc")});
+        const dummyExist = await Profile.findById({ _id: ObjectId("63ca69c1bed13a9dd55702fc") });
 
         const token = await createJwtToken(ObjectId("63ca69c1bed13a9dd55702fc"), phoneNumber.text);
 
@@ -60,9 +66,9 @@ module.exports = class AuthController {
           message: "success",
           token,
           existingUser: true,
-          usersProfileExist: dummyExist ? "USERS_PROFILE_EXISTS": "USERS_PROFILE_DOESNOT_EXISTS"
+          usersProfileExist: dummyExist ? "USERS_PROFILE_EXISTS" : "USERS_PROFILE_DOESNOT_EXISTS"
         });
-        
+
       } else {
         //Verfying again otp collection to check the otp is valid
         const verficationStatus = await OtpService.verifyOTPAndDeleteDocument(phoneNumber.text, otp);

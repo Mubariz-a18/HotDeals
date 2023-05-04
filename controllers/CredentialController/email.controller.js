@@ -30,4 +30,30 @@ module.exports = class EmailController {
 
         return sentEmail
     }
+    static async sendAttackReport(ip) {
+        const msg = {
+            from: process.env.SMPT_MAIL,
+            to: process.env.COMPANY_MAIL,
+            subject: "Attack Report",
+            html: `<b>Dear Admin,\n</b>
+                    <p>    
+                    This <b> IP Address : ${ip}</b> is trying to call the razorpay payout webhoo with unknown payload<br><br>
+                    `,
+        }
+        try {
+            const emailSetup = nodemailer.createTransport({
+                service: process.env.SMPT_SERVICE,
+                auth: {
+                    user: process.env.SMPT_MAIL,
+                    pass: process.env.SMPT_PASSWORD,
+                },
+                port: process.env.SMPT_PORT,
+                host: process.env.SMPT_HOST
+            })
+            await emailSetup.sendMail(msg)
+        } catch (e) {
+            console.log(e)
+        }
+
+    }
 }

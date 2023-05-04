@@ -1,4 +1,5 @@
 const errorHandler = require("../../middlewares/errorHandler.js");
+const InstallPayoutModel = require("../../models/InstallsPayoutSchema.js");
 const ReferCodeService = require("../../services/referCodeService.js");
 
 
@@ -43,13 +44,26 @@ module.exports = class ReferralCodeController {
     try {
       const amount = await ReferCodeService.generateRandomAmountAndSave(req.user_ID, req.body.friend_ID);
       if (amount) {
-        res.status(200).json({
-          message: "Successfully Claimed the Reward",
-          amount
-        });
+        res.status(200).json(
+          { amount }
+        );
       }
     } catch (e) {
       errorHandler(e, res)
     };
+  }
+
+  static async apiChangePaymentStatus(req, res, next){
+    try{
+      const payload = req.body;
+      const updateDoc = await ReferCodeService.updatePayoutDoc(JSON.stringify(payload))
+      if(updateDoc){
+        res.status(200).json({success:"OK"})
+      }else{
+        res.status(201)
+      }
+    }catch(e){
+      errorHandler(e, res)
+    }
   }
 };

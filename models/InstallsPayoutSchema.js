@@ -23,6 +23,10 @@ const InstallsPayoutSchema = mongoose.Schema(
         amount: {
             type: Number
         },
+        showAmount: {
+            type: Boolean,
+            default:false
+        },
         vpa: {
             type: Object
         },

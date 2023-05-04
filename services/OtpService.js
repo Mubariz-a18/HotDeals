@@ -4,36 +4,60 @@ const EmailController = require('../controllers/CredentialController/email.contr
 const Profile = require('../models/Profile/Profile');
 const { INVALID_OTP_ERR } = require('../validators/error');
 const { track } = require('./mixpanel-service');
-
+const moment = require('moment');
 
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
-  static async generateOTPAndCreateDocument(phoneNumber) {
+  static async generateOTPAndCreateDocument(phoneNumber, ip) {
 
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
+    const otpDocWithPhoneNumber = await OtpModel.countDocuments({
+      phoneNumber
+    });
+    const otpWithIpAddress = await OtpModel.countDocuments({
+      ipAddress: ip.toString()
+    });
+
+    if (otpWithIpAddress >= 10) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
+    if (otpDocWithPhoneNumber >= 3) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
     const otpDoc = await OtpModel.findOne({
-      phoneNumber,
+      phoneNumber: phoneNumber,
+      isVerified: false,
+      expireAt: {
+        $gte: currentDate,
+      }
     });
 
     if (otpDoc) {
+      const twoMinutesAfter = moment().utcOffset("+05:30").subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
 
-      const otp = generateOTP(6);
-
-      const newOtp = await OtpModel.create({
-        otp,
-        phoneNumber,
-        expire_at: Date.now()
-      });
-
-      return newOtp;
-
+      if (moment(otpDoc.sentAt, 'YYYY-MM-DD HH:mm:ss.SSS').isSameOrBefore(twoMinutesAfter)) {
+        const newDoc = await OtpModel.findOneAndUpdate({
+          phoneNumber,
+        }, {
+          $set: {
+            sentAt: currentDate
+          }
+        });
+        return newDoc;
+      } else {
+        throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+      }
     } else {
 
       const otp = generateOTP(6);
-
+      const fiveMinutesLater = moment().utcOffset("+05:30").add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
-        expire_at: Date.now()
+        ipAddress: ip,
+        sentAt: currentDate,
+        createdAt: Date.now(),
+        expireAt: fiveMinutesLater
       });
 
       return newOtp;
@@ -42,16 +66,25 @@ module.exports = class OtpService {
 
   //Verify Otp and Delete Document 
   static async verifyOTPAndDeleteDocument(phoneNumber, otp) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
       otp,
+      isVerified: false,
+      expireAt: {
+        $gte: currentDate,
+      }
     });
     // Deleting Doc
     if (otpDoc) {
-      // await OtpModel.deleteOne({
-      //   phoneNumber,
-      //   otp,
-      // });
+      await OtpModel.updateOne({
+        phoneNumber,
+        otp,
+      }, {
+        $set: {
+          isVerified: true
+        }
+      });
       return "approved";
     }
     else {
@@ -130,7 +163,7 @@ module.exports = class OtpService {
           email: email,
           message: `sent email to user : ${userId}  `
         })
-        await OtpModel.deleteOne({_id:verify_otp._id});
+        await OtpModel.deleteOne({ _id: verify_otp._id });
         return "EMAIL_VERIFICATION_SUCCESSFULL"
       } else {
         throw ({ status: 401, message: INVALID_OTP_ERR });

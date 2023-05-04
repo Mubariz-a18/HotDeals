@@ -1,6 +1,7 @@
 const credit_value = {
     "Vehicles": 5,
     "Properties": 5,
+    "Community Place":5,
     "Electronics": 3,
     "Home Appliances": 3,
     "Kitchen Appliances": 3,

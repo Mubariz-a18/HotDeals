@@ -25,8 +25,8 @@ const AdDurationModel = require("../models/durationSchema");
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    const adExist = await Generic.findById({ _id: bodyData.ad_id });
 
+    const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
@@ -135,7 +135,7 @@ module.exports = class AdService {
         is_ad_posted,
         detection: batch,
         created_at: currentDate,
-        ad_expire_date: isPrime === true? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
+        ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
         updated_at: currentDate,
       });
 
@@ -405,63 +405,69 @@ module.exports = class AdService {
 
     const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
 
-    async function translateStringToMultipleLanguages(tranObj, languages) {
-      const translations = await Promise.all(languages.map((language) => {
-        return translate(tranObj, { to: language });
-      }));
+    try {
+      async function translateStringToMultipleLanguages(tranObj, languages) {
+        const translations = await Promise.all(languages.map((language) => {
+          return translate(tranObj, { to: language });
+        }));
 
-      return Object.fromEntries(languages.map((language, index) => {
-        return [language, translations[index]];
-      }));
+        return Object.fromEntries(languages.map((language, index) => {
+          return [language, translations[index]];
+        }));
+      }
+
+      const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
+        .then((translations) => {
+          return new Error("could nt do")
+        })
+      await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
+        $set: {
+          textLanguages: translatedObj
+        }
+      });
+    } catch (e) {
+      console.log(e)
     }
 
-    const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
-      .then((translations) => {
-        return translations
-      })
-      .catch((error) => {
-        console.error(error);
-      });
 
 
 
-    await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
-      $set: {
-        textLanguages: translatedObj
-      }
-    });
 
   };
 
   static async languageTranslation(textObj) {
+    try {
+      const { title, description, special_mention } = textObj;
 
-    const { title, description, special_mention } = textObj;
+      if (!title || !description || !special_mention) {
+        throw ({ status: 400, message: 'Bad Request' });
+      }
 
-    if (!title || !description || !special_mention) {
-      throw ({ status: 400, message: 'Bad Request' });
+      const tranObj = {
+        title,
+        description,
+        special_mention
+      };
+
+      const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
+
+      async function translateStringToMultipleLanguages(tranObj, languages) {
+        const translations = await Promise.all(languages.map((language) => {
+          return translate(tranObj, { to: language });
+        }));
+
+        return Object.fromEntries(languages.map((language, index) => {
+          return [language, translations[index]];
+        }));
+      }
+
+      const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
+
+      return translatedObj;
+    } catch (e) {
+      console.log(e)
     }
 
-    const tranObj = {
-      title,
-      description,
-      special_mention
-    };
-
-    const languages = ["hi", "ta", "te", "ur", "kn", "ml", "mr", "bn", "gu"]
-
-    async function translateStringToMultipleLanguages(tranObj, languages) {
-      const translations = await Promise.all(languages.map((language) => {
-        return translate(tranObj, { to: language });
-      }));
-
-      return Object.fromEntries(languages.map((language, index) => {
-        return [language, translations[index]];
-      }));
-    }
-
-    const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
-
-    return translatedObj
   };
 
   //Update Ad
@@ -611,6 +617,8 @@ module.exports = class AdService {
 
     const { primaryDetails } = bodyData;
 
+    const durationForExpiryDate = await AdDurationModel.findOne();
+
     for (let i = 0; i < primaryDetails.length; i++) {
 
       const ad_id = primaryDetails[i]["ad_id"];
@@ -627,8 +635,6 @@ module.exports = class AdService {
     }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-    const DateAfter30Days = expiry_date_func(30);
 
     const DefaultThumbnail = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"
     let {
@@ -735,7 +741,7 @@ module.exports = class AdService {
         textLanguages: translatedObj ? translatedObj : {},
         is_negotiable,
         created_at: currentDate,
-        ad_expire_date: DateAfter30Days,
+        ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
         updated_at: currentDate,
       });
 
@@ -743,9 +749,9 @@ module.exports = class AdService {
         await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
           $set: {
             is_Highlighted: true,
-            Highlight_Days: 15,
+            Highlight_Days: durationForExpiryDate.highlightAdDuration,
             Highlighted_Date: currentDate,
-            Highlight_Expiry_Date: expiry_date_func(15),
+            Highlight_Expiry_Date: expiry_date_func(durationForExpiryDate.highlightAdDuration),
           }
         })
       }
@@ -1558,7 +1564,7 @@ module.exports = class AdService {
             'sub_category': 1,
             'ad_status': 1,
             'title': 1,
-            'SelectFields':1,
+            'SelectFields': 1,
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
@@ -1699,7 +1705,7 @@ $skip and limit for pagination
             'category': 1,
             'sub_category': 1,
             'ad_status': 1,
-            'SelectFields':1,
+            'SelectFields': 1,
             'title': 1,
             "created_at": 1,
             'price': 1,
@@ -1835,7 +1841,7 @@ $skip and limit for pagination
           "thumbnail_url": 1,
           'ad_posted_address': 1,
           'ad_status': 1,
-          'SelectFields':1,
+          'SelectFields': 1,
           'ad_type': 1,
           'created_at': 1,
           'isPrime': 1,
@@ -2016,7 +2022,7 @@ $skip and limit for pagination
       is_ad_posted,
       created_at: currentDate,
       updated_at: currentDate,
-      ad_expire_date: isPrime === true? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
+      ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
     });
     if (newDoc) {
       //save the ad id in users profile in myads
@@ -2050,7 +2056,7 @@ $skip and limit for pagination
       */
       const messageBody = {
 
-        title: `Ad: ${title} is successfully reposted!`,
+        title: `Ad: "${title}" is successfully reposted!`,
         body: "Click here to access it",
         data: { _id: new_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
@@ -2580,6 +2586,7 @@ Cloud Notification To firebase
       throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
+  
   // delete Draft Ads
   static async deleteDraft(user_Id, ad_id) {
 

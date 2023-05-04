@@ -41,7 +41,7 @@ const profileSchema = mongoose.Schema({
   user_type: {
     text: {
       type: String,
-      enum: ["Agent", "Owner"],
+      enum: ["Agent", "Owner", "Business"],
       default: "Owner",
     }
   },
