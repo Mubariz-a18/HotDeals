@@ -9,12 +9,13 @@ const moment = require('moment');
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
   static async generateOTPAndCreateDocument(phoneNumber, ip) {
+    const ipPrefix = ip.split(":")[0];
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
     const otpDocWithPhoneNumber = await OtpModel.countDocuments({
       phoneNumber
     });
     const otpWithIpAddress = await OtpModel.countDocuments({
-      ipAddress: ip.toString()
+      ipAddress: ipPrefix
     });
 
     if (otpWithIpAddress >= 10) {
@@ -53,7 +54,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
-        ipAddress: ip,
+        ipAddress: ipPrefix,
         sentAt: currentDate,
         createdAt: Date.now(),
         expireAt: fiveMinutesLater

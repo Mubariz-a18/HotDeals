@@ -6,6 +6,12 @@ const otpSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
+    validate: {
+      validator: function (v) {
+        return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid mobile phone number!`
+    }
   },
   email: {
     type: String,
@@ -15,8 +21,8 @@ const otpSchema = new mongoose.Schema({
     type: String
   },
   isVerified: {
-    type:Boolean,
-    default:false
+    type: Boolean,
+    default: false
   },
   ipAddress: {
     type: String
