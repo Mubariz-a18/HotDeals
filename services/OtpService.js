@@ -9,7 +9,6 @@ const moment = require('moment');
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
   static async generateOTPAndCreateDocument(phoneNumber, ip) {
-
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
     const otpDocWithPhoneNumber = await OtpModel.countDocuments({
       phoneNumber
