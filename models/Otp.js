@@ -18,9 +18,12 @@ const otpSchema = new mongoose.Schema({
   // countryCode: {
   //   type: String,
   // },
+  sentAt: {
+    type: String
+  },
   expire_at: {
     type: Date,
-    expires: 200
+    expires: 320
   }
 });
 

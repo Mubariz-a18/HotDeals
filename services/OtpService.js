@@ -4,27 +4,43 @@ const EmailController = require('../controllers/CredentialController/email.contr
 const Profile = require('../models/Profile/Profile');
 const { INVALID_OTP_ERR } = require('../validators/error');
 const { track } = require('./mixpanel-service');
-
+const moment = require('moment');
 
 module.exports = class OtpService {
   //Generating OTP and Creating a Document  
   static async generateOTPAndCreateDocument(phoneNumber) {
-
+    
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const otpDoc = await OtpModel.findOne({
       phoneNumber,
     });
 
     if (otpDoc) {
 
-      const otp = generateOTP(6);
+      const twoMinutesAfter = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
-      const newOtp = await OtpModel.create({
-        otp,
-        phoneNumber,
-        expire_at: Date.now()
-      });
+      if (moment(otpDoc.sentAt, 'YYYY-MM-DD HH:mm:ss').isSameOrBefore(twoMinutesAfter)) {
+        const newDoc = await OtpModel.findOneAndUpdate({
+          phoneNumber,
+        }, {
+          $set: {
+            sentAt: currentDate
+          }
+        });
+        return newDoc;
+      } else {
+        throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+      }
+      // throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+      // const otp = generateOTP(6);
 
-      return newOtp;
+      // const newOtp = await OtpModel.create({
+      //   otp,
+      //   phoneNumber,
+      //   expire_at: Date.now()
+      // });
+
+      // return newOtp;
 
     } else {
 
@@ -33,6 +49,7 @@ module.exports = class OtpService {
       const newOtp = await OtpModel.create({
         otp,
         phoneNumber,
+        sentAt: currentDate,
         expire_at: Date.now()
       });
 
@@ -48,10 +65,10 @@ module.exports = class OtpService {
     });
     // Deleting Doc
     if (otpDoc) {
-      // await OtpModel.deleteOne({
-      //   phoneNumber,
-      //   otp,
-      // });
+      await OtpModel.deleteOne({
+        phoneNumber,
+        otp,
+      });
       return "approved";
     }
     else {
@@ -130,7 +147,7 @@ module.exports = class OtpService {
           email: email,
           message: `sent email to user : ${userId}  `
         })
-        await OtpModel.deleteOne({_id:verify_otp._id});
+        await OtpModel.deleteOne({ _id: verify_otp._id });
         return "EMAIL_VERIFICATION_SUCCESSFULL"
       } else {
         throw ({ status: 401, message: INVALID_OTP_ERR });

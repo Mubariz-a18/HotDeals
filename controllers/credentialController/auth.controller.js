@@ -11,6 +11,8 @@ const errorHandler = require("../../middlewares/errorHandler");
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
   static async apiGetOTP(req, res, next) {
+    try{
+
     const { phoneNumber, smsToken } = req.body;
     // Creating OTP for phoneNumber
     if (!phoneNumber.text) {
@@ -44,6 +46,8 @@ module.exports = class AuthController {
           throw ({ status: 500, message: 'SOMETHING_WENT_WRONG' });
         }
       }
+    }}catch(e){
+      errorHandler(e,res)
     }
   }
 
