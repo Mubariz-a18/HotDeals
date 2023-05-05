@@ -105,6 +105,8 @@ module.exports = class CreditService {
 
     creditsArray.forEach(async credit => {
 
+      //TODO: validate the transaction id with our Transactions collection
+
       const push = {
 
         universal_credit_bundles: {

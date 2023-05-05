@@ -96,6 +96,7 @@ module.exports = class OtpService {
     };
   };
 
+  //TODO: Use same process as mobile authentication
   //Generating OTP for email and Creating a Document  
   static async generateEmail_OTPAndCreateDocument(email, userId) {
     //check if user is existing or not
@@ -135,6 +136,7 @@ module.exports = class OtpService {
     }
   };
 
+  //TODO: Use same process as mobile authentication
   //Verify Otp and Delete Document 
   static async verify_Email_By_otp_And_Delete_Document(otp, email, userId) {
     //check if user exist 

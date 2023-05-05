@@ -21,6 +21,7 @@ module.exports = class HelpService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
     else {
+      //TODO: handle invalid data from body
       // create help doc
       const helpdoc = await Help.create({
         user_id: userId,

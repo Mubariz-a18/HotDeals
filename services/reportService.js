@@ -29,6 +29,8 @@ module.exports = class ReportService {
 
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
+        //TODO: handle invalid data from body(Reason should be from predefined reasons,check description length,attachemnt length)
+    
         const { ad_id, reason, description , attachment } = bodyData;
 
         const points = Reason_points(reason)

@@ -39,6 +39,8 @@ module.exports = class ProfileService {
 
       if (!userProfile) {
 
+        //TODO: handle invalid data from body
+
         let contactNumber = profileDoc.userNumber;
 
         // Creating Profile
@@ -360,6 +362,7 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
+      //TODO: handle invalid data from body
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {

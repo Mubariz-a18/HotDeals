@@ -4,6 +4,8 @@ const moment = require('moment');
 module.exports = class SuggestionService {
     // create suggestions by user
     static async createSuggestion(bodyData, user_id) {
+        //TODO: handle invalid data from body
+
         const {
             suggestion
         } = bodyData;

@@ -123,6 +123,7 @@ module.exports = class ReferCodeService {
                     throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
                 }
 
+                //TODO: change the logic for this probability to get 8,9,10 should be very low
                 const min = minReferralReward / 100;
                 const max = maxReferralReward / 100;
                 const amount = (Math.floor(Math.random() * (max - min + 1)) + min) * 100;
@@ -337,6 +338,8 @@ module.exports = class ReferCodeService {
             email,
             upi_id
         } = bodyData;
+
+        //TODO: handle valid phone and email, also UPI if possible
 
         if (!friend_ID || !upi_id) {
 

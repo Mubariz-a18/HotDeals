@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const moment = require('moment');
 const Transaction = require("../models/transactionSchema");
 
+//TODO: we need to use encryption for these things
 module.exports = class TransactionService {
 
     static async getOrderService(bodyData, user_ID) {
