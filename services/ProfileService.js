@@ -38,14 +38,9 @@ module.exports = class ProfileService {
       const userProfile = await Profile.findById({ _id: userID })
 
       if (!userProfile) {
-
-        //TODO: handle invalid data from body
-
         let contactNumber = profileDoc.userNumber;
-
         // Creating Profile
         const profileDoc1 = await Profile.create({
-
           _id: userID,
           name: bodyData.name,
           userNumber: {
@@ -67,7 +62,6 @@ module.exports = class ProfileService {
           cover_photo_url: bodyData.cover_photo_url,
           created_date: currentDate,
           updated_date: currentDate
-
         });
 
         // Create a new referralCode doc
@@ -362,7 +356,6 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
-      //TODO: handle invalid data from body
       const updateUsr = await Profile.findByIdAndUpdate(userId,
         {
           $set: {

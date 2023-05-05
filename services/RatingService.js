@@ -13,7 +13,6 @@ module.exports = class RatingService {
     const user = await User.findOne({
       _id: userId,
     });
-    //TODO: handle invalid data from body
     if (!bodyData.RatingInfo || !bodyData.RatingInfo.rating) {
       throw ({ status: 401, message: 'PLEASE_GIVE_THE_RATING' });
     }
@@ -159,7 +158,6 @@ module.exports = class RatingService {
 
   };
 
-  //! I dont understand this
   // Get Rating for a user
   static async getRating(bodyData, userId) {
     //if exist find Rating doc for the user in bodyData 

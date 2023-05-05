@@ -2243,6 +2243,21 @@ $skip and limit for pagination
 
       throw ({ status: 401, message: 'Please Enter UPI And Ad Id' });
     }
+
+    const upiRegex = /^[\w.-]+@[\w.-]+$/;
+    const phoneRegex = /^\d{10}$/;
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+
+    if (!upiRegex.test(upi_id)) {
+        throw ({ status: 401, message: 'Please Enter Proper UPI ID' });
+    }
+    if(phoneNumber && !phoneRegex.test(phoneNumber) ){
+        throw ({ status: 401, message: 'Enter Valid Mobile Number' });
+    }
+    if(email && !emailRegex.test(email) ){
+        throw ({ status: 401, message: 'Enter Valid Email Address' });
+    }
+    
     const userDetails = await Profile.findById({ _id: userId }, {
       name: 1,
       "userNumber.text": 1,
