@@ -10,6 +10,7 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
+const catSubCat = require('../utils/categorySubcategory')
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -20,6 +21,7 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
+const { validateBody } = require("../validators/Ads.Validator");
 
 
 module.exports = class AdService {
@@ -327,13 +329,13 @@ module.exports = class AdService {
       type: "Info"
     }
 
-    if (adDoc.thumbnail_url.length === 0) {
-      await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
-        $push: {
-          thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
-        }
-      })
-    }
+    // if (adDoc.thumbnail_url.length === 0) {
+    //   await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+    //     $push: {
+    //       thumbnail_url: 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'
+    //     }
+    //   })
+    // }
 
     await cloudMessage(userId.toString(), messageBody);
 
@@ -614,7 +616,11 @@ module.exports = class AdService {
   };
 
   static async postAd(bodyData, userId) {
-
+    const isbodyvalid = validateBody(bodyData);
+    console.log(isbodyvalid)
+    if (!isbodyvalid) {
+      throw ({ status: 401, message: "Please Fill the Required Details properly" });
+    }
     const { primaryDetails } = bodyData;
 
     const durationForExpiryDate = await AdDurationModel.findOne();
@@ -654,18 +660,9 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-
-
-    if (image_url.length == 0) {
-      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
-    }
-
     const thumbnail_url = await imgCom(image_url[0]);
 
-
     await imageWaterMark(image_url);
-
-
 
     const { health, batch } = await detectSafeSearch(image_url);
 
@@ -2249,15 +2246,15 @@ $skip and limit for pagination
     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
 
     if (!upiRegex.test(upi_id)) {
-        throw ({ status: 401, message: 'Please Enter Proper UPI ID' });
+      throw ({ status: 401, message: 'Please Enter Proper UPI ID' });
     }
-    if(phoneNumber && !phoneRegex.test(phoneNumber) ){
-        throw ({ status: 401, message: 'Enter Valid Mobile Number' });
+    if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+      throw ({ status: 401, message: 'Enter Valid Mobile Number' });
     }
-    if(email && !emailRegex.test(email) ){
-        throw ({ status: 401, message: 'Enter Valid Email Address' });
+    if (email && !emailRegex.test(email)) {
+      throw ({ status: 401, message: 'Enter Valid Email Address' });
     }
-    
+
     const userDetails = await Profile.findById({ _id: userId }, {
       name: 1,
       "userNumber.text": 1,
@@ -2601,7 +2598,7 @@ Cloud Notification To firebase
       throw ({ status: 404, message: 'ADS_NOT_EXISTS' });
     }
   };
-  
+
   // delete Draft Ads
   static async deleteDraft(user_Id, ad_id) {
 
