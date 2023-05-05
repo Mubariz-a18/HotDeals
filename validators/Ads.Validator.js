@@ -140,9 +140,40 @@ function validateBody(body) {
   return true;
 };
 
+function validateUpdateAd(body){
+  const {
+    parent_id,
+    description,
+    SelectFields,
+    special_mention,
+    price,
+    image_url,
+    video_url,
+    is_negotiable,
+  } = body;
+
+  if (typeof parent_id !== 'string' || parent_id.length !== 24) return false;
+
+  if (typeof description !== 'string' || !description || description.length > 500) return false;
+
+  if (typeof price !== 'number' || !price || price.length > 12) return false;
+
+  if (typeof image_url !== 'object' || !image_url || !(image_url.length > 0 && image_url.length <= 10)) return false;
+
+  if (video_url && (typeof video_url !== 'object' || video_url.length > 2)) return false;
+
+
+  if (special_mention && (typeof special_mention !== "object" || special_mention.length > 5)) return false;
+
+  if (typeof is_negotiable !== 'boolean') return false;
+
+  return true;
+}
+
 
 module.exports = {
   commonFieldSchema,
-  validateBody
+  validateBody,
+  validateUpdateAd
 };
 

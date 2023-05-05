@@ -21,7 +21,7 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { validateBody } = require("../validators/Ads.Validator");
+const { validateBody, validateUpdateAd } = require("../validators/Ads.Validator");
 
 
 module.exports = class AdService {
@@ -477,6 +477,11 @@ module.exports = class AdService {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
+    const isUpdateBodyValid = validateUpdateAd(bodyData);
+    if(!isUpdateBodyValid){
+      throw ({ status: 401, message: "Please Fill the Required Details properly" });
+    }
+    
     const {
       parent_id,
       description,
@@ -488,7 +493,7 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id });
+    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id , ad_status:"Selling"});
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -539,7 +544,7 @@ module.exports = class AdService {
     const isTextSafe = await safetext(" ", description, special_mention_string);
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
-      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
+      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id ,ad_status:"Selling"}, {
         $set: {
           description,
           SelectFields,
