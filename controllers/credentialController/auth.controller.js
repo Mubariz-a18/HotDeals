@@ -143,8 +143,9 @@ module.exports = class AuthController {
   static async apiSentOtpByEmail(req, res, next) {
     try {
       const { email } = req.body;
-      const userId = req.user_ID
-      const EmailOtpDoc = await OtpService.generateEmail_OTPAndCreateDocument(email, userId)
+      const userId = req.user_ID;
+      const ip = req.ip;
+      const EmailOtpDoc = await OtpService.generateEmail_OTPAndCreateDocument(email, userId, ip)
       res.status(200).send({
         message: EmailOtpDoc
       })
