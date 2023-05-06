@@ -10,6 +10,8 @@ const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
+const { fa } = require("translate-google/languages");
+const validateTransaction = require("../validators/transactionValidator");
 
 const creditType = {
   Premium: "Premium",
@@ -96,12 +98,29 @@ module.exports = class CreditService {
     await cloudMessage(user_id.toString(), messageBody);
   };
 
+  
+
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
     const creditsArray = bodyData;
+
+    const isValid = validateTransaction(creditsArray);
+    if (!isValid) {
+      throw ({ status: 404, message: 'Bad Request' });
+    }
+    const isTransactionValid = await Transaction.findOne({
+      _id: ObjectId(creditsArray[0].transaction_Id),
+      user_id: ObjectId(userId),
+      status: 'Successfull',
+      isTransactionUsed: false
+    });
+
+    if (!isTransactionValid) {
+      throw ({ status: 404, message: 'Bad Request' });
+    }
 
     creditsArray.forEach(async credit => {
 
@@ -122,7 +141,7 @@ module.exports = class CreditService {
         }
       }
 
-      const Purchased_Credit_Doc = await Credit.findOneAndUpdate({ user_id: userId }, {
+      await Credit.findOneAndUpdate({ user_id: ObjectId(userId) }, {
 
         $inc: { total_universal_credits: credit.number_of_credit },
 
@@ -142,7 +161,12 @@ module.exports = class CreditService {
       })
 
     });
-
+    
+    await Transaction.findOneAndUpdate({ _id: ObjectId(creditsArray[0].transaction_Id) }, {
+      $set: {
+        isTransactionValid: true
+      }
+    });
 
     /* 
  
@@ -157,7 +181,7 @@ module.exports = class CreditService {
 
     const messageBody = {
 
-      title:`Purchased: Thanks for purchasing '${creditCount}' credits!`,
+      title: `Purchased: Thanks for purchasing '${creditCount}' credits!`,
       body: "Check Your Credit Info",
       data: {
         navigateTo: navigateToTabs.credits

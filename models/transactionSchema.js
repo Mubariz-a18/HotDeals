@@ -25,6 +25,10 @@ const transactionSchema = mongoose.Schema(
                 'Failed',
             ]
         },
+        isTransactionUsed: {
+            type:Boolean,
+            default: false
+        },
         credits_bundle: [
             {
                 number_of_credit: {
