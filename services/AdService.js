@@ -478,10 +478,10 @@ module.exports = class AdService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
     const isUpdateBodyValid = validateUpdateAd(bodyData);
-    if(!isUpdateBodyValid){
+    if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
-    
+
     const {
       parent_id,
       description,
@@ -493,7 +493,7 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id , ad_status:"Selling"});
+    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -544,7 +544,7 @@ module.exports = class AdService {
     const isTextSafe = await safetext(" ", description, special_mention_string);
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
-      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id ,ad_status:"Selling"}, {
+      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" }, {
         $set: {
           description,
           SelectFields,
@@ -1004,145 +1004,120 @@ module.exports = class AdService {
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
+    const statuses = [
+      "Selling",
+      "Archive",
+      "Sold",
+      "Delete",
+      "Reposted"
+    ]
 
+    if(!statuses.includes(bodyData.status)){
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
 
     //TODO: check ift the ad status is not Suspended and there may be other cases also
     const findAd = await Generic.findOne({
       _id: ad_id,
-      user_id: userId
+      user_id: userId,
+      ad_status: {
+        $ne: "Suspended"
+      }
     });
 
-    if (!findAd) {
-      throw ({ status: 401, message: 'Access_Denied' });
-    }
-
-    // if ad doesnt exist throw error 
     if (!findAd) {
       await track('failed !! to chaange ad status', {
         distinct_id: userId,
         ad_id: ad_id,
         message: ` ad_id : ${ad_id}  does not exist`
-
       })
-      throw ({ status: 404, message: 'AD_NOT_EXISTS' })
+      throw ({ status: 401, message: 'Access_Denied' });
     }
-    // if ad exist change the status of Ad
-    else {
-      // mixpanel track - when Status Of Ad changed 
-      await track('ad status changed successfully !!', {
-        distinct_id: userId,
-        ad_id: ad_id,
-        status: bodyData.status
-      })
-      if (bodyData.status == "Archive") {
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Archive",
-              ad_Archive_Date: currentDate
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+    if (bodyData.status == "Archive") {
+      const adDoc = await Generic.findByIdAndUpdate(
+        {
+          _id: ad_id,
+          ad_status: "Selling"
+        },
+        {
+          $set: {
+            ad_status: "Archive",
+            ad_Archive_Date: currentDate
+          }
+        },
+        { returnOriginal: false, new: true }
+      )
+      if (!adDoc) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Sold") {
-        const adDoc = await Generic.updateMany(
-          {
-            parent_id: ad_id,
-            ad_status: "Selling"
-          },
-          {
-            $set: {
-              ad_status: "Sold",
-              ad_Sold_Date: currentDate,
-              ad_Historic_Duration_Date: Ad_Historic_Duration,
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+      return adDoc;
+    }
+    else if (bodyData.status == "Sold") {
+      const adDoc = await Generic.updateMany(
+        {
+          parent_id: ad_id,
+          ad_status: "Selling"
+        },
+        {
+          $set: {
+            ad_status: "Sold",
+            ad_Sold_Date: currentDate,
+            ad_Historic_Duration_Date: Ad_Historic_Duration,
+          }
+        },
+        { returnOriginal: false, new: true }
+      );
+      if (adDoc.modifiedCount === 0) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Delete") {
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Delete",
-              ad_Deleted_Date: currentDate,
-              ad_Historic_Duration_Date: Ad_Historic_Duration
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+      return adDoc;
+    }
+    else if (bodyData.status == "Delete") {
+      const adDoc = await Generic.findByIdAndUpdate(
+        {
+          _id: ad_id
+        },
+        {
+          $set: {
+            ad_status: "Delete",
+            ad_Deleted_Date: currentDate,
+            ad_Historic_Duration_Date: Ad_Historic_Duration
+          }
+        },
+        { returnOriginal: false, new: true }
+      );
+      if (!adDoc) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      //TODO: remove this we dont need this
-      else if (bodyData.status == "Premium") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
+      return adDoc;
+    }
+    else if (bodyData.status == "Selling") {
+      const adDoc = await Generic.updateOne(
+        {
+          _id: ad_id,
+          ad_status: "Archive"
+        },
+        {
+          $set: {
+            ad_status: "Selling",
           },
-          {
-            $set: {
-              ad_status: "Selling",
-              ad_Premium_Date: currentDate,
-              isPrime: true
-            }
+          $unset: {
+            ad_Draft_Date: 1,
+            ad_Deleted_Date: 1,
+            ad_Sold_Date: 1,
+            ad_Archive_Date: 1,
+            ad_Historic_Duration_Date: 1
           },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+        }
+      );
+      if (adDoc.modifiedCount === 0) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      //TODO: remove this we dont need this
-      else if (bodyData.status == "Draft") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Draft",
-              ad_Sold_Date: currentDate,
-              ad_Draft_Date: currentDate
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
-      }
-      else if (bodyData.status == "Selling") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Selling",
-            },
-            $unset: {
-              ad_Draft_Date: 1,
-              ad_Deleted_Date: 1,
-              ad_Sold_Date: 1,
-              ad_Archive_Date: 1,
-              ad_Historic_Duration_Date: 1
-            },
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
-      }
-    };
+      return adDoc;
+    }
+
 
   };
 
