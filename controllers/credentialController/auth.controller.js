@@ -54,6 +54,7 @@ module.exports = class AuthController {
 
   static async apiVerifyOTP(req, res, next) {
     const { phoneNumber, otp } = req.body;
+    //TODO: validate body
 
     try {
       if (phoneNumber.text == "0123456789") {
@@ -157,6 +158,7 @@ module.exports = class AuthController {
   // verification of email by otp from nodemailer
   static async apiEmailVerficationByOtp(req, res, next) {
     try {
+      //TODO: validate body
       const userId = req.user_ID;
       const Otp = req.body.otp;
       const email = req.body.email;

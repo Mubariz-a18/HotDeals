@@ -12,6 +12,7 @@ module.exports = class AlertService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     // date after 15 days
     const DateAfter15Days = moment().add(15, 'd').format('YYYY-MM-DD HH:mm:ss');
+    //TODO: validate body (cat should be from the json)
     const {
       name,
       category,

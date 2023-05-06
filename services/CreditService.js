@@ -182,6 +182,7 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
+    //TODO: validate body (cat should be from the json)
     const { category, AdsArray } = bodyData;
 
     const user_credit_Document = await Credit.findOne({
@@ -454,9 +455,10 @@ module.exports = class CreditService {
 
   //boost Ad 
   static async boost_MyAd(user_Id, body) {
-
+    //TODO: validate body
     const { ad_id, category, boost_duration } = body
 
+    //TODO: check if ad is in Selling state
     const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
 
     if (!Ad) {
@@ -620,6 +622,8 @@ module.exports = class CreditService {
   // Make Ad Premium
   static async MakeAdPremium(user_Id, body) {
 
+    //TODO: validate body
+
     const { ad_id, category } = body
 
     const typeMultiples = {
@@ -630,6 +634,7 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
+    //TODO: check if ad is in Selling state
     const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
 
     if (!Ad) {
@@ -786,10 +791,12 @@ module.exports = class CreditService {
   //HIGHLIGHTAD
   static async HighLight_MyAd(user_Id, body) {
 
+    //TODO: validate body
     const { ad_id, category, HighLight_Duration } = body
 
     const AdsArray = Array(body.AdsArray);
 
+    //TODO: check if ad is in Selling state
     const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id });
 
     if (!adDetail) {

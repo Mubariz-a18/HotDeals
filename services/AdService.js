@@ -27,7 +27,7 @@ const { validateBody, validateUpdateAd } = require("../validators/Ads.Validator"
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-
+    //TODO: validate body
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
@@ -1008,6 +1008,7 @@ module.exports = class AdService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
 
+    //TODO: check ift the ad status is not Suspended and there may be other cases also
     const findAd = await Generic.findOne({
       _id: ad_id,
       user_id: userId
@@ -1083,6 +1084,7 @@ module.exports = class AdService {
         )
         return adDoc;
       }
+      //TODO: remove this we dont need this
       else if (bodyData.status == "Premium") {
         // only after payment is done 
         const adDoc = await Generic.findByIdAndUpdate(
@@ -1100,6 +1102,7 @@ module.exports = class AdService {
         )
         return adDoc;
       }
+      //TODO: remove this we dont need this
       else if (bodyData.status == "Draft") {
         // only after payment is done 
         const adDoc = await Generic.findByIdAndUpdate(
@@ -1148,6 +1151,7 @@ module.exports = class AdService {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
+    //TODO: validate body
     // Ad is find from Generics collection    if body contains "Favourite"
     if (bodyData.value == "Favourite") {
 
@@ -1936,7 +1940,7 @@ $skip and limit for pagination
   static async repostAd(ad_id, userId) {
 
     // only after payment is done 
-
+    //TODO: handle ad status cases
     const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId });
 
     if (!adCopy) {
@@ -2437,6 +2441,7 @@ Cloud Notification To firebase
 
   // Create Draft Ad api
   static async draftAd(bodyData, userId) {
+    //TODO: validate body
     // Generic AdDoc is created 
     const {
       ad_id,
@@ -2520,7 +2525,7 @@ Cloud Notification To firebase
 
   // Update Any Draft Ad
   static async updateDraft(bodyData, userId) {
-
+    //TODO: validate body
     const {
       ad_id,
       category,
