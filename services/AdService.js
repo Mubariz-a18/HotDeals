@@ -32,10 +32,15 @@ module.exports = class AdService {
     if(!isAdBodyValid){
       throw ({ status: 401, message: 'Bad Request' })
     }
+    const userExist = await Profile.findById({_id:userId});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
+
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
@@ -63,37 +68,55 @@ module.exports = class AdService {
       is_negotiable,
       is_ad_posted,
     } = bodyData;
+   async function doImageOperations(){
+     try{
+ 
+       /*  
+       
+       *************************************************
+       IMAGE COMPRESSION FOR THUMBNAILS
+       *************************************************
+   
+   
+       */
+       const thumbnail_url = await imgCom(image_url[0]);
+   
+       /*
+   
+       *************************************************
+       IMAGE WATERMARK
+       *************************************************
+       
+       */
+   
+       await imageWaterMark(image_url)
+   
+       /* 
+       
+       **********************************************************
+       CHECKING IMAGES PROFANITY
+       **********************************************************
+       
+       */
+   
+       const { health, batch } = await detectSafeSearch(image_url);
 
-    /*  
-    
-    *************************************************
-    IMAGE COMPRESSION FOR THUMBNAILS
-    *************************************************
+       return {
+        thumbnail_url,
+        health,
+        batch
+       }
+     }catch(e){
+       return error
+     }
+   }
 
-
-    */
-    const thumbnail_url = await imgCom(image_url[0]);
-
-    /*
-
-    *************************************************
-    IMAGE WATERMARK
-    *************************************************
-    
-    */
-
-    await imageWaterMark(image_url)
-
-    /* 
-    
-    **********************************************************
-    CHECKING IMAGES PROFANITY
-    **********************************************************
-    
-    */
-
-    const { health, batch } = await detectSafeSearch(image_url);
-
+   const imageoperations = await doImageOperations()
+   const {
+    thumbnail_url,
+    health,
+    batch
+   } = imageoperations
     /* 
     
     **********************************************************
@@ -475,7 +498,10 @@ module.exports = class AdService {
   static async updateAd(bodyData, user_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
+    const userExist = await Profile.findById({_id:user_id});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
     const isUpdateBodyValid = validateUpdateAd(bodyData);
     if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
@@ -501,35 +527,57 @@ module.exports = class AdService {
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
-    /*  
+
+    async function doImageOperations(){
+      try{
+ 
+        /*  
+        
+        *************************************************
+        IMAGE COMPRESSION FOR THUMBNAILS
+        *************************************************
     
-    *************************************************
-    IMAGE COMPRESSION FOR THUMBNAILS
-    *************************************************
-
-
-    */
-    const thumbnail_url = await imgCom(image_url[0]);
-
-    /*
-
-    *************************************************
-    IMAGE WATERMARK
-    *************************************************
     
-    */
-
-    await imageWaterMark(image_url)
-
-    /* 
+        */
+        const thumbnail_url = await imgCom(image_url[0]);
     
-    **********************************************************
-    CHECKING IMAGES PROFANITY
-    **********************************************************
+        /*
     
-    */
+        *************************************************
+        IMAGE WATERMARK
+        *************************************************
+        
+        */
+    
+        await imageWaterMark(image_url)
+    
+        /* 
+        
+        **********************************************************
+        CHECKING IMAGES PROFANITY
+        **********************************************************
+        
+        */
+    
+        const { health, batch } = await detectSafeSearch(image_url);
+ 
+       return {
+         thumbnail_url,
+         health,
+         batch
+        }
+      }catch(e){
+        return error
+      }
+    }
 
-    const { health, batch } = await detectSafeSearch(image_url);
+    
+   const imageoperations = await doImageOperations()
+   const {
+    thumbnail_url,
+    health,
+    batch
+   } = imageoperations
 
     /* 
     
@@ -624,6 +672,12 @@ module.exports = class AdService {
     if (!isbodyvalid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
+
+    const userExist = await Profile.findById({_id:userId});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
+
     const { primaryDetails } = bodyData;
 
     const durationForExpiryDate = await AdDurationModel.findOne();
@@ -662,13 +716,24 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
     } = bodyData;
+    async function doImageOperations(){
+      try{
 
-    const thumbnail_url = await imgCom(image_url[0]);
+        const thumbnail_url = await imgCom(image_url[0]);
+    
+        await imageWaterMark(image_url);
+    
+        const { health, batch } = await detectSafeSearch(image_url);
 
-    await imageWaterMark(image_url);
+        return {thumbnail_url , health, batch}
+      }catch(e){
+        return e
+      }
+    }
 
-    const { health, batch } = await detectSafeSearch(image_url);
+    const imageoperations = await doImageOperations()
 
+    const {thumbnail_url , health, batch} = imageoperations;
 
     const special_mention_string = special_mention.join(" ");
 
