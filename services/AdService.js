@@ -10,7 +10,6 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const catSubCat = require('../utils/categorySubcategory')
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -116,7 +115,6 @@ module.exports = class AdService {
         user_id: ObjectId(userId),
         category,
         sub_category,
-        field,
         description,
         SelectFields,
         special_mention,
@@ -623,7 +621,6 @@ module.exports = class AdService {
 
   static async postAd(bodyData, userId) {
     const isbodyvalid = validateBody(bodyData);
-    console.log(isbodyvalid)
     if (!isbodyvalid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
