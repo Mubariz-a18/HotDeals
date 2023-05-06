@@ -21,13 +21,18 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { validateBody, validateUpdateAd } = require("../validators/Ads.Validator");
+const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
 
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    //TODO: validate body
+    //DONE: validate body
+
+    const isAdBodyValid = ValidateCreateAdBody(bodyData);
+    if(!isAdBodyValid){
+      throw ({ status: 401, message: 'Bad Request' })
+    }
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
@@ -43,7 +48,6 @@ module.exports = class AdService {
       parent_id,
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
@@ -59,11 +63,8 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
       is_ad_posted,
-    } = bodyData
+    } = bodyData;
 
-    if (image_url.length == 0) {
-      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
-    }
     /*  
     
     *************************************************
@@ -1018,7 +1019,6 @@ module.exports = class AdService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
 
-    //TODO: check ift the ad status is not Suspended and there may be other cases also
     const findAd = await Generic.findOne({
       _id: ad_id,
       user_id: userId,
@@ -1125,8 +1125,10 @@ module.exports = class AdService {
   static async favouriteAds(bodyData, userId, ad_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-    //TODO: validate body
+    const isBodyValid = validateFavoriteAdBody(bodyData,ad_id);
+    if(!isBodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     // Ad is find from Generics collection    if body contains "Favourite"
     if (bodyData.value == "Favourite") {
 
@@ -1135,14 +1137,12 @@ module.exports = class AdService {
       });
       // if Ad doesnt exists throw error
       if (!findAd) {
-
         // mixpanel track for failed event in make ad favourite
         await track('failed !! Make Ad favourite ', {
           distinct_id: userId,
           ad_id: ad_id,
           message: ` ad_id : ${ad_id}  does not exist`
         })
-
         throw ({ status: 404, message: 'AD_NOT_EXISTS' });
       }
       else {
@@ -1915,11 +1915,14 @@ $skip and limit for pagination
   static async repostAd(ad_id, userId) {
 
     // only after payment is done 
-    //TODO: handle ad status cases
-    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId });
+    const isIdValid = validateMongoID(ad_id);
+    if(!isIdValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
+    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId ,ad_status:{$in:["Sold","Delete","Expired"]}});
 
     if (!adCopy) {
-      throw ({ status: 401, message: 'Access_Denied' });
+      throw ({ status: 401, message: 'Bad Request' });
     }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -2416,27 +2419,23 @@ Cloud Notification To firebase
 
   // Create Draft Ad api
   static async draftAd(bodyData, userId) {
-    //TODO: validate body
+    const isAdBodyValid = ValidateDraftAdBody(bodyData);
+    if(!isAdBodyValid){
+      throw ({ status: 401, message: 'Bad Request' })
+    }
     // Generic AdDoc is created 
     const {
       ad_id,
       parent_id,
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
       title,
       price,
-      isPrime,
       image_url,
       video_url,
-      ad_present_location,
-      ad_posted_location,
-      ad_posted_address,
-      ad_present_address,
-      ad_status,
       is_negotiable
     } = bodyData
 
@@ -2453,9 +2452,6 @@ Cloud Notification To firebase
 
     */
     const thumbnail_url = await imgCom(image_url[0]);
-
-
-    let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     let adDoc = await Draft.create({
       _id: ObjectId(ad_id),
@@ -2463,23 +2459,15 @@ Cloud Notification To firebase
       user_id: ObjectId(userId),
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
       title,
       price,
-      product_age: age || 0,
-      isPrime,
-      ad_type: isPrime == false ? "Free" : "Premium",
       image_url,
       video_url,
       thumbnail_url,
-      ad_present_location,
-      ad_posted_location,
-      ad_posted_address,
-      ad_present_address,
-      ad_status,
+      ad_status:"Draft",
       ad_Draft_Date: currentDate,
       is_negotiable,
       created_at: currentDate
@@ -2500,7 +2488,6 @@ Cloud Notification To firebase
 
   // Update Any Draft Ad
   static async updateDraft(bodyData, userId) {
-    //TODO: validate body
     const {
       ad_id,
       category,

@@ -12,6 +12,7 @@ const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const { fa } = require("translate-google/languages");
 const validateTransaction = require("../validators/transactionValidator");
+const { validateBoostMyAd, validateCheckCreditBody, validateHighlightMyAdbody } = require("../validators/CreditValidations");
 
 const creditType = {
   Premium: "Premium",
@@ -123,13 +124,8 @@ module.exports = class CreditService {
     }
 
     creditsArray.forEach(async credit => {
-
-      //TODO: validate the transaction id with our Transactions collection
-
       const push = {
-
         universal_credit_bundles: {
-
           number_of_credit: credit.number_of_credit,
           source_of_credit: "Paid",
           credit_status: "Active",
@@ -137,7 +133,6 @@ module.exports = class CreditService {
           credit_expiry_date: expiry_date_func(+credit.credit_duration),
           transaction_Id: credit.transaction_Id,
           credit_created_date: currentDate
-
         }
       }
 
@@ -205,9 +200,12 @@ module.exports = class CreditService {
       Premium_Boost: 4,
       HighLight: 5
     };
-
-    //TODO: validate body (cat should be from the json)
+    //DONE: validate body (cat should be from the json)
     const { category, AdsArray } = bodyData;
+    const isCheckCreditBodyValid = validateCheckCreditBody(bodyData);
+    if(!isCheckCreditBodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
 
     const user_credit_Document = await Credit.findOne({
       user_id: user_Id
@@ -479,14 +477,18 @@ module.exports = class CreditService {
 
   //boost Ad 
   static async boost_MyAd(user_Id, body) {
-    //TODO: validate body
+    //DONE: validate body
+    const isBoostbodyValid = validateBoostMyAd(body);
+    if(!isBoostbodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category, boost_duration } = body
 
-    //TODO: check if ad is in Selling state
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
 
     if (!Ad) {
-      throw ({ status: 401, message: 'Access_Denied' });
+      throw ({ status: 401, message: 'Access Denied' });
     }
 
     const AdsArray = Array(body.AdsArray);
@@ -646,8 +648,11 @@ module.exports = class CreditService {
   // Make Ad Premium
   static async MakeAdPremium(user_Id, body) {
 
-    //TODO: validate body
-
+    //DONE: validate body
+    const isPremiumbodyValid = ValidateMakeAdPremiumBody(body);
+    if(!isPremiumbodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category } = body
 
     const typeMultiples = {
@@ -658,8 +663,8 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
-    //TODO: check if ad is in Selling state
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -815,13 +820,17 @@ module.exports = class CreditService {
   //HIGHLIGHTAD
   static async HighLight_MyAd(user_Id, body) {
 
-    //TODO: validate body
+    //DONE: validate body
+    const isHighlightAdValid = validateHighlightMyAdbody(body);
+    if(!isHighlightAdValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category, HighLight_Duration } = body
 
     const AdsArray = Array(body.AdsArray);
 
-    //TODO: check if ad is in Selling state
-    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id , ad_status:"Selling"});
 
     if (!adDetail) {
       throw ({ status: 401, message: 'Access_Denied' });

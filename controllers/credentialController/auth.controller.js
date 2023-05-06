@@ -7,6 +7,7 @@ const { track } = require("../../services/mixpanel-service");
 const Profile = require("../../models/Profile/Profile");
 const { ObjectId } = require("mongodb");
 const errorHandler = require("../../middlewares/errorHandler");
+const {validateOtp, validatePhoneNumer, validateEmail, validateEmailOtp} = require("../../validators/otpValidator");
 
 module.exports = class AuthController {
   // Get OTP with PhoneNumber
@@ -14,6 +15,10 @@ module.exports = class AuthController {
     try {
       const ip = req.ip;
       const { phoneNumber, smsToken } = req.body;
+      const isOtpBodyValid = validatePhoneNumer(phoneNumber,smsToken)
+      if(!isOtpBodyValid){
+        throw ({ status: 401, message: 'Bad Request' });
+      }
       // Creating OTP for phoneNumber
       if (!phoneNumber.text) {
         throw ({ status: 401, message: 'PHONE_NUMBER_REQUIRED' });
@@ -53,10 +58,12 @@ module.exports = class AuthController {
   }
 
   static async apiVerifyOTP(req, res, next) {
-    const { phoneNumber, otp } = req.body;
-    //TODO: validate body
-
     try {
+      const { phoneNumber, otp } = req.body;
+      const isOtpBodyValid = validateOtp(phoneNumber,otp)
+      if(!isOtpBodyValid){
+        return  res.status(401).send({  message: 'Bad Request' });
+      }
       if (phoneNumber.text == "0123456789") {
 
         const dummyExist = await Profile.findById({ _id: ObjectId("63ca69c1bed13a9dd55702fc") });
@@ -77,7 +84,7 @@ module.exports = class AuthController {
           //Get user from Database
           const oldUser = await User.findOne({
             userNumber: phoneNumber.text,
-          }); // CHECK THIS!!!!
+          }); 
 
           if (oldUser) {
             // If user exists
@@ -106,7 +113,6 @@ module.exports = class AuthController {
 
           } else {
             // If new user, create a user
-
             const user = await User.create({
               userNumber: phoneNumber.text,
             });
@@ -130,7 +136,7 @@ module.exports = class AuthController {
       }
     } catch (error) {
       await track("login unsuccessfull", {
-        distinct_id: phoneNumber,
+        distinct_id: req?.body?.phoneNumber?.text,
       })
       return res.status(500).send({
         error: {
@@ -146,6 +152,10 @@ module.exports = class AuthController {
       const { email } = req.body;
       const userId = req.user_ID;
       const ip = req.ip;
+      const isEmailValid = validateEmail(email)
+      if(!isEmailValid){
+        return res.status(401).send({message:'Bad Request'})
+      }
       const EmailOtpDoc = await OtpService.generateEmail_OTPAndCreateDocument(email, userId, ip)
       res.status(200).send({
         message: EmailOtpDoc
@@ -158,10 +168,14 @@ module.exports = class AuthController {
   // verification of email by otp from nodemailer
   static async apiEmailVerficationByOtp(req, res, next) {
     try {
-      //TODO: validate body
+
       const userId = req.user_ID;
       const Otp = req.body.otp;
       const email = req.body.email;
+      const isEmailValid = validateEmailOtp(Otp,email)
+      if(!isEmailValid){
+        return res.status(401).send({message:'Bad Request'})
+      }
       const emailVerifiedDoc = await OtpService.verify_Email_By_otp_And_Delete_Document(Otp, email, userId)
       res.status(200).send({
         message: emailVerifiedDoc
