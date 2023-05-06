@@ -10,7 +10,7 @@ module.exports = class CreditController {
       const creditDoc = await CreditService.createCredit(req.body, req.user_ID);
       // response is sent
       res.status(200).send({
-        data: creditDoc,
+        message: creditDoc,
       })
     } catch (e) {
       errorHandler(e, res)
