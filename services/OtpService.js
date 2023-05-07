@@ -96,47 +96,90 @@ module.exports = class OtpService {
     };
   };
 
+
   //Generating OTP for email and Creating a Document  
-  static async generateEmail_OTPAndCreateDocument(email, userId) {
+  static async generateEmail_OTPAndCreateDocument(email, userId, ip) {
+    if (!email) {
+      throw ({ status: 403, message: 'Email Required' });
+    }
     //check if user is existing or not
     const userExist = await Profile.findOne({
       _id: userId
     })
-    //if exist generate 6 digit otp to the email by nodemailer
-    if (userExist) {
-      const otp = generateOTP(6);
-      const email_OtpDoc = await OtpModel.findOne({
-        email,
-      });
-      if (email_OtpDoc) {
-        return email_OtpDoc;
-      }
-      else {
-        // sent email to user 
-        await EmailController.sendEmailWithNodemailer(email, otp, userExist.name)
-          .then(async (res) => {
-            await OtpModel.create({
-              otp,
-              email,
-              user_id: userId,
-              expire_at: Date.now()
-            });
-          })
-        // mixpanel track - email sent 
-        await track('Otp Sent to Email Success !! ', {
-          email: email,
-          message: `sent email to user : ${userId}  `
-        })
-        return "OTP_SENT_TO_EMAIL_SUCCESS"
-      };
-    }
-    else {
+    if (!userExist) {
       throw ({ status: 401, message: 'USER_NOT_EXIST' });
     }
+    if (email === userExist?.email?.text) {
+      throw ({ status: 403, message: 'This Email is Already Verified' });
+    }
+    const ipPrefix = ip.split(":")[0];
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
+
+    const otpDocWithEmail = await OtpModel.countDocuments({
+      email
+    });
+    const otpWithIpAddress = await OtpModel.countDocuments({
+      ipAddress: ipPrefix
+    });
+
+    if (otpWithIpAddress >= 10) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
+    if (otpDocWithEmail >= 3) {
+      throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+    }
+
+    const otpDoc = await OtpModel.findOne({
+      email: email,
+      isVerified: false,
+      expireAt: {
+        $gte: currentDate,
+      }
+    });
+    const otp = generateOTP(6);
+    if (otpDoc) {
+      const twoMinutesAfter = moment().utcOffset("+05:30").subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
+
+      if (moment(otpDoc.sentAt, 'YYYY-MM-DD HH:mm:ss.SSS').isSameOrBefore(twoMinutesAfter)) {
+        const newDoc = await OtpModel.findOneAndUpdate({
+          email,
+        }, {
+          $set: {
+            sentAt: currentDate
+          }
+        });
+        return newDoc;
+      } else {
+        throw ({ status: 403, message: 'OTP CANT BE GENERATED AT THE MOMENT' });
+      }
+    }
+    else {
+      // sent email to user 
+      const fiveMinutesLater = moment().utcOffset("+05:30").add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss.SSS');
+      await EmailController.sendEmailWithNodemailer(email, otp, userExist.name)
+        .then(async (res) => {
+          await OtpModel.create({
+            otp,
+            email,
+            ipAddress: ipPrefix,
+            sentAt: currentDate,
+            createdAt: Date.now(),
+            expireAt: fiveMinutesLater
+          });
+        })
+
+      // mixpanel track - email sent 
+      await track('Otp Sent to Email Success !! ', {
+        email: email,
+        message: `sent email to user : ${userId}  `
+      })
+      return "OTP_SENT_TO_EMAIL_SUCCESSFULLY"
+    };
   };
 
   //Verify Otp and Delete Document 
   static async verify_Email_By_otp_And_Delete_Document(otp, email, userId) {
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss.SSS');
     //check if user exist 
     const userExist = await Profile.findOne({
       _id: userId
@@ -146,7 +189,11 @@ module.exports = class OtpService {
       const verify_otp = await OtpModel.findOne({
         user_id: userId,
         email,
-        otp
+        otp,
+        isVerified: false,
+        expireAt: {
+          $gte: currentDate,
+        }
       })
       //if exists update users profile email as well as is_email_verified 
       if (verify_otp) {
@@ -156,14 +203,17 @@ module.exports = class OtpService {
             "is_email_verified": true
           }
         })
-        //delete doc
-        // await OtpModel.deleteOne({ email, otp })
         // mixpanel track - email sent 
         await track('Otp verfication Success !! ', {
           email: email,
           message: `sent email to user : ${userId}  `
         })
-        await OtpModel.deleteOne({ _id: verify_otp._id });
+        await OtpModel.updateOne({ _id: verify_otp._id },
+          {
+            $set: {
+              isVerified: true
+            }
+          });
         return "EMAIL_VERIFICATION_SUCCESSFULL"
       } else {
         throw ({ status: 401, message: INVALID_OTP_ERR });

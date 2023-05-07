@@ -123,6 +123,7 @@ module.exports = class ReferCodeService {
                     throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
                 }
 
+                //TODO: change the logic for this probability to get 8,9,10 should be very low
                 const min = minReferralReward / 100;
                 const max = maxReferralReward / 100;
                 const amount = (Math.floor(Math.random() * (max - min + 1)) + min) * 100;
@@ -321,6 +322,18 @@ module.exports = class ReferCodeService {
         }
 
     };
+    static isValidUpiOrPhoneNumber(phoneNumber,upi) {
+        const upiRegex = /^[\w.-]+@[\w.-]+$/;
+        const phoneRegex = /^\d{10}$/;
+
+
+        if (upiRegex.test(upi) && phoneRegex.test(phoneNumber)) {
+            return true;
+        }
+
+        // If the string doesn't match either regex, return false
+        return false;
+    }
 
     // claim Reward
     static async claimReferralPayouts(userId, bodyData) {
@@ -338,9 +351,24 @@ module.exports = class ReferCodeService {
             upi_id
         } = bodyData;
 
+
         if (!friend_ID || !upi_id) {
 
             throw ({ status: 401, message: 'Please Enter UPI And Reffered-To UserId ' });
+        }
+
+        const upiRegex = /^[\w.-]+@[\w.-]+$/;
+        const phoneRegex = /^\d{10}$/;
+        const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+
+        if (!upiRegex.test(upi_id)) {
+            throw ({ status: 401, message: 'Please Enter Proper UPI ID' });
+        }
+        if(phoneNumber && !phoneRegex.test(phoneNumber) ){
+            throw ({ status: 401, message: 'Enter Valid Mobile Number' });
+        }
+        if(email && !emailRegex.test(email) ){
+            throw ({ status: 401, message: 'Enter Valid Email Address' });
         }
 
         const userDetails = await Profile.findById({ _id: userId }, {
@@ -586,7 +614,7 @@ module.exports = class ReferCodeService {
         const statusVal = statusFunc(status);
         const payoutStat = payoutTransactionStatus(event)
         if (payoutStat === "payoutSuccess") {
-            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid", "Failed"] }}, {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid", "Failed"] } }, {
                 $set: {
                     payment_status: statusVal,
                     razorpayPayoutStatus: status
@@ -594,7 +622,7 @@ module.exports = class ReferCodeService {
             });
         }
         if (payoutStat === "PayoutProcessing") {
-            await InstallPayoutModel.findOneAndUpdate({ payout_id: id , payment_status: { $nin: ["Paid"] }}, {
+            await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] } }, {
                 $set: {
                     payment_status: statusVal,
                     razorpayPayoutStatus: status
@@ -603,7 +631,7 @@ module.exports = class ReferCodeService {
         }
         if (payoutStat === "PayoutFailed") {
             if (statusVal === "Failed") {
-                const payoutDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] }}, {
+                const payoutDoc = await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] } }, {
                     $set: {
                         payment_status: 'Not_Claimed',
                     },
@@ -619,8 +647,8 @@ module.exports = class ReferCodeService {
                     }
                 });
 
-                const updateReferralDoc = await Referral.updateOne({user_Id: payoutDoc.user_id, 'used_by.userId':payoutDoc.referredTo},{
-                    $set:{
+                const updateReferralDoc = await Referral.updateOne({ user_Id: payoutDoc.user_id, 'used_by.userId': payoutDoc.referredTo }, {
+                    $set: {
                         "used_by.$.isClaimed": false
                     }
                 })

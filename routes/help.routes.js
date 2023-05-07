@@ -7,18 +7,18 @@ const { rateLimiter } = require('../middlewares/rateLimiterMiddleWare');
 const { globalWindowTime, globalApiHits } = require('../utils/globalRateLimits');
 const {
     createHelpTime,
-    deletehelpTime,
-    getHelpTime,
+    // deletehelpTime,
+    // getHelpTime,
 } = globalWindowTime
 const {
     createHelpHits,
-    deletehelpHits,
-    getHelpHits,
+    // deletehelpHits,
+    // getHelpHits,
 } = globalApiHits
 //Help Routes
 router.post('/api/createHelp', rateLimiter(createHelpTime, createHelpHits), verifyToken, HelpController.apiCreateHelp);
-router.post('/api/deleteHelp', rateLimiter(deletehelpTime, deletehelpHits), verifyToken, HelpController.apiDeleteHelp);
-router.get('/api/getHelp', rateLimiter(getHelpTime, getHelpHits), verifyToken, HelpController.apiGetHelp);
+// router.post('/api/deleteHelp', rateLimiter(deletehelpTime, deletehelpHits), verifyToken, HelpController.apiDeleteHelp);
+// router.get('/api/getHelp', rateLimiter(getHelpTime, getHelpHits), verifyToken, HelpController.apiGetHelp);
 
 module.exports = router;
 

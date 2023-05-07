@@ -19,8 +19,8 @@ const reportSchema = mongoose.Schema({
     grace_counter: {
         type: String
     },
-    grace_count_latest_date:{
-        type:String
+    grace_count_latest_date: {
+        type: String
     },
     reports_box: [
         {
@@ -45,13 +45,22 @@ const reportSchema = mongoose.Schema({
                         type: mongoose.Types.ObjectId
                     },
                     reason: {
-                        type: String
+                        type: String,
+                        required: true
                     },
                     description: {
-                        type: String
+                        type: String,
+                        maxLength: [500, 'maximun 500 charecters'],
                     },
-                    attachment:{
-                        type:Array
+                    attachment: {
+                        type: [String],
+                        validate: {
+                            validator: function (v) {
+                                console.log(v)
+                                return v.length <= 3;
+                            },
+                            message: props => `${props.value} exceeds the maximum allowed length of 3`
+                        }
                     },
                     reported_date: {
                         type: String

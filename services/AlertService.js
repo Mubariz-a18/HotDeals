@@ -4,6 +4,7 @@ const { track } = require("./mixpanel-service");
 const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
 const { app } = require("../firebaseAppSetup");
+const validateAlert = require("../validators/AlertValidation");
 const db = app.database(process.env.DATABASEURL)
 module.exports = class AlertService {
 
@@ -12,6 +13,10 @@ module.exports = class AlertService {
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     // date after 15 days
     const DateAfter15Days = moment().add(15, 'd').format('YYYY-MM-DD HH:mm:ss');
+    const isAlerValid = validateAlert(bodyData);
+    if(!isAlerValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const {
       name,
       category,

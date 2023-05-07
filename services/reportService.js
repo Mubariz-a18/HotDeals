@@ -31,6 +31,18 @@ module.exports = class ReportService {
 
         const { ad_id, reason, description , attachment } = bodyData;
 
+        const ReasonEnum =  [
+            "Sold Out",
+            "Fake Product",
+            "Harassment / Bulling",
+            'Inappropriate Post',
+            'By-Admin',
+            "Other"
+        ]
+        if(!ReasonEnum.includes(reason) || attachment.length > 3 || description.length > 500){
+            throw ({ status: 401, message: 'Bad Request' });
+        }
+
         const points = Reason_points(reason)
 
         const findAd = await Generic.findById({ _id: ad_id });

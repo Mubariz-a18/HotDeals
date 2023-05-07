@@ -4,26 +4,29 @@ const mongoose = require("mongoose");
 const profileSchema = mongoose.Schema({
   name: {
     type: String,
+    required: true,
+    maxLength: [30, 'maximun 30 charecters']
   },
   userNumber: {
     text: {
       type: String,
-      default: "",
+      required: true,
+      maxLength: [10, 'maximun 10 charecters']
     },
     private: {
       type: Boolean,
       default: true,
     },
   },
-  country_code: {
-    type: String,
-  },
   date_of_birth: {
     type: String,
+    required: true,
+    match: /^\d{4}-\d{2}-\d{2}$/
   },
   email: {
     text: {
       type: String,
+      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address'],
       default: "",
     },
     private: {
@@ -31,9 +34,6 @@ const profileSchema = mongoose.Schema({
       default: true,
     },
   },
-  // age: {
-  //   type: Number,
-  // },
   gender: {
     type: String,
     enum: ["Male", "Female", "Others"],
@@ -47,10 +47,26 @@ const profileSchema = mongoose.Schema({
   },
   language_preference: {
     type: String,
+    enum: [
+      'English',
+      'Hindi',
+      'Gujarati',
+      'Marathi',
+      'Punjabi',
+      'Bengali',
+      'Odia',
+      'Tamil',
+      'Telugu',
+      'Urdu',
+      'Kannada',
+      'Malayalam',
+    ]
   },
   city: {
     text: {
       type: String,
+      required: true,
+      maxLength: [20, 'maximun 20 charecters'],
       default: "",
     },
     private: {
@@ -61,6 +77,7 @@ const profileSchema = mongoose.Schema({
   about: {
     text: {
       type: String,
+      maxLength: [200, 'maximun 200 charecters'],
       default: "",
     },
     private: {
@@ -118,7 +135,7 @@ const profileSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  availble_credit:{
+  availble_credit: {
     type: Number,
   },
   premium_ad: [
@@ -127,14 +144,22 @@ const profileSchema = mongoose.Schema({
     },
   ],
   profile_url: {
-    type: String
+    type: String,
+    required: true,
+    match:/^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
+    default: "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb"
+
   },
-  thumbnail_url:{
-    type:String
+  thumbnail_url: {
+    type: String,
+    required: true,
+    match:/^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
+    default: "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb"
   },
   cover_photo_url: {
     type: String,
-    default:""
+    match: /^(http|https):\/\/[a-z0-9\-_]+\.[a-z0-9\-_]+\.[a-z0-9\-_]{2,}$/i,
+    default: ""
   },
   followers: Array,
   followers_count: {
@@ -150,8 +175,8 @@ const profileSchema = mongoose.Schema({
     type: Boolean,
     default: false
   },
-  referrered_user:{
-    type:mongoose.Schema.Types.ObjectId,
+  referrered_user: {
+    type: mongoose.Schema.Types.ObjectId,
   },
   rate_count: {
     type: Number,
@@ -167,7 +192,7 @@ const profileSchema = mongoose.Schema({
   },
   user_Banned_Flag: {
     type: Boolean,
-    default:false,
+    default: false,
   },
   user_Banned_Times: {
     type: Number

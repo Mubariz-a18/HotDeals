@@ -52,7 +52,6 @@ router.post('/api/v1/updateAd',
     AdController.apiUpdateAd);
 
 router.post('/api/v1/makeAdPremium',
-    rateLimiter(updateAdTime, updateAdHits),
     verifyToken,
     AdController.apiMakeAdPremuium);
 

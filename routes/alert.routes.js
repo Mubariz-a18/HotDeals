@@ -8,12 +8,12 @@ const { verifyJwtToken } = require('../utils/verifyToken');
 
 const {
     createAlertTime,
-    updateAlertTime,
+    // updateAlertTime,
     deleteAlertTime,
 } = globalWindowTime
 const {
     createAlertHits,
-    updateAlertHits,
+    // updateAlertHits,
     deleteAlertHits,
 } = globalApiHits
 //Alert Routes
@@ -21,13 +21,16 @@ router.post('/api/createAlert',
     rateLimiter(createAlertTime, createAlertHits),
     verifyJwtToken,
     AlertController.apiCreateAlert);
-router.get('/api/getMyAlertsAlert',
-    verifyJwtToken,
-    AlertController.apiGetAlert);
-router.post('/api/updateAlert',
-    rateLimiter(updateAlertTime, updateAlertHits),
-    verifyJwtToken,
-    AlertController.apiUpdateAlert);
+
+// router.get('/api/getMyAlertsAlert',
+//     verifyJwtToken,
+//     AlertController.apiGetAlert);
+
+// router.post('/api/updateAlert',
+//     rateLimiter(updateAlertTime, updateAlertHits),
+//     verifyJwtToken,
+//     AlertController.apiUpdateAlert);
+
 router.delete('/api/deleteAlert',
     rateLimiter(deleteAlertTime, deleteAlertHits),
     verifyJwtToken,
