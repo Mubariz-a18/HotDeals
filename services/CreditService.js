@@ -12,7 +12,7 @@ const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const { fa } = require("translate-google/languages");
 const validateTransaction = require("../validators/transactionValidator");
-const { validateBoostMyAd, validateCheckCreditBody, validateHighlightMyAdbody } = require("../validators/CreditValidations");
+const { validateBoostMyAd, validateCheckCreditBody, validateHighlightMyAdbody, validateCheckCreditBodyForArray } = require("../validators/CreditValidations");
 
 const creditType = {
   Premium: "Premium",
@@ -202,9 +202,14 @@ module.exports = class CreditService {
     };
     //DONE: validate body (cat should be from the json)
     const { category, AdsArray } = bodyData;
-    const isCheckCreditBodyValid = validateCheckCreditBody(bodyData);
+    const isCheckCreditBodyValid = validateCheckCreditBodyForArray(bodyData);
     if(!isCheckCreditBodyValid){
       throw ({ status: 401, message: 'Bad Request' });
+    }
+
+    const userExist = await Profile.findById({_id:user_Id});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorised' });
     }
 
     const user_credit_Document = await Credit.findOne({

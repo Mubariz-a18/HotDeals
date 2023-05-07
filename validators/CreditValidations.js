@@ -19,6 +19,28 @@ function validateCheckCreditBody(body) {
 
     return true;
 }
+function validateCheckCreditBodyForArray(body) {
+    const {
+        category,
+        AdsArray
+    } = body
+    const catNames = Object.keys(catSubCat);
+    if (!catNames.includes(category)) return false;
+
+    if (!Array.isArray(AdsArray) ||AdsArray.length === 0) return false
+
+    for (let i = 0; i < AdsArray.length; i++) {
+
+        if (!AdsArray[i] || typeof AdsArray[i] !== "object") {
+            return false
+        }
+        if (typeof AdsArray[i].isPrime !== 'boolean' || typeof AdsArray[i].isHighlighted !== 'boolean' || typeof AdsArray[i].isBoosted !== 'boolean') {
+            return false
+        }
+    }
+
+    return true;
+}
 
 
 function validateBoostMyAd(body) {
@@ -75,5 +97,6 @@ module.exports = {
     validateCheckCreditBody,
     validateBoostMyAd,
     ValidateMakeAdPremiumBody,
-    validateHighlightMyAdbody
+    validateHighlightMyAdbody,
+    validateCheckCreditBodyForArray
 }
