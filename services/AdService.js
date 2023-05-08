@@ -10,7 +10,6 @@ const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
 const { featureAdsFunction } = require("../utils/featureAdsUtil");
-const catSubCat = require('../utils/categorySubcategory')
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -21,17 +20,27 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { validateBody, validateUpdateAd } = require("../validators/Ads.Validator");
+const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
 
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
+    //DONE: validate body
 
+    const isAdBodyValid = ValidateCreateAdBody(bodyData);
+    if(!isAdBodyValid){
+      throw ({ status: 401, message: 'Bad Request' })
+    }
+    const userExist = await Profile.findById({_id:userId});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
+
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
 
@@ -43,7 +52,6 @@ module.exports = class AdService {
       parent_id,
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
@@ -59,41 +67,56 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
       is_ad_posted,
-    } = bodyData
+    } = bodyData;
+   async function doImageOperations(){
+     try{
+ 
+       /*  
+       
+       *************************************************
+       IMAGE COMPRESSION FOR THUMBNAILS
+       *************************************************
+   
+   
+       */
+       const thumbnail_url = await imgCom(image_url[0]);
+   
+       /*
+   
+       *************************************************
+       IMAGE WATERMARK
+       *************************************************
+       
+       */
+   
+       await imageWaterMark(image_url)
+   
+       /* 
+       
+       **********************************************************
+       CHECKING IMAGES PROFANITY
+       **********************************************************
+       
+       */
+   
+       const { health, batch } = await detectSafeSearch(image_url);
 
-    if (image_url.length == 0) {
-      throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
-    }
-    /*  
-    
-    *************************************************
-    IMAGE COMPRESSION FOR THUMBNAILS
-    *************************************************
+       return {
+        thumbnail_url,
+        health,
+        batch
+       }
+     }catch(e){
+       return error
+     }
+   }
 
-
-    */
-    const thumbnail_url = await imgCom(image_url[0]);
-
-    /*
-
-    *************************************************
-    IMAGE WATERMARK
-    *************************************************
-    
-    */
-
-    await imageWaterMark(image_url)
-
-    /* 
-    
-    **********************************************************
-    CHECKING IMAGES PROFANITY
-    **********************************************************
-    
-    */
-
-    const { health, batch } = await detectSafeSearch(image_url);
-
+   const imageoperations = await doImageOperations()
+   const {
+    thumbnail_url,
+    health,
+    batch
+   } = imageoperations
     /* 
     
     **********************************************************
@@ -115,7 +138,6 @@ module.exports = class AdService {
         user_id: ObjectId(userId),
         category,
         sub_category,
-        field,
         description,
         SelectFields,
         special_mention,
@@ -476,12 +498,15 @@ module.exports = class AdService {
   static async updateAd(bodyData, user_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
+    const userExist = await Profile.findById({_id:user_id});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
     const isUpdateBodyValid = validateUpdateAd(bodyData);
-    if(!isUpdateBodyValid){
+    if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
-    
+
     const {
       parent_id,
       description,
@@ -493,7 +518,7 @@ module.exports = class AdService {
       is_negotiable,
     } = bodyData;
 
-    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id , ad_status:"Selling"});
+    const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -502,35 +527,57 @@ module.exports = class AdService {
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
-    /*  
+
+    async function doImageOperations(){
+      try{
+ 
+        /*  
+        
+        *************************************************
+        IMAGE COMPRESSION FOR THUMBNAILS
+        *************************************************
     
-    *************************************************
-    IMAGE COMPRESSION FOR THUMBNAILS
-    *************************************************
-
-
-    */
-    const thumbnail_url = await imgCom(image_url[0]);
-
-    /*
-
-    *************************************************
-    IMAGE WATERMARK
-    *************************************************
     
-    */
-
-    await imageWaterMark(image_url)
-
-    /* 
+        */
+        const thumbnail_url = await imgCom(image_url[0]);
     
-    **********************************************************
-    CHECKING IMAGES PROFANITY
-    **********************************************************
+        /*
     
-    */
+        *************************************************
+        IMAGE WATERMARK
+        *************************************************
+        
+        */
+    
+        await imageWaterMark(image_url)
+    
+        /* 
+        
+        **********************************************************
+        CHECKING IMAGES PROFANITY
+        **********************************************************
+        
+        */
+    
+        const { health, batch } = await detectSafeSearch(image_url);
+ 
+       return {
+         thumbnail_url,
+         health,
+         batch
+        }
+      }catch(e){
+        return error
+      }
+    }
 
-    const { health, batch } = await detectSafeSearch(image_url);
+    
+   const imageoperations = await doImageOperations()
+   const {
+    thumbnail_url,
+    health,
+    batch
+   } = imageoperations
 
     /* 
     
@@ -544,7 +591,7 @@ module.exports = class AdService {
     const isTextSafe = await safetext(" ", description, special_mention_string);
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
-      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id ,ad_status:"Selling"}, {
+      const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" }, {
         $set: {
           description,
           SelectFields,
@@ -622,10 +669,15 @@ module.exports = class AdService {
 
   static async postAd(bodyData, userId) {
     const isbodyvalid = validateBody(bodyData);
-    console.log(isbodyvalid)
     if (!isbodyvalid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
+
+    const userExist = await Profile.findById({_id:userId});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorized' })
+    }
+
     const { primaryDetails } = bodyData;
 
     const durationForExpiryDate = await AdDurationModel.findOne();
@@ -664,13 +716,24 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
     } = bodyData;
+    async function doImageOperations(){
+      try{
 
-    const thumbnail_url = await imgCom(image_url[0]);
+        const thumbnail_url = await imgCom(image_url[0]);
+    
+        await imageWaterMark(image_url);
+    
+        const { health, batch } = await detectSafeSearch(image_url);
 
-    await imageWaterMark(image_url);
+        return {thumbnail_url , health, batch}
+      }catch(e){
+        return e
+      }
+    }
 
-    const { health, batch } = await detectSafeSearch(image_url);
+    const imageoperations = await doImageOperations()
 
+    const {thumbnail_url , health, batch} = imageoperations;
 
     const special_mention_string = special_mention.join(" ");
 
@@ -1004,142 +1067,119 @@ module.exports = class AdService {
 
   // Updating the status of Ad from body  using $set in mongodb
   static async changeAdStatus(bodyData, userId, ad_id) {
+    const statuses = [
+      "Selling",
+      "Archive",
+      "Sold",
+      "Delete",
+      "Reposted"
+    ]
 
+    if(!statuses.includes(bodyData.status)){
+      throw ({ status: 401, message: 'Access_Denied' });
+    }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
 
     const findAd = await Generic.findOne({
       _id: ad_id,
-      user_id: userId
+      user_id: userId,
+      ad_status: {
+        $ne: "Suspended"
+      }
     });
 
-    if (!findAd) {
-      throw ({ status: 401, message: 'Access_Denied' });
-    }
-
-    // if ad doesnt exist throw error 
     if (!findAd) {
       await track('failed !! to chaange ad status', {
         distinct_id: userId,
         ad_id: ad_id,
         message: ` ad_id : ${ad_id}  does not exist`
-
       })
-      throw ({ status: 404, message: 'AD_NOT_EXISTS' })
+      throw ({ status: 401, message: 'Access_Denied' });
     }
-    // if ad exist change the status of Ad
-    else {
-      // mixpanel track - when Status Of Ad changed 
-      await track('ad status changed successfully !!', {
-        distinct_id: userId,
-        ad_id: ad_id,
-        status: bodyData.status
-      })
-      if (bodyData.status == "Archive") {
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Archive",
-              ad_Archive_Date: currentDate
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+    if (bodyData.status == "Archive") {
+      const adDoc = await Generic.findByIdAndUpdate(
+        {
+          _id: ad_id,
+          ad_status: "Selling"
+        },
+        {
+          $set: {
+            ad_status: "Archive",
+            ad_Archive_Date: currentDate
+          }
+        },
+        { returnOriginal: false, new: true }
+      )
+      if (!adDoc) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Sold") {
-        const adDoc = await Generic.updateMany(
-          {
-            parent_id: ad_id,
-            ad_status: "Selling"
-          },
-          {
-            $set: {
-              ad_status: "Sold",
-              ad_Sold_Date: currentDate,
-              ad_Historic_Duration_Date: Ad_Historic_Duration,
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+      return adDoc;
+    }
+    else if (bodyData.status == "Sold") {
+      const adDoc = await Generic.updateMany(
+        {
+          parent_id: ad_id,
+          ad_status: "Selling"
+        },
+        {
+          $set: {
+            ad_status: "Sold",
+            ad_Sold_Date: currentDate,
+            ad_Historic_Duration_Date: Ad_Historic_Duration,
+          }
+        },
+        { returnOriginal: false, new: true }
+      );
+      if (adDoc.modifiedCount === 0) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Delete") {
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Delete",
-              ad_Deleted_Date: currentDate,
-              ad_Historic_Duration_Date: Ad_Historic_Duration
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+      return adDoc;
+    }
+    else if (bodyData.status == "Delete") {
+      const adDoc = await Generic.findByIdAndUpdate(
+        {
+          _id: ad_id
+        },
+        {
+          $set: {
+            ad_status: "Delete",
+            ad_Deleted_Date: currentDate,
+            ad_Historic_Duration_Date: Ad_Historic_Duration
+          }
+        },
+        { returnOriginal: false, new: true }
+      );
+      if (!adDoc) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Premium") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
+      return adDoc;
+    }
+    else if (bodyData.status == "Selling") {
+      const adDoc = await Generic.updateOne(
+        {
+          _id: ad_id,
+          ad_status: "Archive"
+        },
+        {
+          $set: {
+            ad_status: "Selling",
           },
-          {
-            $set: {
-              ad_status: "Selling",
-              ad_Premium_Date: currentDate,
-              isPrime: true
-            }
+          $unset: {
+            ad_Draft_Date: 1,
+            ad_Deleted_Date: 1,
+            ad_Sold_Date: 1,
+            ad_Archive_Date: 1,
+            ad_Historic_Duration_Date: 1
           },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
+        }
+      );
+      if (adDoc.modifiedCount === 0) {
+        throw ({ status: 401, message: 'Access_Denied' });
       }
-      else if (bodyData.status == "Draft") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Draft",
-              ad_Sold_Date: currentDate,
-              ad_Draft_Date: currentDate
-            }
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
-      }
-      else if (bodyData.status == "Selling") {
-        // only after payment is done 
-        const adDoc = await Generic.findByIdAndUpdate(
-          {
-            _id: ad_id
-          },
-          {
-            $set: {
-              ad_status: "Selling",
-            },
-            $unset: {
-              ad_Draft_Date: 1,
-              ad_Deleted_Date: 1,
-              ad_Sold_Date: 1,
-              ad_Archive_Date: 1,
-              ad_Historic_Duration_Date: 1
-            },
-          },
-          { returnOriginal: false, new: true }
-        )
-        return adDoc;
-      }
-    };
+      return adDoc;
+    }
+
 
   };
 
@@ -1147,7 +1187,10 @@ module.exports = class AdService {
   static async favouriteAds(bodyData, userId, ad_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
+    const isBodyValid = validateFavoriteAdBody(bodyData,ad_id);
+    if(!isBodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     // Ad is find from Generics collection    if body contains "Favourite"
     if (bodyData.value == "Favourite") {
 
@@ -1156,14 +1199,12 @@ module.exports = class AdService {
       });
       // if Ad doesnt exists throw error
       if (!findAd) {
-
         // mixpanel track for failed event in make ad favourite
         await track('failed !! Make Ad favourite ', {
           distinct_id: userId,
           ad_id: ad_id,
           message: ` ad_id : ${ad_id}  does not exist`
         })
-
         throw ({ status: 404, message: 'AD_NOT_EXISTS' });
       }
       else {
@@ -1936,11 +1977,14 @@ $skip and limit for pagination
   static async repostAd(ad_id, userId) {
 
     // only after payment is done 
-
-    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId });
+    const isIdValid = validateMongoID(ad_id);
+    if(!isIdValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
+    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId ,ad_status:{$in:["Sold","Delete","Expired"]}});
 
     if (!adCopy) {
-      throw ({ status: 401, message: 'Access_Denied' });
+      throw ({ status: 401, message: 'Bad Request' });
     }
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -2437,26 +2481,23 @@ Cloud Notification To firebase
 
   // Create Draft Ad api
   static async draftAd(bodyData, userId) {
+    const isAdBodyValid = ValidateDraftAdBody(bodyData);
+    if(!isAdBodyValid){
+      throw ({ status: 401, message: 'Bad Request' })
+    }
     // Generic AdDoc is created 
     const {
       ad_id,
       parent_id,
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
       title,
       price,
-      isPrime,
       image_url,
       video_url,
-      ad_present_location,
-      ad_posted_location,
-      ad_posted_address,
-      ad_present_address,
-      ad_status,
       is_negotiable
     } = bodyData
 
@@ -2473,9 +2514,6 @@ Cloud Notification To firebase
 
     */
     const thumbnail_url = await imgCom(image_url[0]);
-
-
-    let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"])
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     let adDoc = await Draft.create({
       _id: ObjectId(ad_id),
@@ -2483,23 +2521,15 @@ Cloud Notification To firebase
       user_id: ObjectId(userId),
       category,
       sub_category,
-      field,
       description,
       SelectFields,
       special_mention,
       title,
       price,
-      product_age: age || 0,
-      isPrime,
-      ad_type: isPrime == false ? "Free" : "Premium",
       image_url,
       video_url,
       thumbnail_url,
-      ad_present_location,
-      ad_posted_location,
-      ad_posted_address,
-      ad_present_address,
-      ad_status,
+      ad_status:"Draft",
       ad_Draft_Date: currentDate,
       is_negotiable,
       created_at: currentDate
@@ -2520,7 +2550,6 @@ Cloud Notification To firebase
 
   // Update Any Draft Ad
   static async updateDraft(bodyData, userId) {
-
     const {
       ad_id,
       category,

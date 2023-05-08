@@ -20,6 +20,7 @@ const { app, storage } = require("../firebaseAppSetup");
 const { getAdsForPayout } = require("./AdService");
 const OfferModel = require("../models/offerSchema");
 const { getReferralForPayouts } = require("./referCodeService");
+const HelpCenter = require("../models/helpCenterSchema");
 
 
 module.exports = class ProfileService {
@@ -402,7 +403,7 @@ module.exports = class ProfileService {
       const Offer = await OfferModel.findOne({});
       let adsPayout = false;
       let referralPayout = false;
-  
+
       if (Offer.offerValid) {
         adsPayout = true;
       } else {
@@ -414,7 +415,7 @@ module.exports = class ProfileService {
           adsPayout = true
         }
       }
-  
+
       if (Offer.referralOfferValid) {
         referralPayout = true;
       } else {
@@ -427,7 +428,7 @@ module.exports = class ProfileService {
 
       let adsPayoutFlag = adsPayout;
       let referralPayoutFlag = referralPayout;
-  
+
       return { updateUsr, referral_code, adsPayoutFlag, referralPayoutFlag }
     }
   };
@@ -444,7 +445,7 @@ module.exports = class ProfileService {
   };
   //delete userProfile Service
   static async deleteUserService(user_ID) {
-
+    const UserID = ObjectId(user_ID)
     // const defultProfile = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb";
     // const defaultThumbnail = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"; 
     // const userDeleted = await Profile.findOne({ _id: user_ID });
@@ -453,23 +454,23 @@ module.exports = class ProfileService {
     //   video_url: 1,
     //     thumbnail_url: 1
     // });
-    const userDeleted = await Profile.findOneAndDelete({ _id: user_ID });
+    const userDeleted = await Profile.findOneAndDelete({ _id: UserID });
 
     if (userDeleted) {
-      await User.findOneAndUpdate({ _id: user_ID }, {
+      await User.findOneAndUpdate({ _id: UserID }, {
         $set: {
           isDeletedOnce: true
         }
       });
 
-      await Credit.deleteOne({ user_id: user_ID });
-      await Alert.deleteOne({ user_ID: user_ID });
-      await Draft.deleteMany({ user_id: user_ID });
-      //   // await Generic.deleteMany({ user_id: user_ID });
+      await Credit.deleteOne({ user_id: UserID });
+      await Alert.deleteOne({ user_ID: UserID });
+      await Draft.deleteMany({ user_id: UserID });
+      await Generic.deleteMany({ user_id: UserID });
       await GlobalSearch.deleteMany({ ad_id: { $in: userDeleted.my_ads } });
-      await HelpService.deleteMany({ user_id: user_ID });
-      await Rating.deleteOne({ user_id: user_ID });
-      await Referral.deleteOne({ user_Id: user_ID });
+      await HelpCenter.deleteMany({ user_id: UserID });
+      await Rating.deleteMany({ user_id: UserID });
+      await Referral.deleteMany({ user_Id: UserID });
 
       // if (userDeleted.profile_url !== defultProfile) {
       //   //firebase delete operation

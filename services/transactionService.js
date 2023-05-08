@@ -38,7 +38,7 @@ module.exports = class TransactionService {
     };
 
     static async saveTrasactionService(bodyData) {
-
+        //TODO: validate body
         const orderId = bodyData.orderId;
 
         if (bodyData.status === "Failed") {

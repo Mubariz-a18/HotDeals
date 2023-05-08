@@ -10,6 +10,9 @@ const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
+const { fa } = require("translate-google/languages");
+const validateTransaction = require("../validators/transactionValidator");
+const { validateBoostMyAd, validateCheckCreditBody, validateHighlightMyAdbody, validateCheckCreditBodyForArray } = require("../validators/CreditValidations");
 
 const creditType = {
   Premium: "Premium",
@@ -96,6 +99,8 @@ module.exports = class CreditService {
     await cloudMessage(user_id.toString(), messageBody);
   };
 
+  
+
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
 
@@ -103,14 +108,24 @@ module.exports = class CreditService {
 
     const creditsArray = bodyData;
 
+    const isValid = validateTransaction(creditsArray);
+    if (!isValid) {
+      throw ({ status: 404, message: 'Bad Request' });
+    }
+    const isTransactionValid = await Transaction.findOne({
+      _id: ObjectId(creditsArray[0].transaction_Id),
+      user_id: ObjectId(userId),
+      status: 'Successfull',
+      isTransactionUsed: false
+    });
+
+    if (!isTransactionValid) {
+      throw ({ status: 404, message: 'Bad Request' });
+    }
+
     creditsArray.forEach(async credit => {
-
-      //TODO: validate the transaction id with our Transactions collection
-
       const push = {
-
         universal_credit_bundles: {
-
           number_of_credit: credit.number_of_credit,
           source_of_credit: "Paid",
           credit_status: "Active",
@@ -118,11 +133,10 @@ module.exports = class CreditService {
           credit_expiry_date: expiry_date_func(+credit.credit_duration),
           transaction_Id: credit.transaction_Id,
           credit_created_date: currentDate
-
         }
       }
 
-      const Purchased_Credit_Doc = await Credit.findOneAndUpdate({ user_id: userId }, {
+      await Credit.findOneAndUpdate({ user_id: ObjectId(userId) }, {
 
         $inc: { total_universal_credits: credit.number_of_credit },
 
@@ -142,7 +156,12 @@ module.exports = class CreditService {
       })
 
     });
-
+    
+    await Transaction.findOneAndUpdate({ _id: ObjectId(creditsArray[0].transaction_Id) }, {
+      $set: {
+        isTransactionValid: true
+      }
+    });
 
     /* 
  
@@ -157,7 +176,7 @@ module.exports = class CreditService {
 
     const messageBody = {
 
-      title:`Purchased: Thanks for purchasing '${creditCount}' credits!`,
+      title: `Purchased: Thanks for purchasing '${creditCount}' credits!`,
       body: "Check Your Credit Info",
       data: {
         navigateTo: navigateToTabs.credits
@@ -181,8 +200,17 @@ module.exports = class CreditService {
       Premium_Boost: 4,
       HighLight: 5
     };
-
+    //DONE: validate body (cat should be from the json)
     const { category, AdsArray } = bodyData;
+    const isCheckCreditBodyValid = validateCheckCreditBodyForArray(bodyData);
+    if(!isCheckCreditBodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
+
+    const userExist = await Profile.findById({_id:user_Id});
+    if(!userExist){
+      throw ({ status: 401, message: 'UnAuthorised' });
+    }
 
     const user_credit_Document = await Credit.findOne({
       user_id: user_Id
@@ -454,13 +482,18 @@ module.exports = class CreditService {
 
   //boost Ad 
   static async boost_MyAd(user_Id, body) {
-
+    //DONE: validate body
+    const isBoostbodyValid = validateBoostMyAd(body);
+    if(!isBoostbodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category, boost_duration } = body
 
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
 
     if (!Ad) {
-      throw ({ status: 401, message: 'Access_Denied' });
+      throw ({ status: 401, message: 'Access Denied' });
     }
 
     const AdsArray = Array(body.AdsArray);
@@ -620,6 +653,11 @@ module.exports = class CreditService {
   // Make Ad Premium
   static async MakeAdPremium(user_Id, body) {
 
+    //DONE: validate body
+    const isPremiumbodyValid = ValidateMakeAdPremiumBody(body);
+    if(!isPremiumbodyValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category } = body
 
     const typeMultiples = {
@@ -630,7 +668,8 @@ module.exports = class CreditService {
       HighLight: 5
     };
 
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -786,11 +825,17 @@ module.exports = class CreditService {
   //HIGHLIGHTAD
   static async HighLight_MyAd(user_Id, body) {
 
+    //DONE: validate body
+    const isHighlightAdValid = validateHighlightMyAdbody(body);
+    if(!isHighlightAdValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const { ad_id, category, HighLight_Duration } = body
 
     const AdsArray = Array(body.AdsArray);
 
-    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id });
+    //DONE: check if ad is in Selling state
+    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id , ad_status:"Selling"});
 
     if (!adDetail) {
       throw ({ status: 401, message: 'Access_Denied' });

@@ -1,5 +1,6 @@
 const Profile = require('../models/Profile/Profile')
 const Help = require("../models/helpCenterSchema");
+const { validateHelpBody } = require('../validators/HelpValidator');
 const { track } = require('./mixpanel-service');
 const moment = require('moment');
 
@@ -8,6 +9,10 @@ module.exports = class HelpService {
 
   // Create Help 
   static async createHelp(bodyData, userId) {
+    const isHelpAttachmentValid = validateHelpBody(bodyData)
+    if(!isHelpAttachmentValid){
+      throw ({ status: 401, message: 'Bad Request' });
+    }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const { phone_Info, title, description, attachment } = bodyData
     //check if user exist 
