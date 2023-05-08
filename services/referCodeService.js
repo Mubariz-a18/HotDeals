@@ -122,11 +122,10 @@ module.exports = class ReferCodeService {
                 if (installPayoutExist) {
                     throw ({ status: 403, message: 'YOU_CAN_ONLY_USE_ONE_REFERRED_CODE' });
                 }
-
-                //TODO: change the logic for this probability to get 8,9,10 should be very low
+                const rand = Math.random();
                 const min = minReferralReward / 100;
                 const max = maxReferralReward / 100;
-                const amount = (Math.floor(Math.random() * (max - min + 1)) + min) * 100;
+                const amount = (Math.floor(rand * (max - min)) + min) * 100;
 
                 await InstallPayoutModel.create({
                     user_id: referCodeExist.user_Id,
@@ -271,10 +270,28 @@ module.exports = class ReferCodeService {
     // Get Amount
     static async generateRandomAmountAndSave(user_ID, friend_ID) {
 
+        user_ID = ObjectId(user_ID)
+        friend_ID = ObjectId(friend_ID)
         const Offer = await OfferModel.findOne();
 
-        if (Offer.referralOfferValid === false) {
+        if (Offer.stopReferralOfferNow === true) {
             throw ({ status: 401, message: 'OFFER NOT VALID' });
+        }
+
+        let referralPayout = false;
+
+        if (Offer.referralOfferValid) {
+            referralPayout = true;
+        } else {
+            const payoutReferralList = await this.getReferralForPayouts(user_ID);
+            const claimablePayouts = payoutReferralList.find(obj => obj.paymentstatus === "Not_Claimed")
+            if (claimablePayouts) {
+                referralPayout = true
+            }
+        }
+
+        if (!referralPayout) {
+            throw ({ status: 400, message: 'Bad Request' });
         }
 
         const UserDoc = await Profile.findById({ _id: user_ID });
@@ -282,14 +299,17 @@ module.exports = class ReferCodeService {
             throw ({ status: 401, message: 'UNAUTHORIZED' });
         }
 
-        const FriendDoc = await Profile.findById({ _id: friend_ID });
+        const FriendDoc = await Profile.findOne({ _id: friend_ID, referrered_user: user_ID });
         if (!FriendDoc) {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
         }
 
+        // if (FriendDoc?.referrered_user?.toString() !== user_ID) {
+        //     throw ({ status: 401, message: 'Bad Request' });
+        // }
         const UserRefferal = await Referral.findOne({
-            user_Id: ObjectId(user_ID),
-            "used_by.userId": ObjectId(friend_ID),
+            user_Id: user_ID,
+            "used_by.userId": friend_ID,
             "used_by.isClaimed": false
         });
 
@@ -297,16 +317,12 @@ module.exports = class ReferCodeService {
 
         const isReferralOld = UserRefferal?.used_by.find(obj => obj.userId.toString() === friend_ID.toString() && moment(obj.used_Date).isBefore(threeDaysAgo))
         if (moment(FriendDoc.created_date).isAfter(threeDaysAgo) || isReferralOld === undefined) {
-            throw ({ status: 400, message: 'Referral is not Old Enough' });
-        }
-
-        if (FriendDoc?.referrered_user?.toString() !== user_ID) {
-            throw ({ status: 401, message: 'Bad Request' });
+            throw ({ status: 400, message: 'Referral Doesnot Exist or Referral is not Old Enough' });
         }
 
         const payoutDoc = await InstallPayoutModel.findOneAndUpdate({
-            user_id: ObjectId(user_ID),
-            referredTo: ObjectId(friend_ID),
+            user_id: user_ID,
+            referredTo: friend_ID,
             payment_status: "Not_Claimed"
         },
             {
@@ -322,7 +338,7 @@ module.exports = class ReferCodeService {
         }
 
     };
-    static isValidUpiOrPhoneNumber(phoneNumber,upi) {
+    static isValidUpiOrPhoneNumber(phoneNumber, upi) {
         const upiRegex = /^[\w.-]+@[\w.-]+$/;
         const phoneRegex = /^\d{10}$/;
 
@@ -340,9 +356,26 @@ module.exports = class ReferCodeService {
 
         const Offer = await OfferModel.findOne();
 
-        if (Offer.referralOfferValid === false) {
+        if (Offer.stopReferralOfferNow === true) {
             throw ({ status: 401, message: 'OFFER NOT VALID' });
         }
+
+        let referralPayout = false;
+
+        if (Offer.referralOfferValid) {
+            referralPayout = true;
+        } else {
+            const payoutReferralList = await this.getReferralForPayouts(userId);
+            const claimablePayouts = payoutReferralList.find(obj => obj.paymentstatus === "Not_Claimed")
+            if (claimablePayouts) {
+                referralPayout = true
+            }
+        }
+
+        if (!referralPayout) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+
 
         let {
             friend_ID,
@@ -364,12 +397,15 @@ module.exports = class ReferCodeService {
         if (!upiRegex.test(upi_id)) {
             throw ({ status: 401, message: 'Please Enter Proper UPI ID' });
         }
-        if(phoneNumber && !phoneRegex.test(phoneNumber) ){
+        if (phoneNumber && !phoneRegex.test(phoneNumber)) {
             throw ({ status: 401, message: 'Enter Valid Mobile Number' });
         }
-        if(email && !emailRegex.test(email) ){
+        if (email && !emailRegex.test(email)) {
             throw ({ status: 401, message: 'Enter Valid Email Address' });
         }
+
+        userId = ObjectId(userId)
+        friend_ID = ObjectId(friend_ID)
 
         const userDetails = await Profile.findById({ _id: userId }, {
             name: 1,
@@ -383,7 +419,7 @@ module.exports = class ReferCodeService {
             throw ({ status: 401, message: 'UNAUTHORIZED' });
         }
 
-        const FriendDoc = await User.findById({ _id: ObjectId(friend_ID), isDeletedOnce: false });
+        const FriendDoc = await User.findById({ _id: (friend_ID), isDeletedOnce: false });
         const FriendProfile = await Profile.findById({ _id: friend_ID });
         if (!FriendDoc) {
             throw ({ status: 401, message: 'Friend Id Doesnot Exist' });
@@ -391,7 +427,7 @@ module.exports = class ReferCodeService {
 
         const referCodeExist = await Referral.findOne({
             user_Id: userId,
-            "used_by.userId": ObjectId(friend_ID),
+            "used_by.userId": (friend_ID),
             "used_by.isClaimed": false
         });
 
@@ -407,8 +443,8 @@ module.exports = class ReferCodeService {
         }
 
         const payoutDoc = await InstallPayoutModel.findOne({
-            user_id: ObjectId(userId),
-            referredTo: ObjectId(friend_ID),
+            user_id: (userId),
+            referredTo: (friend_ID),
             payment_status: "Not_Claimed",
             showAmount: true
         });
@@ -529,8 +565,8 @@ module.exports = class ReferCodeService {
 
             await InstallPayoutModel.findOneAndUpdate(
                 {
-                    user_id: ObjectId(userId),
-                    referredTo: ObjectId(friend_ID),
+                    user_id: (userId),
+                    referredTo: (friend_ID),
                 }, {
                 $set: {
                     payout_id: id,
@@ -545,7 +581,7 @@ module.exports = class ReferCodeService {
                 }
             });
             if (status !== "Not_Claimed") {
-                await Referral.findOneAndUpdate({ user_Id: userId, "used_by.userId": ObjectId(friend_ID) }, {
+                await Referral.findOneAndUpdate({ user_Id: userId, "used_by.userId": (friend_ID) }, {
                     $set: {
                         "used_by.$.isClaimed": true
                     }

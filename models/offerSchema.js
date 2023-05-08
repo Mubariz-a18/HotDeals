@@ -25,6 +25,9 @@ const OfferSchema = new mongoose.Schema({
   referralOfferValid: {
     type: Boolean
   },
+  stopReferralOfferNow: {
+    type: Boolean
+  },
   minReferralReward: {
     type: Number
   },
