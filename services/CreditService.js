@@ -1,18 +1,23 @@
-const Credit = require("../models/creditSchema");
-const { durationInDays, expiry_date_func } = require("../utils/moment");
-const Profile = require("../models/Profile/Profile");
-const { credit_value, boost_vales, HighLight_values } = require("../utils/creditValues");
 const moment = require('moment');
 const { ObjectId } = require("mongodb");
+const Credit = require("../models/creditSchema");
+const CreditValuesModel = require("../models/creditvaluesSchema");
+const Profile = require("../models/Profile/Profile");
 const Generic = require("../models/Ads/genericSchema");
 const Transaction = require("../models/transactionSchema");
-const cloudMessage = require("../Firebase operations/cloudMessaging");
-const navigateToTabs = require("../utils/navigationTabs");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { fa } = require("translate-google/languages");
+const cloudMessage = require("../Firebase operations/cloudMessaging");
+const navigateToTabs = require("../utils/navigationTabs");
+const { durationInDays, expiry_date_func } = require("../utils/moment");
 const validateTransaction = require("../validators/transactionValidator");
-const { validateBoostMyAd, validateCheckCreditBody, validateHighlightMyAdbody, validateCheckCreditBodyForArray } = require("../validators/CreditValidations");
+const {
+  validateBoostMyAd,
+  validateCheckCreditBody,
+  validateHighlightMyAdbody,
+  validateCheckCreditBodyForArray,
+  ValidateMakeAdPremiumBody
+} = require("../validators/CreditValidations");
 
 const creditType = {
   Premium: "Premium",
@@ -99,8 +104,6 @@ module.exports = class CreditService {
     await cloudMessage(user_id.toString(), messageBody);
   };
 
-  
-
   // Create Credit for old users
   static async createCredit(bodyData, userId) {
 
@@ -156,7 +159,7 @@ module.exports = class CreditService {
       })
 
     });
-    
+
     await Transaction.findOneAndUpdate({ _id: ObjectId(creditsArray[0].transaction_Id) }, {
       $set: {
         isTransactionValid: true
@@ -192,23 +195,17 @@ module.exports = class CreditService {
 
   //check Credit Function
   static async CreditCheckFunction(bodyData, user_Id) {
-
-    const typeMultiples = {
-      General: 1,
-      Premium: 3,
-      General_Boost: 2,
-      Premium_Boost: 4,
-      HighLight: 5
-    };
-    //DONE: validate body (cat should be from the json)
+    const CreditValuesDocument = await CreditValuesModel.findOne();
+    const typeMultiples = CreditValuesDocument.typeMultiples;
     const { category, AdsArray } = bodyData;
+
     const isCheckCreditBodyValid = validateCheckCreditBodyForArray(bodyData);
-    if(!isCheckCreditBodyValid){
+    if (!isCheckCreditBodyValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
 
-    const userExist = await Profile.findById({_id:user_Id});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: user_Id });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorised' });
     }
 
@@ -231,7 +228,7 @@ module.exports = class CreditService {
     })
 
 
-    const CategoryCreditBaseValue = credit_value[category];
+    const CategoryCreditBaseValue = CreditValuesDocument.creditValuesForCategories[category];
 
     const tempArray = [];
 
@@ -298,16 +295,11 @@ module.exports = class CreditService {
   //Credit Deduction Function
   static async creditDeductionFunction(bodyData, user_Id, ad_id) {
 
+    const CreditValuesDocument = await CreditValuesModel.findOne();
+
+    const typeMultiples = CreditValuesDocument.typeMultiples;
+
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-    const typeMultiples = {
-      General: 1,
-      General_Boost: 2,
-      Premium: 3,
-      Premium_Boost: 4,
-      HighLight: 5
-    };
-
     const { category, title } = bodyData;
 
     const AdsArray = Array(bodyData.AdsArray);
@@ -331,7 +323,7 @@ module.exports = class CreditService {
     })
 
 
-    const CategoryCreditBaseValue = credit_value[category];
+    const CategoryCreditBaseValue = CreditValuesDocument.creditValuesForCategories[category];
 
     const tempArray = [];
 
@@ -484,13 +476,13 @@ module.exports = class CreditService {
   static async boost_MyAd(user_Id, body) {
     //DONE: validate body
     const isBoostbodyValid = validateBoostMyAd(body);
-    if(!isBoostbodyValid){
+    if (!isBoostbodyValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
     const { ad_id, category, boost_duration } = body
 
     //DONE: check if ad is in Selling state
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id, ad_status: "Selling" });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access Denied' });
@@ -525,9 +517,9 @@ module.exports = class CreditService {
 
     })
 
+    const CreditValuesDocument = await CreditValuesModel.findOne();
 
-    const CategoryCreditBaseValue = credit_value[category]
-
+    const CategoryCreditBaseValue = CreditValuesDocument.creditValuesForCategories[category];
     const tempArray = [];
 
     AdsArray.forEach(ad => {
@@ -540,8 +532,7 @@ module.exports = class CreditService {
 
       const credittype = getCreditType(eachAd);
 
-      const creditTypeMultiple = boost_vales[credittype][boost_duration];
-
+      const creditTypeMultiple = CreditValuesDocument.boostValues[credittype][boost_duration];
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
 
       creditValue_for_usage = creditValue_for_usage + requiredCredits
@@ -655,21 +646,18 @@ module.exports = class CreditService {
 
     //DONE: validate body
     const isPremiumbodyValid = ValidateMakeAdPremiumBody(body);
-    if(!isPremiumbodyValid){
+    if (!isPremiumbodyValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
     const { ad_id, category } = body
 
-    const typeMultiples = {
-      General: 1,
-      General_Boost: 2,
-      Premium: 3,
-      Premium_Boost: 4,
-      HighLight: 5
-    };
+
+    const CreditValuesDocument = await CreditValuesModel.findOne();
+
+    const typeMultiples = CreditValuesDocument.typeMultiples;
 
     //DONE: check if ad is in Selling state
-    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id , ad_status:"Selling"});
+    const Ad = await Generic.findOne({ _id: ObjectId(ad_id), user_id: user_Id, ad_status: "Selling" });
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -701,15 +689,13 @@ module.exports = class CreditService {
       }
     })
 
-
     universal_credit_bundles.sort((a, b) => {
 
       return new Date(a.credit_expiry_date) - new Date(b.credit_expiry_date)
 
     })
 
-
-    const CategoryCreditBaseValue = credit_value[category]
+    const CategoryCreditBaseValue = CreditValuesDocument.creditValuesForCategories[category];
 
     const tempArray = [];
 
@@ -827,7 +813,7 @@ module.exports = class CreditService {
 
     //DONE: validate body
     const isHighlightAdValid = validateHighlightMyAdbody(body);
-    if(!isHighlightAdValid){
+    if (!isHighlightAdValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
     const { ad_id, category, HighLight_Duration } = body
@@ -835,7 +821,7 @@ module.exports = class CreditService {
     const AdsArray = Array(body.AdsArray);
 
     //DONE: check if ad is in Selling state
-    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id , ad_status:"Selling"});
+    const adDetail = await Generic.findOne({ _id: ad_id, user_id: user_Id, ad_status: "Selling" });
 
     if (!adDetail) {
       throw ({ status: 401, message: 'Access_Denied' });
@@ -868,8 +854,8 @@ module.exports = class CreditService {
 
     })
 
-
-    const CategoryCreditBaseValue = credit_value[category]
+    const CreditValuesDocument = await CreditValuesModel.findOne();
+    const CategoryCreditBaseValue = CreditValuesDocument.creditValuesForCategories[category];
 
     const tempArray = [];
 
@@ -883,10 +869,9 @@ module.exports = class CreditService {
 
       // const credittype = getCreditType(eachAd);
 
-      const creditTypeMultiple = HighLight_values;
+      const creditTypeMultiple = CreditValuesDocument.HighLight_values.value;
 
       const requiredCredits = CategoryCreditBaseValue * creditTypeMultiple
-
 
       creditValue_for_usage = creditValue_for_usage + requiredCredits
 
