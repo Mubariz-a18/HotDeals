@@ -338,12 +338,12 @@ module.exports = class ReferCodeService {
         }
 
     };
-    
+
     // claim Reward
     static async claimReferralPayouts(userId, bodyData) {
 
         const Offer = await OfferModel.findOne();
-
+        //fixed
         if (Offer.stopReferralOfferNow === true) {
             throw ({ status: 401, message: 'OFFER NOT VALID' });
         }
