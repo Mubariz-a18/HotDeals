@@ -3,6 +3,7 @@ const BusinessInfoModel = require("../models/Profile/BusinessDetailSchema");
 const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
+const {ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile} = require('../validators/BusinessAds.Validators');
 
 module.exports = class BusinessAdService {
 
@@ -43,6 +44,10 @@ module.exports = class BusinessAdService {
     }
 
     static async createBusinessProfileService(userID, body) {
+        const isCreateBusinessProfileValid = ValidateBusinessProfile(body);
+        if(!isCreateBusinessProfileValid){
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
             name,
@@ -68,6 +73,10 @@ module.exports = class BusinessAdService {
     };
 
     static async updateBusinesProfileService(userID, body) {
+        const isCreateBusinessProfileValid = ValidateBusinessProfile(body);
+        if(!isCreateBusinessProfileValid){
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
             name,
@@ -97,6 +106,10 @@ module.exports = class BusinessAdService {
     }
 
     static async createBusinessAdService(userID, body) {
+        const isCreateBusinessAdValid = ValidateBusinessBody(body);
+        if(!isCreateBusinessAdValid){
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
             title,
@@ -136,6 +149,10 @@ module.exports = class BusinessAdService {
     };
 
     static async updateBusinessAdService(userID, body) {
+        const isUpdateBusinessAdValid = ValidateUpdateBusinessBody(body);
+        if(!isUpdateBusinessAdValid){
+            throw ({ status: 400, message: 'Bad Request' });
+        }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
             adID,
@@ -162,7 +179,7 @@ module.exports = class BusinessAdService {
         if (BusinessAdDoc.modifiedCount === 1) {
             return true
         } else {
-            throw ({ status: 404, message: 'Bad Request' });
+            throw ({ status: 400, message: 'Bad Request' });
         }
     };
 

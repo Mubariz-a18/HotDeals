@@ -72,7 +72,7 @@ function IsVideoArrInvalid(video_url){
 };
 
 function isImageInvalid(imageurl){
-  if (!(imageurl.startsWith(firebaseStorageBucketUrl) || imageurl.startsWith(googleCloudStorageBucketUrl))) return false
+  if (!(imageurl.startsWith(firebaseStorageBucketUrlImage) || imageurl.startsWith(googleCloudStorageBucketUrl))) return false
   return true
 }
 
@@ -351,6 +351,7 @@ module.exports = {
   validateMongoID,
   ValidateCreateAdBody,
   ValidateDraftAdBody,
+  validateLocation,
   ArrayOfString,
   isImageInvalid,
   IsimageArrInvalid,
