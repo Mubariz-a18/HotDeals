@@ -338,19 +338,7 @@ module.exports = class ReferCodeService {
         }
 
     };
-    static isValidUpiOrPhoneNumber(phoneNumber, upi) {
-        const upiRegex = /^[\w.-]+@[\w.-]+$/;
-        const phoneRegex = /^\d{10}$/;
-
-
-        if (upiRegex.test(upi) && phoneRegex.test(phoneNumber)) {
-            return true;
-        }
-
-        // If the string doesn't match either regex, return false
-        return false;
-    }
-
+    
     // claim Reward
     static async claimReferralPayouts(userId, bodyData) {
 
