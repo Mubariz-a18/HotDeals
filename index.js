@@ -32,6 +32,7 @@ var bodyParser = require("body-parser");
   const connectDB = require("./db/connectDatabase");
 
 
+
   app.set('trust proxy', 1)
 
   //Middlewares
@@ -79,3 +80,24 @@ var bodyParser = require("body-parser");
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
+  // const crypto = require('crypto');
+
+  // // // Generate a new RSA key pair (public and private key)
+  // const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+  //   modulusLength: 2048,
+  //   publicKeyEncoding: {
+  //     type: 'spki',
+  //     format: 'pem'
+  //   },
+  //   privateKeyEncoding: {
+  //     type: 'pkcs8',
+  //     format: 'pem',
+  //     cipher: 'aes-256-cbc',
+  //     passphrase: 'truelist'
+  //   }
+  // });
+
+  // console.log( publicKey,privateKey)
+
+  
+  

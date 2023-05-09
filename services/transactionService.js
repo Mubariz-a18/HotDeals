@@ -1,40 +1,55 @@
 const Razorpay = require("razorpay")
 const { ObjectId } = require('mongodb');
-
 const moment = require('moment');
 const Transaction = require("../models/transactionSchema");
-
+const crypto = require('crypto');
+const fs = require('fs')
 //TODO: we need to use encryption for these things
 module.exports = class TransactionService {
 
     static async getOrderService(bodyData, user_ID) {
-
-        const razorPayConfig = new Razorpay({
-            key_id: process.env.LIVE_KEY_ID,
-            key_secret: process.env.LIVE_KEY_SECRET,
-        });
-
-        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
-        const receipt_id = new ObjectId();
-
-        const order = await razorPayConfig.orders.create({
-            amount: bodyData.amount * 100,
-            currency: 'INR',
-            receipt: receipt_id
-        });
-
-        const TransactionOrder = await Transaction.create({
-            _id: receipt_id,
-            user_id: user_ID,
-            amount: bodyData.amount,
-            status: "Pending",
-            order_id: order.id.toString(),
-            payment_initate_date: currentDate
-        });
-
-        return TransactionOrder
-
+        try{
+            const privateKey = fs.readFileSync('private-key.pem', 'utf-8')
+            const encryptedData = bodyData.encryptedData
+    
+            const decryptedData = crypto.privateDecrypt({
+                key: privateKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+                passphrase: process.env.CRYPTOPASSPHRASE
+            }, Buffer.from(encryptedData, 'base64'));
+    
+            const newData = JSON.parse(decryptedData.toString('utf8'));
+    
+            const razorPayConfig = new Razorpay({
+                key_id: process.env.LIVE_KEY_ID,
+                key_secret: process.env.LIVE_KEY_SECRET,
+            });
+    
+            const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+            const receipt_id = new ObjectId();
+    
+            const order = await razorPayConfig.orders.create({
+                amount: newData.amount * 100,
+                currency: 'INR',
+                receipt: receipt_id
+            });
+    
+            const TransactionOrder = await Transaction.create({
+                _id: receipt_id,
+                user_id: user_ID,
+                amount: newData.amount,
+                status: "Pending",
+                order_id: order.id.toString(),
+                payment_initate_date: currentDate
+            });
+    
+            return TransactionOrder
+    
+        }catch(e){
+            throw ({ status: 400, message: "Bad Request" });
+        }
+       
     };
 
     static async saveTrasactionService(bodyData) {
@@ -108,3 +123,4 @@ module.exports = class TransactionService {
         }
     };
 }
+
