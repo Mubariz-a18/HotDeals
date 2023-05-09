@@ -623,3 +623,32 @@ translate(tranObj, { to: 'ta' }).then(res => {
 }).catch(err => {
   console.error(err)
 })
+
+
+
+const xlsx = require('xlsx');
+const BusinessAds = require("./models/Ads/businessAdsShema");
+
+// Read data from XLSX file
+const workbook = xlsx.readFile('Book.xlsx');
+const sheet = workbook.Sheets['Sheet1'];
+const data = xlsx.utils.sheet_to_json(sheet);
+console.log(data)
+// Loop through data and create documents
+data.forEach((row) => {
+  console.log(Object.keys(row))
+  const document = BusinessAds.create({
+    title: row.title,
+    description: row.description,
+    imageUrl: row.imageUrl,
+    adType:'customized',
+    location:{
+      "type": "Point",
+      "coordinates": [
+          78.467233,
+          17.411255
+      ]
+  },
+  address:'gol'
+  });
+});
