@@ -81,23 +81,3 @@ const ValidateSelectFields = require("./validators/SelectFields.Validation");
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
-
-  const obj = {
-    cat:"Electronics",
-    subCat:"Mobiles",
-    selectFields:{
-      "Listed By ": "Owner",
-      "Condition": "Very Good",
-      "Device": "Android",
-      "Brand": "Vive y20",
-      "Make & Config": "Full",
-      "Color": "Blue",
-      "Year of Purchase (MM/YYYY)": "08/2022",
-      "Box Availability": "Yes",
-      "Bill Availability": "Yes",
-      "Warranty": "Yes"
-    }
-  }
-  const result = ValidateSelectFields(obj);
-
-  console.log(result)
