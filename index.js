@@ -30,6 +30,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
+const ValidateSelectFields = require("./validators/SelectFields.Validation");
 
 
 
@@ -80,24 +81,23 @@ var bodyParser = require("body-parser");
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error.message, error.stack, error.name);
   });
-  // const crypto = require('crypto');
 
-  // // // Generate a new RSA key pair (public and private key)
-  // const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-  //   modulusLength: 2048,
-  //   publicKeyEncoding: {
-  //     type: 'spki',
-  //     format: 'pem'
-  //   },
-  //   privateKeyEncoding: {
-  //     type: 'pkcs8',
-  //     format: 'pem',
-  //     cipher: 'aes-256-cbc',
-  //     passphrase: 'truelist'
-  //   }
-  // });
+  const obj = {
+    cat:"Electronics",
+    subCat:"Mobiles",
+    selectFields:{
+      "Listed By ": "Owner",
+      "Condition": "Very Good",
+      "Device": "Android",
+      "Brand": "Vive y20",
+      "Make & Config": "Full",
+      "Color": "Blue",
+      "Year of Purchase (MM/YYYY)": "08/2022",
+      "Box Availability": "Yes",
+      "Bill Availability": "Yes",
+      "Warranty": "Yes"
+    }
+  }
+  const result = ValidateSelectFields(obj);
 
-  // console.log( publicKey,privateKey)
-
-  
-  
+  console.log(result)
