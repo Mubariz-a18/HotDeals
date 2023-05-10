@@ -137,7 +137,6 @@ function validateBody(body) {
   const catNames = Object.keys(catSubCat);
   if (!(catNames.includes(category) && catSubCat[category].includes(sub_category))) return false;
 
-
   if (!ValidateSelectFields({ cat: category, subCat: sub_category, selectFields: SelectFields })) return false
 
   if (typeof description !== 'string' || !description || description.length > 500) return false;
@@ -171,7 +170,7 @@ function validateBody(body) {
   return true;
 };
 
-function validateUpdateAd(body) {
+function validateUpdateAd(body,category,sub_category) {
   const {
     parent_id,
     description,
@@ -184,6 +183,8 @@ function validateUpdateAd(body) {
   } = body;
 
   if (typeof parent_id !== 'string' || parent_id.length !== 24) return false;
+
+  if (!ValidateSelectFields({ cat: category, subCat: sub_category, selectFields: SelectFields })) return false
 
   if (typeof description !== 'string' || !description || description.length > 500) return false;
 
@@ -248,6 +249,8 @@ function ValidateCreateAdBody(body) {
 
   const catNames = Object.keys(catSubCat);
   if (!(catNames.includes(category) && catSubCat[category].includes(sub_category))) return false;
+
+  if (!ValidateSelectFields({ cat: category, subCat: sub_category, selectFields: SelectFields })) return false
 
   if (typeof description !== 'string' || !description || description.length > 500) return false;
 
@@ -315,6 +318,8 @@ function ValidateDraftAdBody(body) {
 
   const catNames = Object.keys(catSubCat);
   if (!(catNames.includes(category) && catSubCat[category].includes(sub_category))) return false;
+
+  if (!ValidateSelectFields({ cat: category, subCat: sub_category, selectFields: SelectFields })) return false
 
   if (typeof description !== 'string' || !description || description.length > 500) return false;
 

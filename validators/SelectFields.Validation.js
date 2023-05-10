@@ -7,7 +7,7 @@ function getPostFors(cat, subCat) {
     }
     const postfors = jsonData[cat][subCat][0]['Post for'][0]['subFields']
         .map(e => e.toString())
-        // .toList();
+    // .toList();
     return postfors;
 };
 
@@ -42,14 +42,15 @@ function validateFields({ formFields, selectFields }) {
 };
 
 function validateRequiredFields({ formFields, selectFields }) {
-    for (const key in formFields) {
-        if (!selectFields.hasOwnProperty(key)) {
-            return false;
+    for (let key in formFields) {
+        if (formFields[key]['required'] === true) {
+            if (!selectFields.hasOwnProperty(key)) {
+                return false;
+            }
         }
     }
-
     return true;
-};
+}
 
 function validateValue({ field, key, selectedValue }) {
     const enumType = field['enumType'];
@@ -132,8 +133,8 @@ function validateTextFieldValue({ field, key, selectedValue }) {
     return true;
 };
 
-function validateNestedFields(field, key, selectedValue) {
-    if (!(selectedValue instanceof Map)) return false;
+function validateNestedFields({ field, key, selectedValue }) {
+    if (!(typeof selectedValue === 'object')) return false;
 
     for (let i = 0; i < selectedValue.length; i++) {
         const key = Array.from(selectedValue.keys())[i];
@@ -311,7 +312,7 @@ function ValidateSelectFields({ cat, subCat, selectFields }) {
 
     const formFields = jsonData[cat][subCat][0];
 
-    if(!formFields) return false;
+    if (!formFields) return false;
 
     const validFields = validateFields({ formFields, selectFields });
 

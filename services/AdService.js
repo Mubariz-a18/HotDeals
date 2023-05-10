@@ -502,10 +502,6 @@ module.exports = class AdService {
     if(!userExist){
       throw ({ status: 401, message: 'UnAuthorized' })
     }
-    const isUpdateBodyValid = validateUpdateAd(bodyData);
-    if (!isUpdateBodyValid) {
-      throw ({ status: 401, message: "Please Fill the Required Details properly" });
-    }
 
     const {
       parent_id,
@@ -522,6 +518,11 @@ module.exports = class AdService {
 
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
+    }
+
+    const isUpdateBodyValid = validateUpdateAd(bodyData,Ad.category,Ad.sub_category);
+    if (!isUpdateBodyValid) {
+      throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
 
     if (image_url.length == 0) {

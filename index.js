@@ -30,7 +30,6 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
-const ValidateSelectFields = require("./validators/SelectFields.Validation");
 
 
 
