@@ -10,19 +10,21 @@ module.exports = class TransactionService {
 
     static async getOrderService(bodyData, user_ID) {
         try {
-            const privateKey = process.env.CRYPTOPRIVATEKEY
-            const encryptedData = bodyData.encryptedData
-            if (!encryptedData) {
-                throw ({ status: 400, message: "Bad Request" });
-            }
-            const decryptedData = crypto.privateDecrypt({
-                key: privateKey,
-                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                oaepHash: 'sha256',
-                passphrase: process.env.CRYPTOPASSPHRASE
-            }, Buffer.from(encryptedData, 'base64'));
 
-            const newData = JSON.parse(decryptedData.toString('utf8'));
+            const amount = bodyData.amount;
+            // const privateKey = process.env.CRYPTOPRIVATEKEY
+            // const encryptedData = bodyData.encryptedData
+            // if (!encryptedData) {
+            //     throw ({ status: 400, message: "Bad Request" });
+            // }
+            // const decryptedData = crypto.privateDecrypt({
+            //     key: privateKey,
+            //     padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            //     oaepHash: 'sha256',
+            //     passphrase: process.env.CRYPTOPASSPHRASE
+            // }, Buffer.from(encryptedData, 'base64'));
+
+            // const newData = JSON.parse(decryptedData.toString('utf8'));
 
             const razorPayConfig = new Razorpay({
                 key_id: process.env.LIVE_KEY_ID,
@@ -33,7 +35,7 @@ module.exports = class TransactionService {
             const receipt_id = new ObjectId();
 
             const order = await razorPayConfig.orders.create({
-                amount: newData.amount * 100,
+                amount: amount * 100,
                 currency: 'INR',
                 receipt: receipt_id
             });
@@ -41,7 +43,7 @@ module.exports = class TransactionService {
             const TransactionOrder = await Transaction.create({
                 _id: receipt_id,
                 user_id: user_ID,
-                amount: newData.amount,
+                amount: amount,
                 status: "Pending",
                 order_id: order.id.toString(),
                 payment_initate_date: currentDate
@@ -50,7 +52,7 @@ module.exports = class TransactionService {
             return TransactionOrder
 
         } catch (e) {
-            throw ({ status: 400, message: "Bad Reques" });
+            throw ({ status: 400, message: "Bad Request" });
         }
 
     };
