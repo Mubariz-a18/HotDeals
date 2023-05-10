@@ -6,10 +6,10 @@ function validateOtp(phoneNumber, otp) {
     return true
 }
 
-function validatePhoneNumer(phoneNumber, smsToken) {
-    if (!phoneNumber || !phoneNumber.text || !smsToken) return false
+function validatePhoneNumer(phoneNumber) {
+    if (!phoneNumber || !phoneNumber.text ) return false
     if (typeof phoneNumber.text !== 'string' || phoneNumber.text.length !== 10) return false
-    if (typeof smsToken !== 'string') return false
+    // if (typeof smsToken !== 'string') return false
 
     return true
 }
