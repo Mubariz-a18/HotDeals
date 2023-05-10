@@ -32,7 +32,7 @@ module.exports = class SMSController {
         formUrlEncoded({
           From: "DNTRUE",
           To: phoneNumber.text,
-          Body: `Dear user, your OTP for TrueList is ${otp}  ${smsToken}.`
+          Body: `Dear user, your OTP for TrueList is ${otp}  ${smsToken === undefined ? "" : smsToken}.`
           // Priority: "HIGH",
         }),
         {
