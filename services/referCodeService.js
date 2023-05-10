@@ -10,6 +10,8 @@ const InstallPayoutModel = require("../models/InstallsPayoutSchema");
 const { ObjectId } = require("mongodb");
 const { default: axios } = require("axios");
 const User = require("../models/Profile/User");
+const Generic = require("../models/Ads/genericSchema");
+const PayoutModel = require("../models/payoutSchema");
 
 module.exports = class ReferCodeService {
 
@@ -372,6 +374,7 @@ module.exports = class ReferCodeService {
             upi_id
         } = bodyData;
 
+        const isClaimBodyValid = ValidateClaimReferral(bodyData)
 
         if (!friend_ID || !upi_id) {
 
@@ -644,9 +647,23 @@ module.exports = class ReferCodeService {
                     razorpayPayoutStatus: status
                 }
             });
+
+            await PayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid", "Failed"] } }, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
         }
         if (payoutStat === "PayoutProcessing") {
             await InstallPayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] } }, {
+                $set: {
+                    payment_status: statusVal,
+                    razorpayPayoutStatus: status
+                }
+            });
+
+            await PayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] } }, {
                 $set: {
                     payment_status: statusVal,
                     razorpayPayoutStatus: status
@@ -671,11 +688,39 @@ module.exports = class ReferCodeService {
                     }
                 });
 
-                const updateReferralDoc = await Referral.updateOne({ user_Id: payoutDoc.user_id, 'used_by.userId': payoutDoc.referredTo }, {
+                if(payoutDoc){
+
+                    await Referral.updateOne({ user_Id: payoutDoc.user_id, 'used_by.userId': payoutDoc.referredTo }, {
+                        $set: {
+                            "used_by.$.isClaimed": false
+                        }
+                    })
+                }
+
+                const AdPayoutDoc = await PayoutModel.findOneAndUpdate({ payout_id: id, payment_status: { $nin: ["Paid"] } }, {
                     $set: {
-                        "used_by.$.isClaimed": false
+                        payment_status: 'Not_Claimed',
+                    },
+                    $unset: {
+                        "contact_id": "",
+                        "failure_reason": "",
+                        "fund_account_id": "",
+                        "razorpayPayoutStatus": "",
+                        "reference_id": "",
+                        "payout_id": "",
+                        "payment_initate_date": "",
+                        "vpa": ""
                     }
-                })
+                });
+
+                if(AdPayoutDoc){
+                    await Generic.updateOne({_id:AdPayoutDoc.ad_id, user_id: AdPayoutDoc.user_id }, {
+                        $set: {
+                            "isClaimed": false
+                        }
+                    })
+                }
+
             }
         }
 
