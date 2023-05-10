@@ -442,13 +442,13 @@ module.exports = class AdService {
 
       const translatedObj = await translateStringToMultipleLanguages(tranObj, languages)
         .then((translations) => {
-          return new Error("could nt do")
+          return translations
         })
-      // await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
-      //   $set: {
-      //     textLanguages: translatedObj
-      //   }
-      // });
+      await Generic.findByIdAndUpdate({ _id: ObjectId(ad_id) }, {
+        $set: {
+          textLanguages: translatedObj
+        }
+      });
     } catch (e) {
       console.log(e)
     }
@@ -803,7 +803,7 @@ module.exports = class AdService {
         ad_Premium_Date: isPrime == true ? currentDate : "",
         ad_status: new_adStatus,
         detection: batch,
-        // textLanguages: translatedObj ? translatedObj : {},
+        textLanguages: translatedObj ? translatedObj : {},
         is_negotiable,
         created_at: currentDate,
         ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
