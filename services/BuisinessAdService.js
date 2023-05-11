@@ -48,6 +48,10 @@ module.exports = class BusinessAdService {
         if (!isCreateBusinessProfileValid) {
             throw ({ status: 400, message: 'Bad Request' });
         }
+        const isBusinessOwner = await this.BusinessProfile(userID);
+        if (isBusinessOwner) {
+            throw ({ status: 400, message: 'You Already Have a Business Account' });
+        }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
             name,
@@ -69,7 +73,10 @@ module.exports = class BusinessAdService {
             createdAt: currentDate,
             updatedAt: currentDate
         })
-        return BusinessPofileDoc;
+        if (BusinessPofileDoc) {
+            return BusinessPofileDoc;
+        }
+        else throw ({ status: 400, message: 'Bad Request' });
     };
 
     static async updateBusinesProfileService(userID, body) {
@@ -123,11 +130,11 @@ module.exports = class BusinessAdService {
         } = body;
         for (let i = 0; i < primaryDetails.length; i++) {
             const adExist = await this.BusinessAd(primaryDetails[i].ad_id);
-            if(adExist){
+            if (adExist) {
                 throw ({ status: 400, message: 'Bad Request' });
             }
             const BusinessAdDoc = await BusinessAds.create({
-                _id:primaryDetails[i].ad_id,
+                _id: primaryDetails[i].ad_id,
                 title,
                 description,
                 parentID,
