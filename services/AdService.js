@@ -1541,7 +1541,7 @@ module.exports = class AdService {
     let maxDistance = +query.maxDistance;
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
-    let limitval = 10;
+    let limitval = +query.limit || 25;
     if (!lng || !lat || !maxDistance) {
       throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
     }

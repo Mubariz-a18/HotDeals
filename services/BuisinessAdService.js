@@ -4,6 +4,10 @@ const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
 const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile } = require('../validators/BusinessAds.Validators');
+const { ValidateQuery } = require('../validators/Ads.Validator');
+const { getPremiumAdsService } = require('./AdService');
+const { BusinessAdsFunc } = require('../utils/featureAdsUtil');
+
 
 module.exports = class BusinessAdService {
 
@@ -110,7 +114,7 @@ module.exports = class BusinessAdService {
         } else {
             throw ({ status: 404, message: 'Bad Request' });
         }
-    }
+    };
 
     static async createBusinessAdService(userID, body) {
         const isCreateBusinessAdValid = ValidateBusinessBody(body);
@@ -198,7 +202,11 @@ module.exports = class BusinessAdService {
     };
 
     static async getMyBusinessAdsService(userID) {
-        const BusinessPofileDoc = await this.BusinessProfile(userID);
+        const BusinessPofileDoc = await this.BusinessProfile(userID)
+        if (!BusinessPofileDoc) {
+            throw ({ status: 401, message: 'Unauthorized' });
+        }
+        console.log(BusinessPofileDoc.businessAdList)
         const MyBusinessAds = await BusinessAds.aggregate([
             {
                 $match: {
@@ -273,4 +281,82 @@ module.exports = class BusinessAdService {
         }
         return BusinessAdDoc;
     };
+
+    static async GetBusinessAds(userID, query) {
+        try{
+            const isQueryValid = ValidateQuery(query);
+            if (!isQueryValid) {
+                throw ({ status: 400, message: 'Bad Request' });
+            }
+    
+            let lng = +query.lng;
+            let lat = +query.lat;
+            let maxDistance = +query.maxDistance;
+            let pageVal = +query.page;
+            if (pageVal == 0) pageVal = pageVal + 1
+            let limitval = +query.limit || 25;
+            const BusinessAdsArray = await BusinessAds.aggregate([
+                [
+                    {
+                        '$geoNear': {
+                            'near': { type: 'Point', coordinates: [lng, lat] },
+                            "distanceField": "dist.calculated",
+                            'maxDistance': maxDistance,
+                            "includeLocs": "dist.location",
+                            'spherical': true
+                        }
+                    },
+                    {
+                        $match: {
+                            adStatus: "Active",
+                            adType: 'highlighted'
+                        }
+                    },
+                    {
+                        '$project': {
+                            '_id': 1,
+                            'parentID': 1,
+                            'userID': 1,
+                            'adStatus': 1,
+                            'title': 1,
+                            'description': 1,
+                            "adType": 1,
+                            'price': 1,
+                            "imageUrl": 1,
+                            'translateText': 1,
+                            'subAds': 1,
+                            "dist": 1,
+                            "createdAt": 1
+                        }
+                    },
+                    {
+                        $sort: {
+                            "createdAt": -1,
+                            "dist.calculated": -1
+                        }
+                    },
+                    {
+                        $skip: limitval * (pageVal - 1)
+                    },
+                    {
+                        $limit: limitval
+                    },
+                ]
+            ]);
+
+            const PremiumAdsArray = await getPremiumAdsService(userID,query)
+
+            // const Highlighted = 
+
+            if(BusinessAdsArray.length === 0 && PremiumAds.length === 0){
+                throw ({ status: 204, message: '' });
+            }
+            const HighlightedAds = BusinessAdsFunc(PremiumAdsArray,BusinessAdsArray);
+
+            return HighlightedAds
+
+        }catch(e){
+            console.log(e)
+        }
+    }
 }

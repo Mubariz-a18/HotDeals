@@ -170,7 +170,7 @@ function validateBody(body) {
   return true;
 };
 
-function validateUpdateAd(body,category,sub_category) {
+function validateUpdateAd(body, category, sub_category) {
   const {
     parent_id,
     description,
@@ -352,6 +352,22 @@ function ArrayOfString(Array, strLength) {
   return true
 };
 
+function ValidateQuery(queries) {
+  const {
+    lng,
+    lat,
+    maxDistance
+  } = queries;
+  if (!lng || !lat) {
+    return false
+  }
+  if (!maxDistance) {
+    return false
+  }
+
+  return true
+}
+
 module.exports = {
   commonFieldSchema,
   validateBody,
@@ -364,5 +380,6 @@ module.exports = {
   ArrayOfString,
   isImageInvalid,
   IsimageArrInvalid,
+  ValidateQuery
 };
 

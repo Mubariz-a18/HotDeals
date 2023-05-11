@@ -116,6 +116,12 @@ function urlTest(url) {
     return urlRegex.test(url)
 };
 
+const firebaseStorageBucketUrlImage = 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/businessCertificates'
+function isCertificateValid(certificateUrl) {
+    if (!(certificateUrl.startsWith(firebaseStorageBucketUrlImage))) return false
+    return true
+}
+
 function ValidateBusinessProfile(body) {
     const {
         name,
@@ -131,7 +137,7 @@ function ValidateBusinessProfile(body) {
     if (typeof description !== 'string' || !description || description.length > 500) return false;
     if (!validatePhoneNumer(phoneNumber)) return false;
     if (typeof businessUrl !== 'string' || !businessUrl || !urlTest(businessUrl)) return false;
-    if (typeof certificateUrl !== 'string' || !certificateUrl || !isImageInvalid(certificateUrl)) return false;
+    if (typeof certificateUrl !== 'string' || !certificateUrl || !isCertificateValid(certificateUrl)) return false;
 
     return true
 };

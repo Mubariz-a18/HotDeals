@@ -6,6 +6,8 @@ const AdController = require('../controllers/AdsController/ad.controller');
 const { verifyJwtTokenForAds } = require('../utils/verifyToken');
 const { rateLimiter } = require('../middlewares/rateLimiterMiddleWare');
 const { globalWindowTime, globalApiHits } = require('../utils/globalRateLimits');
+const BusinessAdsController = require('../controllers/BusinessAdsController/businessAds.controller');
+
 
 const {
     getPremiumAdsTime,
@@ -38,7 +40,7 @@ const {
 
 //Ad Routes
 router.post('/api/createAd',
-    // rateLimiter(createAdTime, createAdHits),
+    rateLimiter(createAdTime, createAdHits),
     verifyToken, Validator("genericSchemaValidator"),
     AdController.apiCreateAd);
 
@@ -81,8 +83,17 @@ router.get('/api/v1/getPremiumAds',
     rateLimiter(getPremiumAdsTime, getPremiumAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetPremiumAds);
+
+    //version 2 of premium ads comes with business highlight ad
+
+    router.get('/api/v2/getPremiumAds',
+    rateLimiter(getPremiumAdsTime, getPremiumAdsHits),
+    verifyJwtTokenForAds,
+    BusinessAdsController.getMyBusinessAdsByLocation
+    );
+
 router.get('/api/v1/getFeaturedAds',
-    // rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
+    rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetRecentAds);
 router.post('/api/v1/getRelatedAd',
