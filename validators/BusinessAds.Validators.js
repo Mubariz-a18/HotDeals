@@ -4,19 +4,43 @@ const {
     isImageInvalid } = require("./Ads.Validator");
 
 function validateSubAds(subAds) {
-    if (subAds && typeof subAds !== 'object') return false
+    if (subAds && typeof subAds !== 'object') return false;
     for (let i = 0; i < subAds.length; i++) {
         const {
             title,
-            description,
+            imageUrl,
             redirectionUrl
-        } = subAds[i]
+        } = subAds[i];
         if (typeof subAds[i] !== 'object') return false;
-        if (!title || !description || !redirectionUrl) return false
-        if (typeof title !== 'string' || typeof description !== 'string' || typeof redirectionUrl !== 'string') return false
+        if (!title  || !redirectionUrl) return false;
+        if(!isImageInvalid(imageUrl)) return false;
+        if (typeof title !== 'string' || typeof redirectionUrl !== 'string') return false;
     }
     return true
 }
+
+const validatePrimaryDetails = (primaryDetails) => {
+    if (!primaryDetails || typeof primaryDetails !== 'object' || primaryDetails.length === 0) {
+        return false;
+    }
+    for (let i = 0; i < primaryDetails.length; i++) {
+
+        const obj = primaryDetails[i];
+
+        const { ad_id, address, location } = obj
+
+        if (!validateMongoID(ad_id)) return false;
+
+        if (!address || typeof address !== 'string') return false
+
+        const isLocationValid = validateLocation(location);
+        if (!isLocationValid) return false
+
+
+    }
+
+    return true
+};
 
 function ValidateBusinessBody(body) {
     const {
@@ -24,13 +48,12 @@ function ValidateBusinessBody(body) {
         description,
         title,
         imageUrl,
-        location,
-        address,
         subAds,
         duration,
+        primaryDetails
     } = body;
 
-    // if (!validateMongoID(parentID)) return false;
+    if (!validateMongoID(parentID)) return false;
 
     if (typeof description !== 'string' || !description || description.length > 500) return false;
 
@@ -38,11 +61,8 @@ function ValidateBusinessBody(body) {
 
     if (typeof imageUrl !== 'string' || !imageUrl) return false;
 
-
-    const isLocationValid = validateLocation(location);
+    const isLocationValid = validatePrimaryDetails(primaryDetails);
     if (!isLocationValid) return false;
-
-    if (typeof address !== 'string' || !address) return false;
 
     if (!validateSubAds(subAds)) return false;
 

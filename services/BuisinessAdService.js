@@ -3,7 +3,7 @@ const BusinessInfoModel = require("../models/Profile/BusinessDetailSchema");
 const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
-const {ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile} = require('../validators/BusinessAds.Validators');
+const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile } = require('../validators/BusinessAds.Validators');
 
 module.exports = class BusinessAdService {
 
@@ -45,7 +45,7 @@ module.exports = class BusinessAdService {
 
     static async createBusinessProfileService(userID, body) {
         const isCreateBusinessProfileValid = ValidateBusinessProfile(body);
-        if(!isCreateBusinessProfileValid){
+        if (!isCreateBusinessProfileValid) {
             throw ({ status: 400, message: 'Bad Request' });
         }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -74,7 +74,7 @@ module.exports = class BusinessAdService {
 
     static async updateBusinesProfileService(userID, body) {
         const isCreateBusinessProfileValid = ValidateBusinessProfile(body);
-        if(!isCreateBusinessProfileValid){
+        if (!isCreateBusinessProfileValid) {
             throw ({ status: 400, message: 'Bad Request' });
         }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -107,50 +107,57 @@ module.exports = class BusinessAdService {
 
     static async createBusinessAdService(userID, body) {
         const isCreateBusinessAdValid = ValidateBusinessBody(body);
-        if(!isCreateBusinessAdValid){
+        if (!isCreateBusinessAdValid) {
             throw ({ status: 400, message: 'Bad Request' });
         }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const {
+            parentID,
             title,
             description,
             adType,
-            location,
-            address,
+            primaryDetails,
             imageUrl,
             subAds,
             duration
         } = body;
-
-        const BusinessAdDoc = await BusinessAds.create({
-            title,
-            description,
-            userID,
-            adType,
-            location,
-            address,
-            imageUrl,
-            subAds,
-            duration,
-            adStatus: 'Pending',
-            expireAt: expiry_date_func(duration),
-            createdAt: currentDate,
-            updatedAt: currentDate
-        });
-
-        const adID = BusinessAdDoc._id;
-        await BusinessInfoModel.updateOne({ userID: ObjectId(userID) }, {
-            $push: {
-                businessAdList: adID
+        for (let i = 0; i < primaryDetails.length; i++) {
+            const adExist = await this.BusinessAd(primaryDetails[i].ad_id);
+            if(adExist){
+                throw ({ status: 400, message: 'Bad Request' });
             }
-        });
+            const BusinessAdDoc = await BusinessAds.create({
+                _id:primaryDetails[i].ad_id,
+                title,
+                description,
+                parentID,
+                userID,
+                adType,
+                location: primaryDetails[i].location,
+                address: primaryDetails[i].address,
+                imageUrl,
+                subAds,
+                duration,
+                adStatus: 'Pending',
+                expireAt: expiry_date_func(duration),
+                createdAt: currentDate,
+                updatedAt: currentDate
+            });
 
-        return BusinessAdDoc;
+            const adID = BusinessAdDoc._id;
+            await BusinessInfoModel.updateOne({ userID: ObjectId(userID) }, {
+                $push: {
+                    businessAdList: adID
+                }
+            });
+        }
+
+        return true;
     };
 
     static async updateBusinessAdService(userID, body) {
         const isUpdateBusinessAdValid = ValidateUpdateBusinessBody(body);
-        if(!isUpdateBusinessAdValid){
+        if (!isUpdateBusinessAdValid) {
             throw ({ status: 400, message: 'Bad Request' });
         }
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
