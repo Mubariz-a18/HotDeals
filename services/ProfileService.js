@@ -344,8 +344,8 @@ module.exports = class ProfileService {
     MyProfile[0].adsPayoutFlag = adsPayout;
     MyProfile[0].referralPayoutFlag = referralPayout;
     const isBusinessOwner = await BusinessProfile(user_ID);
-    if(isBusinessOwner){
-      return { MyProfile, referral_code, isBusinessVerified:isBusinessOwner.isBusinessVerified }
+    if (isBusinessOwner) {
+      return { MyProfile, referral_code, isBusinessVerified: isBusinessOwner.isBusinessVerified }
     }
     return { MyProfile, referral_code }
   };

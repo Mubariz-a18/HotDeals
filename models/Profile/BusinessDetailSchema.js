@@ -33,7 +33,7 @@ const BusinessInfoSchema = mongoose.Schema({
     },
     isBusinessVerified: {
         type: String,
-        default:false
+        default: false
     },
     verifiedAt: {
         type: String,
