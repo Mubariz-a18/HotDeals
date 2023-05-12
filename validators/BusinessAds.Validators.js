@@ -4,7 +4,9 @@ const {
     isImageInvalid } = require("./Ads.Validator");
 
 function validateSubAds(subAds) {
-    if (subAds && typeof subAds !== 'object') return false;
+    if(!subAds) return true;
+    
+    if (typeof subAds !== 'object') return false;
     for (let i = 0; i < subAds.length; i++) {
         const {
             title,
