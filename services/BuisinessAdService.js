@@ -234,7 +234,7 @@ module.exports = class BusinessAdService {
                     "Archived": [
                         {
                             $match: {
-                                adStatus: "Archived"
+                                adStatus: "Archive"
                             }
                         }
                     ],
@@ -248,7 +248,7 @@ module.exports = class BusinessAdService {
                     "Deleted": [
                         {
                             $match: {
-                                adStatus: "Deleted"
+                                adStatus: "Delete"
                             }
                         }
                     ],
