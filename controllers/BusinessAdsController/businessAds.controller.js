@@ -101,91 +101,40 @@ module.exports = class BusinessAdsController {
         }
     };
 
-    static async getMyBusinessAdsByLocation(req, res, next){
+    static async getMyBusinessAdsByLocation(req, res, next) {
         try {
             // Premium ads are fetched from db and sent to response
             const GetBusinessAdsDocs = await BusinessAdService.GetHighLightBusinessAds(req.user_ID, req.query);
-              res.status(200).json({
-                data:GetBusinessAdsDocs
-              });
-          } catch (e) {
+            res.status(200).json({
+                data: GetBusinessAdsDocs
+            });
+        } catch (e) {
             errorHandler(e, res);
-          };
+        };
     };
 
-    static async getFeatureAdsBLocation(req, res, next){
+    static async getFeatureAdsBLocation(req, res, next) {
         try {
             // Premium ads are fetched from db and sent to response
             const GetBusinessAdsDocs = await BusinessAdService.GetFeatureBusinessAds(req.user_ID, req.query);
-              res.status(200).json({
-                data:GetBusinessAdsDocs
-              });
-          } catch (e) {
+            res.status(200).json({
+                data: GetBusinessAdsDocs
+            });
+        } catch (e) {
             errorHandler(e, res);
-          };
+        };
     };
 
-    static async updateBusinessAdStatus(userID, body) {
-        const isBodyValid = ValidateChangeStatusBody(body); 
-        if(!isBodyValid){
-            throw ({ status: 400, message: 'Bad Request' }); 
-        }
-        const {
-            adID,
-            status
-        } = body
-        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-        const findAd = await BusinessAds.findOne({
-            _id: adID,
-            user_id: ObjectId(userID),
-            adStatus: {
-                $ne: "Suspended"
+    static async repostBusinessAd(req, res, next) {
+        try {
+            const RepostedAd = await BusinessAdService.repostBusinessAd(req.user_ID, req.body);
+            if (RepostedAd) {
+                res.status(200).json({
+                    message: "Successfully Reposted the Ad"
+                });
             }
-        });
-
-        if (!findAd) {
-            throw ({ status: 401, message: 'Access_Denied' });
-        }
-
-        if (status == "Archive") {
-            const adDoc = await BusinessAds.findOneAndUpdate(
-                {
-                    _id: adID,
-                    adStatus: "Active"
-                },
-                {
-                    $set: {
-                        adStatus: "Archive",
-                        activatedAt: currentDate
-                    }
-                },
-                { returnOriginal: false, new: true }
-            )
-            if (!adDoc) {
-                throw ({ status: 401, message: 'Access_Denied' });
-            }
-            return adDoc;
-        }
-        else if (status == "Delete") {
-            const adDoc = await BusinessAds.findByIdAndUpdate(
-                {
-                    _id: adID
-                },
-                {
-                    $set: {
-                        adStatus: "Delete",
-                        deletedAt: currentDate
-                    }
-                },
-                { returnOriginal: false, new: true }
-            );
-            if (!adDoc) {
-                throw ({ status: 401, message: 'Access_Denied' });
-            }
-            return adDoc;
-        }
-        else {
-            throw ({ status: 400, message: 'Bad Request' });
-        }
+        } catch (e) {
+            errorHandler(e, res);
+        };
     };
 }

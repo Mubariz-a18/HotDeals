@@ -4,7 +4,7 @@ const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
 const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile, ValidateChangeStatusBody } = require('../validators/BusinessAds.Validators');
-const { ValidateQuery } = require('../validators/Ads.Validator');
+const { ValidateQuery, validateMongoID } = require('../validators/Ads.Validator');
 const { getPremiumAdsService, getRecentAdsService, getFeatureAdsService } = require('./AdService');
 const { BusinessAdsFunc, FeaturedBusinessAdsFunc, featureAdsFunction } = require('../utils/featureAdsUtil');
 
@@ -268,7 +268,7 @@ module.exports = class BusinessAdService {
             const adDoc = await BusinessAds.findOneAndUpdate(
                 {
                     _id: adID,
-                    adStatus:"Archive"
+                    adStatus: "Archive"
                 },
                 {
                     $set: {
@@ -436,7 +436,7 @@ module.exports = class BusinessAdService {
                 throw ({ status: 204, message: '' });
             }
 
-            for(let i = 0;i<BusinessAdsArray.length;i++){
+            for (let i = 0; i < BusinessAdsArray.length; i++) {
                 BusinessAdsArray[i].isBusinessAd = true
             }
             const HighlightedAds = BusinessAdsFunc(PremiumAdsArray, BusinessAdsArray);
@@ -476,7 +476,7 @@ module.exports = class BusinessAdService {
                         $match: {
                             adStatus: "Active",
                             adType: {
-                                $in: ['featured', 'customized']
+                                $in: ['featured']
                             }
                         }
                     },
@@ -513,7 +513,7 @@ module.exports = class BusinessAdService {
                 ]
             ]);
 
-            for(let i = 0;i<BusinessAdsArray.length;i++){
+            for (let i = 0; i < BusinessAdsArray.length; i++) {
                 BusinessAdsArray[i].isBusinessAd = true
             }
 
@@ -525,6 +525,69 @@ module.exports = class BusinessAdService {
 
         } catch (e) {
             console.log(e)
+        }
+    };
+
+    static async repostBusinessAd(userID, body) {
+
+        if (!body) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+        const { adID } = body;
+        const isIdValid = validateMongoID(adID);
+        if (!isIdValid) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+
+        const adCopy = await BusinessAds.findOne({ _id: adID, user_id: userID, adStatus: { $in: ["Delete", "Expired"] } });
+
+        if (!adCopy) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+
+        const {
+            title,
+            description,
+            parentID,
+            adType, 
+            location,
+            address,
+            redirectionUrl,
+            subAds,
+            duration,
+            imageUrl,
+        } = adCopy
+
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+        const newID = ObjectId();
+        const BusinessAdDoc = await BusinessAds.create({
+            _id: newID,
+            title,
+            description,
+            parentID,
+            userID,
+            adType,
+            location,
+            address,
+            imageUrl,
+            redirectionUrl,
+            subAds,
+            duration,
+            adStatus: 'Pending',
+            expireAt: expiry_date_func(duration),
+            createdAt: currentDate,
+            updatedAt: currentDate
+        });
+
+        if(BusinessAdDoc){
+            await BusinessInfoModel.updateOne({ userID: ObjectId(userID) }, {
+                $push: {
+                    businessAdList: newID
+                }
+            });
+            return BusinessAdDoc;
+        }else{
+            throw ({ status: 400, message: 'Bad Request' });
         }
     };
 }
