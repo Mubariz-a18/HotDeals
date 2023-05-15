@@ -232,7 +232,7 @@ module.exports = class BusinessAdService {
                 {
                     $set: {
                         adStatus: "Archive",
-                        activatedAt: currentDate
+                        archivedAt: currentDate
                     }
                 },
                 { returnOriginal: false, new: true }

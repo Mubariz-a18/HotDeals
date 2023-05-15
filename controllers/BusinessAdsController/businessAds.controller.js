@@ -112,4 +112,68 @@ module.exports = class BusinessAdsController {
             errorHandler(e, res);
           };
     };
+
+    static async updateBusinessAdStatus(userID, body) {
+        const isBodyValid = ValidateChangeStatusBody(body); 
+        if(!isBodyValid){
+            throw ({ status: 400, message: 'Bad Request' }); 
+        }
+        const {
+            adID,
+            status
+        } = body
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+        const findAd = await BusinessAds.findOne({
+            _id: adID,
+            user_id: ObjectId(userID),
+            adStatus: {
+                $ne: "Suspended"
+            }
+        });
+
+        if (!findAd) {
+            throw ({ status: 401, message: 'Access_Denied' });
+        }
+
+        if (status == "Archive") {
+            const adDoc = await BusinessAds.findOneAndUpdate(
+                {
+                    _id: adID,
+                    adStatus: "Active"
+                },
+                {
+                    $set: {
+                        adStatus: "Archive",
+                        activatedAt: currentDate
+                    }
+                },
+                { returnOriginal: false, new: true }
+            )
+            if (!adDoc) {
+                throw ({ status: 401, message: 'Access_Denied' });
+            }
+            return adDoc;
+        }
+        else if (status == "Delete") {
+            const adDoc = await BusinessAds.findByIdAndUpdate(
+                {
+                    _id: adID
+                },
+                {
+                    $set: {
+                        adStatus: "Delete",
+                        deletedAt: currentDate
+                    }
+                },
+                { returnOriginal: false, new: true }
+            );
+            if (!adDoc) {
+                throw ({ status: 401, message: 'Access_Denied' });
+            }
+            return adDoc;
+        }
+        else {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+    };
 }
