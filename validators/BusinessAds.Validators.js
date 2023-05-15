@@ -144,9 +144,23 @@ function ValidateBusinessProfile(body) {
     return true
 };
 
+function ValidateChangeStatusBody(body) {
+    if(!body) return false;
+    const {adID,status} = body;
+    if(!validateMongoID(adID)) return false
+    const statuses = [
+        "Archive",
+        "Delete"
+    ];
+    if (!statuses.includes(status)) return false
+
+    return true
+}
+
 
 module.exports = {
     ValidateBusinessBody,
     ValidateUpdateBusinessBody,
-    ValidateBusinessProfile
+    ValidateBusinessProfile,
+    ValidateChangeStatusBody
 }

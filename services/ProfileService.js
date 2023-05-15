@@ -22,7 +22,7 @@ const OfferModel = require("../models/offerSchema");
 const { getReferralForPayouts } = require("./referCodeService");
 const HelpCenter = require("../models/helpCenterSchema");
 const BusinessAds = require("../models/Ads/businessAdsShema");
-const { BusinessProfile } = require("./BuisinessAdService");
+const { BusinessProfile } = require("./BusinessAdService");
 
 
 module.exports = class ProfileService {

@@ -1099,7 +1099,7 @@ module.exports = class AdService {
       throw ({ status: 401, message: 'Access_Denied' });
     }
     if (bodyData.status == "Archive") {
-      const adDoc = await Generic.findByIdAndUpdate(
+      const adDoc = await Generic.findOneAndUpdate(
         {
           _id: ad_id,
           ad_status: "Selling"

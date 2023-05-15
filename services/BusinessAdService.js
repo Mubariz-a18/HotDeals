@@ -3,7 +3,7 @@ const BusinessInfoModel = require("../models/Profile/BusinessDetailSchema");
 const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
-const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile } = require('../validators/BusinessAds.Validators');
+const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile, ValidateChangeStatusBody } = require('../validators/BusinessAds.Validators');
 const { ValidateQuery } = require('../validators/Ads.Validator');
 const { getPremiumAdsService } = require('./AdService');
 const { BusinessAdsFunc } = require('../utils/featureAdsUtil');
@@ -201,6 +201,70 @@ module.exports = class BusinessAdService {
         }
     };
 
+    static async updateBusinessAdStatus(userID, body) {
+        const isBodyValid = ValidateChangeStatusBody(body); 
+        if(!isBodyValid){
+            throw ({ status: 400, message: 'Bad Request' }); 
+        }
+        const {
+            adID,
+            status
+        } = body
+        const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+        const findAd = await BusinessAds.findOne({
+            _id: adID,
+            user_id: ObjectId(userID),
+            adStatus: {
+                $ne: "Suspended"
+            }
+        });
+
+        if (!findAd) {
+            throw ({ status: 401, message: 'Access_Denied' });
+        }
+
+        if (status == "Archive") {
+            const adDoc = await BusinessAds.findOneAndUpdate(
+                {
+                    _id: adID,
+                    adStatus: "Active"
+                },
+                {
+                    $set: {
+                        adStatus: "Archive",
+                        activatedAt: currentDate
+                    }
+                },
+                { returnOriginal: false, new: true }
+            )
+            if (!adDoc) {
+                throw ({ status: 401, message: 'Access_Denied' });
+            }
+            return adDoc;
+        }
+        else if (status == "Delete") {
+            const adDoc = await BusinessAds.findByIdAndUpdate(
+                {
+                    _id: adID
+                },
+                {
+                    $set: {
+                        adStatus: "Delete",
+                        deletedAt: currentDate
+                    }
+                },
+                { returnOriginal: false, new: true }
+            );
+            if (!adDoc) {
+                throw ({ status: 401, message: 'Access_Denied' });
+            }
+            return adDoc;
+        }
+        else {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+    };
+
     static async getMyBusinessAdsService(userID) {
         const BusinessPofileDoc = await this.BusinessProfile(userID)
         if (!BusinessPofileDoc) {
@@ -282,13 +346,13 @@ module.exports = class BusinessAdService {
         return BusinessAdDoc;
     };
 
-    static async GetBusinessAds(userID, query) {
-        try{
+    static async GetHighLightBusinessAds(userID, query) {
+        try {
             const isQueryValid = ValidateQuery(query);
             if (!isQueryValid) {
                 throw ({ status: 400, message: 'Bad Request' });
             }
-    
+
             let lng = +query.lng;
             let lat = +query.lat;
             let maxDistance = +query.maxDistance;
@@ -344,19 +408,19 @@ module.exports = class BusinessAdService {
                 ]
             ]);
 
-            const PremiumAdsArray = await getPremiumAdsService(userID,query)
+            const PremiumAdsArray = await getPremiumAdsService(userID, query)
 
             // const Highlighted = 
 
-            if(BusinessAdsArray.length === 0 && PremiumAds.length === 0){
+            if (BusinessAdsArray.length === 0 && PremiumAds.length === 0) {
                 throw ({ status: 204, message: '' });
             }
-            const HighlightedAds = BusinessAdsFunc(PremiumAdsArray,BusinessAdsArray);
+            const HighlightedAds = BusinessAdsFunc(PremiumAdsArray, BusinessAdsArray);
 
             return HighlightedAds
 
-        }catch(e){
+        } catch (e) {
             console.log(e)
         }
-    }
+    };
 }
