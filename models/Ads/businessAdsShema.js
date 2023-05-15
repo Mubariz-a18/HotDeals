@@ -52,6 +52,9 @@ const businessAdsSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    redirectionUrl :{
+        type: String
+    },
     adStatus: {
         type: String,
         enum: [

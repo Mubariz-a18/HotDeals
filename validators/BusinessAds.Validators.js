@@ -44,6 +44,20 @@ const validatePrimaryDetails = (primaryDetails) => {
     return true
 };
 
+function validAdType(adType){
+    const typesOfAd = [
+        "highlighted",
+        "featured",
+        "customized",
+        "banner",
+        "interstitial"
+    ]
+
+    if(!adType || !typesOfAd.includes(adType)) return false;
+
+    return true
+};
+
 function ValidateBusinessBody(body) {
     const {
         parentID,
@@ -52,6 +66,8 @@ function ValidateBusinessBody(body) {
         imageUrl,
         subAds,
         duration,
+        redirectionUrl,
+        adType,
         primaryDetails
     } = body;
 
@@ -68,7 +84,11 @@ function ValidateBusinessBody(body) {
 
     if (!validateSubAds(subAds)) return false;
 
-    if (!duration || typeof duration !== 'number') return false
+    if (!duration || typeof duration !== 'number') return false;
+
+    if(!validAdType(adType)) return false;
+
+    if(adType === "customized" && !(redirectionUrl && urlTest(redirectionUrl))) return false
 
     return true;
 
@@ -83,6 +103,8 @@ function ValidateUpdateBusinessBody(body) {
         location,
         address,
         subAds,
+        redirectionUrl,
+        adType,
         duration,
     } = body;
 
@@ -102,6 +124,9 @@ function ValidateUpdateBusinessBody(body) {
 
     if (!validateSubAds(subAds)) return false;
 
+    if(!validAdType(adType)) return false;
+
+    if(adType === "customized" && !(redirectionUrl && urlTest(redirectionUrl))) return false
 
     return true;
 
@@ -119,6 +144,7 @@ function urlTest(url) {
 };
 
 const firebaseStorageBucketUrlImage = 'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/businessCertificates'
+
 function isCertificateValid(certificateUrl) {
     if (!(certificateUrl.startsWith(firebaseStorageBucketUrlImage))) return false
     return true

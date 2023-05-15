@@ -128,6 +128,7 @@ module.exports = class BusinessAdService {
             description,
             adType,
             primaryDetails,
+            redirectionUrl,
             imageUrl,
             subAds,
             duration
@@ -147,6 +148,7 @@ module.exports = class BusinessAdService {
                 location: primaryDetails[i].location,
                 address: primaryDetails[i].address,
                 imageUrl,
+                redirectionUrl,
                 subAds,
                 duration,
                 adStatus: 'Pending',
@@ -177,17 +179,19 @@ module.exports = class BusinessAdService {
             title,
             description,
             adType,
+            redirectionUrl,
             location,
             address,
             imageUrl,
             subAds,
         } = body;
 
-        const BusinessAdDoc = await BusinessAds.updateOne({ _id: adID, userID: userID }, {
+        const BusinessAdDoc = await BusinessAds.updateOne({ _id: ObjectId(adID), userID: ObjectId(userID) }, {
             title,
             description,
             adType,
             location,
+            redirectionUrl,
             address,
             imageUrl,
             subAds,
@@ -270,7 +274,6 @@ module.exports = class BusinessAdService {
         if (!BusinessPofileDoc) {
             throw ({ status: 401, message: 'Unauthorized' });
         }
-        console.log(BusinessPofileDoc.businessAdList)
         const MyBusinessAds = await BusinessAds.aggregate([
             {
                 $match: {
@@ -388,6 +391,7 @@ module.exports = class BusinessAdService {
                             'price': 1,
                             "imageUrl": 1,
                             'translateText': 1,
+                            'redirectionUrl': 1,
                             'subAds': 1,
                             "dist": 1,
                             "createdAt": 1
@@ -409,9 +413,6 @@ module.exports = class BusinessAdService {
             ]);
 
             const PremiumAdsArray = await getPremiumAdsService(userID, query)
-
-            // const Highlighted = 
-
             if (BusinessAdsArray.length === 0 && PremiumAds.length === 0) {
                 throw ({ status: 204, message: '' });
             }
