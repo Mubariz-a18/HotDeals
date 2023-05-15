@@ -1793,7 +1793,6 @@ $skip and limit for pagination
 
     let premiumAds = await this.getPremiumAdsService(userId, query)
     const featureAds = featureAdsFunction(getRecentAds, premiumAds)
-
     return featureAds;
   };
 
@@ -2475,6 +2474,136 @@ Cloud Notification To firebase
     return Response
 
   };
+
+    // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
+    static async getFeatureAdsService(userId, query) {
+      let lng = +query.lng;
+      let lat = +query.lat;
+      let maxDistance = +query.maxDistance;
+      let pageVal = +query.page || 1;
+      let limitval = +query.limit || 25;
+      if (pageVal == 0) pageVal = pageVal + 1
+  
+      if (!lng || !lat || !maxDistance) {
+        throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+      }
+      /* 
+  $geonear to find all the ads existing near the given coordinates
+  $lookup for the relation between the profiles and Generics
+  $unwind to extract the array from sample_result
+  $addfeilds to join profile fields with sample result
+  $project to show only the required fields
+  $match for filtering only recent ads
+  $sort to sort all the ads by order 
+  $skip and limit for pagination
+  */
+      let Ads = await Generic.aggregate([
+        [
+          {
+            '$geoNear': {
+              'near': { type: 'Point', coordinates: [lng, lat] },
+              "distanceField": "dist.calculated",
+              'maxDistance': maxDistance,
+              "includeLocs": "dist.location",
+              'spherical': true
+            }
+          },
+          {
+            $match: {
+              isPrime: false,
+              ad_status: "Selling"
+            }
+          },
+          {
+            '$lookup': {
+              'from': 'profiles',
+              'localField': 'user_id',
+              'foreignField': '_id',
+              'as': 'sample_result'
+            }
+          },
+          {
+            '$unwind': {
+              'path': '$sample_result'
+            }
+          },
+          {
+            '$addFields': {
+              'Seller_Name': '$sample_result.name',
+              'Seller_Id': '$sample_result._id',
+              'Seller_Joined': '$sample_result.created_date',
+              'Seller_Image': '$sample_result.profile_url',
+              'Seller_verified': '$sample_result.is_email_verified',
+              'Seller_recommended': '$sample_result.is_recommended',
+  
+            }
+          },
+          {
+            $sort: {
+              "is_Highlighted": -1,
+              "Highlighted_Date": -1,
+              "is_Boosted": -1,
+              "Boosted_Date": -1,
+              "created_at": -1,
+              "dist.calculated": -1,
+              "Seller_verified": -1,
+              "Seller_recommended": -1
+            }
+          },
+          {
+            '$project': {
+              '_id': 1,
+              'parent_id': 1,
+              "Seller_Id": 1,
+              'Seller_Name': 1,
+              "Seller_verified": 1,
+              "Seller_recommended": 1,
+              'category': 1,
+              'sub_category': 1,
+              'ad_status': 1,
+              'SelectFields': 1,
+              'title': 1,
+              "created_at": 1,
+              'price': 1,
+              "thumbnail_url": 1,
+              'textLanguages': 1,
+              'isPrime': 1,
+              "dist": 1,
+              "is_Boosted": 1,
+              "Boosted_Date": 1,
+              "is_Highlighted": 1,
+              "Highlighted_Date": 1
+            }
+          },
+          {
+            $skip: limitval * (pageVal - 1)
+          },
+          {
+            $limit: limitval
+          },
+        ]
+      ])
+      Ads.forEach(async recentAd => {
+        const user = await Profile.find(
+          {
+            _id: userId,
+            "favourite_ads": {
+              $elemMatch: { "ad_id": recentAd._id }
+            }
+          })
+        if (user.length == 0) {
+          recentAd.isAdFav = false
+        } else {
+          recentAd.isAdFav = true
+        }
+      })
+  
+      //mix panel track get recent ads 
+      await track('get recent Ads Successfully', {
+        distinct_id: userId
+      })
+        return Ads;
+    };
 
   /* 
   DRAFT ADS API SERVICES HERE

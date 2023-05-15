@@ -113,6 +113,18 @@ module.exports = class BusinessAdsController {
           };
     };
 
+    static async getFeatureAdsBLocation(req, res, next){
+        try {
+            // Premium ads are fetched from db and sent to response
+            const GetBusinessAdsDocs = await BusinessAdService.GetFeatureBusinessAds(req.user_ID, req.query);
+              res.status(200).json({
+                data:GetBusinessAdsDocs
+              });
+          } catch (e) {
+            errorHandler(e, res);
+          };
+    };
+
     static async updateBusinessAdStatus(userID, body) {
         const isBodyValid = ValidateChangeStatusBody(body); 
         if(!isBodyValid){

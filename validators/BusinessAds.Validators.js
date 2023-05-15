@@ -187,7 +187,8 @@ function ValidateChangeStatusBody(body) {
     if (!validateMongoID(adID)) return false
     const statuses = [
         "Archive",
-        "Delete"
+        "Delete",
+        'Active'
     ];
     if (!statuses.includes(status)) return false
 

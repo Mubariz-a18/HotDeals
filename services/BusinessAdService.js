@@ -5,8 +5,8 @@ const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
 const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile, ValidateChangeStatusBody } = require('../validators/BusinessAds.Validators');
 const { ValidateQuery } = require('../validators/Ads.Validator');
-const { getPremiumAdsService } = require('./AdService');
-const { BusinessAdsFunc } = require('../utils/featureAdsUtil');
+const { getPremiumAdsService, getRecentAdsService, getFeatureAdsService } = require('./AdService');
+const { BusinessAdsFunc, FeaturedBusinessAdsFunc, featureAdsFunction } = require('../utils/featureAdsUtil');
 
 
 module.exports = class BusinessAdService {
@@ -206,9 +206,9 @@ module.exports = class BusinessAdService {
     };
 
     static async updateBusinessAdStatus(userID, body) {
-        const isBodyValid = ValidateChangeStatusBody(body); 
-        if(!isBodyValid){
-            throw ({ status: 400, message: 'Bad Request' }); 
+        const isBodyValid = ValidateChangeStatusBody(body);
+        if (!isBodyValid) {
+            throw ({ status: 400, message: 'Bad Request' });
         }
         const {
             adID,
@@ -247,7 +247,7 @@ module.exports = class BusinessAdService {
             return adDoc;
         }
         else if (status == "Delete") {
-            const adDoc = await BusinessAds.findByIdAndUpdate(
+            const adDoc = await BusinessAds.findOneAndUpdate(
                 {
                     _id: adID
                 },
@@ -255,6 +255,25 @@ module.exports = class BusinessAdService {
                     $set: {
                         adStatus: "Delete",
                         deletedAt: currentDate
+                    }
+                },
+                { returnOriginal: false, new: true }
+            );
+            if (!adDoc) {
+                throw ({ status: 401, message: 'Access_Denied' });
+            }
+            return adDoc;
+        }
+        else if (status == "Active") {
+            const adDoc = await BusinessAds.findOneAndUpdate(
+                {
+                    _id: adID,
+                    adStatus:"Archive"
+                },
+                {
+                    $set: {
+                        adStatus: "Active",
+                        updatedAt: currentDate
                     }
                 },
                 { returnOriginal: false, new: true }
@@ -416,9 +435,93 @@ module.exports = class BusinessAdService {
             if (BusinessAdsArray.length === 0 && PremiumAds.length === 0) {
                 throw ({ status: 204, message: '' });
             }
+
+            for(let i = 0;i<BusinessAdsArray.length;i++){
+                BusinessAdsArray[i].isBusinessAd = true
+            }
             const HighlightedAds = BusinessAdsFunc(PremiumAdsArray, BusinessAdsArray);
 
-            return HighlightedAds
+            return HighlightedAds;
+
+        } catch (e) {
+            console.log(e)
+        }
+    };
+
+    static async GetFeatureBusinessAds(userID, query) {
+        try {
+            const isQueryValid = ValidateQuery(query);
+            if (!isQueryValid) {
+                throw ({ status: 400, message: 'Bad Request' });
+            }
+
+            let lng = +query.lng;
+            let lat = +query.lat;
+            let maxDistance = +query.maxDistance;
+            let pageVal = +query.page;
+            if (pageVal == 0) pageVal = pageVal + 1
+            let limitval = +query.limit || 25;
+            const BusinessAdsArray = await BusinessAds.aggregate([
+                [
+                    {
+                        '$geoNear': {
+                            'near': { type: 'Point', coordinates: [lng, lat] },
+                            "distanceField": "dist.calculated",
+                            'maxDistance': maxDistance,
+                            "includeLocs": "dist.location",
+                            'spherical': true
+                        }
+                    },
+                    {
+                        $match: {
+                            adStatus: "Active",
+                            adType: {
+                                $in: ['featured', 'customized']
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            '_id': 1,
+                            'parentID': 1,
+                            'userID': 1,
+                            'adStatus': 1,
+                            'title': 1,
+                            'description': 1,
+                            "adType": 1,
+                            'price': 1,
+                            "imageUrl": 1,
+                            'translateText': 1,
+                            'redirectionUrl': 1,
+                            'subAds': 1,
+                            "dist": 1,
+                            "createdAt": 1
+                        }
+                    },
+                    {
+                        $sort: {
+                            "createdAt": -1,
+                            "dist.calculated": -1
+                        }
+                    },
+                    {
+                        $skip: limitval * (pageVal - 1)
+                    },
+                    {
+                        $limit: limitval
+                    },
+                ]
+            ]);
+
+            for(let i = 0;i<BusinessAdsArray.length;i++){
+                BusinessAdsArray[i].isBusinessAd = true
+            }
+
+            const FeaturedAdsArray = await getFeatureAdsService(userID, query);
+            const PremiumAdsArray = await getPremiumAdsService(userID, query);
+            const featureAds = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
+            const FeaturedAds = FeaturedBusinessAdsFunc(featureAds, BusinessAdsArray);
+            return FeaturedAds;
 
         } catch (e) {
             console.log(e)
