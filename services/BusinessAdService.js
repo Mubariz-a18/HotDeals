@@ -520,6 +520,9 @@ module.exports = class BusinessAdService {
             const FeaturedAdsArray = await getFeatureAdsService(userID, query);
             const PremiumAdsArray = await getPremiumAdsService(userID, query);
             const featureAds = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
+            if(BusinessAdsArray.length === 0){
+                return featureAds
+            }
             const FeaturedAds = FeaturedBusinessAdsFunc(featureAds, BusinessAdsArray);
             return FeaturedAds;
 
