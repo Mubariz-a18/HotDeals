@@ -804,6 +804,9 @@ module.exports = class BusinessAdService {
                 },
             ]
         ]);
+        for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
+            HighLightBusinessAdsArray[i].isBusinessAd = true
+        }
         const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
             [
                 {
@@ -856,10 +859,75 @@ module.exports = class BusinessAdService {
                 },
             ]
         ]);
+        for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
+            FeaturedBusinessAdsArray[i].isBusinessAd = true
+        }
 
         const HighLightAndPremiumAds = BusinessAdsFunc(RelatedAds[0].PremiumAds, HighLightBusinessAdsArray);
         const FetureAndCustomised = FeaturedBusinessAdsFunc(featureAds, FeaturedBusinessAdsArray)
 
         return { HighLightAndPremiumAds, FetureAndCustomised }
     };
+  
+    static async GetInterStatialAds(query){
+        const isQueryValid = ValidateQuery(query);
+        if (!isQueryValid) {
+            throw ({ status: 400, message: 'Bad Request' });
+        }
+        let lng = +query.lng;
+        let lat = +query.lat;
+        let maxDistance = +query.maxDistance;
+        const BusinessAdsArray = await BusinessAds.aggregate([
+            [
+                {
+                    '$geoNear': {
+                        'near': { type: 'Point', coordinates: [lng, lat] },
+                        "distanceField": "dist.calculated",
+                        'maxDistance': maxDistance,
+                        "includeLocs": "dist.location",
+                        'spherical': true
+                    }
+                },
+                {
+                    $match: {
+                        adStatus: "Active",
+                        adType: "interstitial"
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 1,
+                        'parentID': 1,
+                        'userID': 1,
+                        'adStatus': 1,
+                        'title': 1,
+                        'description': 1,
+                        "adType": 1,
+                        'price': 1,
+                        "imageUrl": 1,
+                        'translateText': 1,
+                        'redirectionUrl': 1,
+                        'subAds': 1,
+                        "dist": 1,
+                        "createdAt": 1
+                    }
+                },
+                {
+                    $sort: {
+                        "createdAt": -1,
+                        "dist.calculated": -1
+                    }
+                }
+            ]
+        ]);
+        if(BusinessAdsArray.length === 0){
+            throw ({ status: 404, message: 'No Ads Found' });
+        }
+        const RandomAdIndex = Math.floor(Math.random() * BusinessAdsArray.length);
+        await BusinessAds.updateOne(
+            { _id: { $in: BusinessAdsArray[RandomAdIndex]['_id'] } },
+            { $inc: { impressions: 1 } }
+        );
+        return BusinessAdsArray[RandomAdIndex]
+    }
 }

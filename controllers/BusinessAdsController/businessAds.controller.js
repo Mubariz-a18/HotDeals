@@ -136,7 +136,6 @@ module.exports = class BusinessAdsController {
             errorHandler(e, res);
         };
     };
-
     
     static async GetBusinessAdsAndRelatedAds(req, res, next) {
         try {
@@ -151,5 +150,18 @@ module.exports = class BusinessAdsController {
         } catch (e) {
             errorHandler(e, res);
         };
+    };
+
+    static async getInterStatialBusinessAd(req, res, next) {
+        try {
+            const BusinessAdDoc = await BusinessAdService.GetInterStatialAds(req.query);
+            if (BusinessAdDoc) {
+                res.status(200).send({
+                    data: BusinessAdDoc
+                });
+            }
+        } catch (e) {
+            errorHandler(e, res)
+        }
     };
 }

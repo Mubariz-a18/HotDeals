@@ -10,6 +10,7 @@ router.post('/createBusinessAd', verifyJwtToken, BusinessAdsController.createBus
 router.post('/updateBusinessAd', verifyJwtToken, BusinessAdsController.updateBusinessAd);
 router.post('/repostBusinessAd', verifyJwtToken, BusinessAdsController.repostBusinessAd);
 router.get('/getMyBusinessAds', verifyJwtToken, BusinessAdsController.getMyBusinessAds);
+router.get('/getInterstitialAd', verifyJwtToken, BusinessAdsController.getInterStatialBusinessAd);
 router.post('/getParticularBusinessAd',BusinessAdsController.getParticularBusinessAd);
 
 module.exports = router;
