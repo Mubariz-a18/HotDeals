@@ -7,6 +7,9 @@ const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfil
 const { ValidateQuery, validateMongoID } = require('../validators/Ads.Validator');
 const { getPremiumAdsService, getRecentAdsService, getFeatureAdsService } = require('./AdService');
 const { BusinessAdsFunc, FeaturedBusinessAdsFunc, featureAdsFunction } = require('../utils/featureAdsUtil');
+const Generic = require('../models/Ads/genericSchema');
+const { track } = require('mixpanel/lib/mixpanel-node');
+const Profile = require('../models/Profile/Profile');
 
 
 module.exports = class BusinessAdService {
@@ -365,7 +368,7 @@ module.exports = class BusinessAdService {
         if (!BusinessAdDoc) {
             throw ({ status: 404, message: 'Bad Request' });
         }
-        return BusinessAdDoc;
+        return true;
     };
 
     static async GetHighLightBusinessAds(userID, query) {
@@ -431,14 +434,19 @@ module.exports = class BusinessAdService {
                 ]
             ]);
 
-            const PremiumAdsArray = await getPremiumAdsService(userID, query)
-            if (BusinessAdsArray.length === 0 && PremiumAds.length === 0) {
-                throw ({ status: 204, message: '' });
-            }
 
+            const PremiumAdsArray = await getPremiumAdsService(userID, query)
+            if (BusinessAdsArray.length === 0) {
+                return PremiumAdsArray
+            }
             for (let i = 0; i < BusinessAdsArray.length; i++) {
                 BusinessAdsArray[i].isBusinessAd = true
             }
+            const adIds = BusinessAdsArray.map((ad) => ad._id);
+            await BusinessAds.updateMany(
+                { _id: { $in: adIds } },
+                { $inc: { impressions: 1 } }
+            );
             const HighlightedAds = BusinessAdsFunc(PremiumAdsArray, BusinessAdsArray);
 
             return HighlightedAds;
@@ -476,7 +484,7 @@ module.exports = class BusinessAdService {
                         $match: {
                             adStatus: "Active",
                             adType: {
-                                $in: ['featured']
+                                $in: ['featured', 'customized']
                             }
                         }
                     },
@@ -516,11 +524,16 @@ module.exports = class BusinessAdService {
             for (let i = 0; i < BusinessAdsArray.length; i++) {
                 BusinessAdsArray[i].isBusinessAd = true
             }
+            const adIds = BusinessAdsArray.map((ad) => ad._id);
+            await BusinessAds.updateMany(
+                { _id: { $in: adIds } },
+                { $inc: { impressions: 1 } }
+            );
 
             const FeaturedAdsArray = await getFeatureAdsService(userID, query);
             const PremiumAdsArray = await getPremiumAdsService(userID, query);
             const featureAds = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
-            if(BusinessAdsArray.length === 0){
+            if (BusinessAdsArray.length === 0) {
                 return featureAds
             }
             const FeaturedAds = FeaturedBusinessAdsFunc(featureAds, BusinessAdsArray);
@@ -552,7 +565,7 @@ module.exports = class BusinessAdService {
             title,
             description,
             parentID,
-            adType, 
+            adType,
             location,
             address,
             redirectionUrl,
@@ -582,15 +595,271 @@ module.exports = class BusinessAdService {
             updatedAt: currentDate
         });
 
-        if(BusinessAdDoc){
+        if (BusinessAdDoc) {
             await BusinessInfoModel.updateOne({ userID: ObjectId(userID) }, {
                 $push: {
                     businessAdList: newID
                 }
             });
             return BusinessAdDoc;
-        }else{
+        } else {
             throw ({ status: 400, message: 'Bad Request' });
         }
+    };
+
+    static async GetBusinessAdsAndRelatedAdsService(query, user_id, adId) {
+        let category = query.category;
+        let sub_category = query.sub_category;
+        let lng = +query.lng;
+        let lat = +query.lat;
+        let maxDistance = 100000;
+        let pageVal = +query.page;
+        if (pageVal == 0) pageVal = pageVal + 1
+        let limitval = +query.limit || 10;
+
+        if (!lng || !lat) {
+            throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+        }
+
+        let RelatedAds = await Generic.aggregate([
+            {
+                '$geoNear': {
+                    'near': {
+                        'type': 'Point',
+                        'coordinates': [
+                            lng, lat
+                        ]
+                    },
+                    'distanceField': 'dist.calculated',
+                    'maxDistance': maxDistance,
+                    'includeLocs': 'dist.location',
+                    'spherical': true
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'profiles',
+                    'localField': 'user_id',
+                    'foreignField': '_id',
+                    'as': 'sample_result'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$sample_result'
+                }
+            },
+            {
+                '$addFields': {
+                    'Seller_Name': '$sample_result.name',
+                    'Seller_Id': '$sample_result._id',
+                    'Seller_Joined': '$sample_result.created_date',
+                    'Seller_Image': '$sample_result.profile_url',
+                    'Seller_verified': '$sample_result.is_email_verified',
+                    'Seller_recommended': '$sample_result.is_recommended',
+                }
+            },
+            {
+                '$match': {
+                    'ad_status': 'Selling',
+                    "$or": [
+                        { "category": category },
+                        { "sub_category": sub_category }
+                    ],
+                }
+            },
+            {
+                $sort: {
+                    "created_at": -1,
+                    "dist.calculated": 1,
+                }
+            },
+            {
+                $skip: limitval * (pageVal - 1)
+            },
+            {
+                $limit: limitval
+            },
+            {
+                '$project': {
+                    '_id': 1,
+                    'parent_id': 1,
+                    'category': 1,
+                    'sub_category': 1,
+                    'title': 1,
+                    'views': 1,
+                    'saved': 1,
+                    'price': 1,
+                    'textLanguages': 1,
+                    "thumbnail_url": 1,
+                    'ad_posted_address': 1,
+                    'ad_status': 1,
+                    'SelectFields': 1,
+                    'ad_type': 1,
+                    'created_at': 1,
+                    'isPrime': 1,
+                    'dist': 1,
+                    'Seller_Name': 1,
+                    'Seller_Id': 1,
+                    'Seller_Joined': 1,
+                    'Seller_Image': 1,
+                    'Seller_verified': 1,
+                    'Seller_recommended': 1
+                }
+            },
+            {
+                '$facet': {
+                    'PremiumAds': [
+                        {
+                            '$match': {
+                                'isPrime': true
+                            }
+                        }
+                    ],
+                    'RecentAds': [
+                        {
+                            '$match': {
+                                'isPrime': false
+                            }
+                        }
+                    ]
+                }
+            },
+        ]);
+
+        const isAdFavFunc = async (AdToCheck) => {
+            AdToCheck.forEach(async relatedAd => {
+                const user = await Profile.find(
+                    {
+                        _id: user_id,
+                        "favourite_ads": {
+                            $elemMatch: { "ad_id": relatedAd._id }
+                        }
+                    })
+                if (user.length == 0) {
+                    relatedAd.isAdFav = false
+                } else {
+                    relatedAd.isAdFav = true
+                }
+            })
+        }
+
+        await isAdFavFunc(RelatedAds[0].RecentAds)
+        await isAdFavFunc(RelatedAds[0].PremiumAds)
+
+        const featureAds = featureAdsFunction(RelatedAds[0].RecentAds, RelatedAds[0].PremiumAds);
+        if (adId) {
+            featureAds = featureAds.filter((ad) => {
+                return ad._id.toString() !== adId;
+            });
+        } else {
+
+        }
+        const HighLightBusinessAdsArray = await BusinessAds.aggregate([
+            [
+                {
+                    '$geoNear': {
+                        'near': { type: 'Point', coordinates: [lng, lat] },
+                        "distanceField": "dist.calculated",
+                        'maxDistance': maxDistance,
+                        "includeLocs": "dist.location",
+                        'spherical': true
+                    }
+                },
+                {
+                    $match: {
+                        adStatus: "Active",
+                        adType: 'highlighted'
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 1,
+                        'parentID': 1,
+                        'userID': 1,
+                        'adStatus': 1,
+                        'title': 1,
+                        'description': 1,
+                        "adType": 1,
+                        'price': 1,
+                        "imageUrl": 1,
+                        'translateText': 1,
+                        'redirectionUrl': 1,
+                        'subAds': 1,
+                        "dist": 1,
+                        "createdAt": 1
+                    }
+                },
+                {
+                    $sort: {
+                        "createdAt": -1,
+                        "dist.calculated": -1
+                    }
+                },
+                {
+                    $skip: limitval * (pageVal - 1)
+                },
+                {
+                    $limit: limitval
+                },
+            ]
+        ]);
+        const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
+            [
+                {
+                    '$geoNear': {
+                        'near': { type: 'Point', coordinates: [lng, lat] },
+                        "distanceField": "dist.calculated",
+                        'maxDistance': maxDistance,
+                        "includeLocs": "dist.location",
+                        'spherical': true
+                    }
+                },
+                {
+                    $match: {
+                        adStatus: "Active",
+                        adType: {
+                            $in: ['featured', 'customized']
+                        }
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 1,
+                        'parentID': 1,
+                        'userID': 1,
+                        'adStatus': 1,
+                        'title': 1,
+                        'description': 1,
+                        "adType": 1,
+                        'price': 1,
+                        "imageUrl": 1,
+                        'translateText': 1,
+                        'redirectionUrl': 1,
+                        'subAds': 1,
+                        "dist": 1,
+                        "createdAt": 1
+                    }
+                },
+                {
+                    $sort: {
+                        "createdAt": -1,
+                        "dist.calculated": -1
+                    }
+                },
+                {
+                    $skip: limitval * (pageVal - 1)
+
+                },
+                {
+                    $limit: limitval
+                },
+            ]
+        ]);
+
+        const HighLightAndPremiumAds = BusinessAdsFunc(RelatedAds[0].PremiumAds, HighLightBusinessAdsArray);
+        const FetureAndCustomised = FeaturedBusinessAdsFunc(featureAds, FeaturedBusinessAdsArray)
+
+        return { HighLightAndPremiumAds, FetureAndCustomised }
     };
 }

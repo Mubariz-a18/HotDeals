@@ -21,6 +21,7 @@ const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
+const BusinessAds = require("../models/Ads/businessAdsShema");
 
 
 module.exports = class AdService {
@@ -29,11 +30,11 @@ module.exports = class AdService {
     //DONE: validate body
 
     const isAdBodyValid = ValidateCreateAdBody(bodyData);
-    if(!isAdBodyValid){
+    if (!isAdBodyValid) {
       throw ({ status: 401, message: 'Bad Request' })
     }
-    const userExist = await Profile.findById({_id:userId});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: userId });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
@@ -68,55 +69,55 @@ module.exports = class AdService {
       is_negotiable,
       is_ad_posted,
     } = bodyData;
-   async function doImageOperations(){
-     try{
- 
-       /*  
-       
-       *************************************************
-       IMAGE COMPRESSION FOR THUMBNAILS
-       *************************************************
-   
-   
-       */
-       const thumbnail_url = await imgCom(image_url[0]);
-   
-       /*
-   
-       *************************************************
-       IMAGE WATERMARK
-       *************************************************
-       
-       */
-   
-       await imageWaterMark(image_url)
-   
-       /* 
-       
-       **********************************************************
-       CHECKING IMAGES PROFANITY
-       **********************************************************
-       
-       */
-   
-       const { health, batch } = await detectSafeSearch(image_url);
+    async function doImageOperations() {
+      try {
 
-       return {
-        thumbnail_url,
-        health,
-        batch
-       }
-     }catch(e){
-       return error
-     }
-   }
+        /*  
+        
+        *************************************************
+        IMAGE COMPRESSION FOR THUMBNAILS
+        *************************************************
+    
+    
+        */
+        const thumbnail_url = await imgCom(image_url[0]);
 
-   const imageoperations = await doImageOperations()
-   const {
-    thumbnail_url,
-    health,
-    batch
-   } = imageoperations
+        /*
+    
+        *************************************************
+        IMAGE WATERMARK
+        *************************************************
+        
+        */
+
+        await imageWaterMark(image_url)
+
+        /* 
+        
+        **********************************************************
+        CHECKING IMAGES PROFANITY
+        **********************************************************
+        
+        */
+
+        const { health, batch } = await detectSafeSearch(image_url);
+
+        return {
+          thumbnail_url,
+          health,
+          batch
+        }
+      } catch (e) {
+        return error
+      }
+    }
+
+    const imageoperations = await doImageOperations()
+    const {
+      thumbnail_url,
+      health,
+      batch
+    } = imageoperations
     /* 
     
     **********************************************************
@@ -498,8 +499,8 @@ module.exports = class AdService {
   static async updateAd(bodyData, user_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const userExist = await Profile.findById({_id:user_id});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: user_id });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
 
@@ -520,7 +521,7 @@ module.exports = class AdService {
       throw ({ status: 401, message: 'Access_Denied' });
     }
 
-    const isUpdateBodyValid = validateUpdateAd(bodyData,Ad.category,Ad.sub_category);
+    const isUpdateBodyValid = validateUpdateAd(bodyData, Ad.category, Ad.sub_category);
     if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
@@ -529,9 +530,9 @@ module.exports = class AdService {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
 
-    async function doImageOperations(){
-      try{
- 
+    async function doImageOperations() {
+      try {
+
         /*  
         
         *************************************************
@@ -541,7 +542,7 @@ module.exports = class AdService {
     
         */
         const thumbnail_url = await imgCom(image_url[0]);
-    
+
         /*
     
         *************************************************
@@ -549,9 +550,9 @@ module.exports = class AdService {
         *************************************************
         
         */
-    
+
         await imageWaterMark(image_url)
-    
+
         /* 
         
         **********************************************************
@@ -559,26 +560,26 @@ module.exports = class AdService {
         **********************************************************
         
         */
-    
+
         const { health, batch } = await detectSafeSearch(image_url);
- 
-       return {
-         thumbnail_url,
-         health,
-         batch
+
+        return {
+          thumbnail_url,
+          health,
+          batch
         }
-      }catch(e){
+      } catch (e) {
         return error
       }
     }
 
-    
-   const imageoperations = await doImageOperations()
-   const {
-    thumbnail_url,
-    health,
-    batch
-   } = imageoperations
+
+    const imageoperations = await doImageOperations()
+    const {
+      thumbnail_url,
+      health,
+      batch
+    } = imageoperations
 
     /* 
     
@@ -674,8 +675,8 @@ module.exports = class AdService {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
 
-    const userExist = await Profile.findById({_id:userId});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: userId });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
 
@@ -717,24 +718,24 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
     } = bodyData;
-    async function doImageOperations(){
-      try{
+    async function doImageOperations() {
+      try {
 
         const thumbnail_url = await imgCom(image_url[0]);
-    
+
         await imageWaterMark(image_url);
-    
+
         const { health, batch } = await detectSafeSearch(image_url);
 
-        return {thumbnail_url , health, batch}
-      }catch(e){
+        return { thumbnail_url, health, batch }
+      } catch (e) {
         return e
       }
     }
 
     const imageoperations = await doImageOperations()
 
-    const {thumbnail_url , health, batch} = imageoperations;
+    const { thumbnail_url, health, batch } = imageoperations;
 
     const special_mention_string = special_mention.join(" ");
 
@@ -1076,7 +1077,7 @@ module.exports = class AdService {
       "Reposted"
     ]
 
-    if(!statuses.includes(bodyData.status)){
+    if (!statuses.includes(bodyData.status)) {
       throw ({ status: 401, message: 'Access_Denied' });
     }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -1188,8 +1189,8 @@ module.exports = class AdService {
   static async favouriteAds(bodyData, userId, ad_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const isBodyValid = validateFavoriteAdBody(bodyData,ad_id);
-    if(!isBodyValid){
+    const isBodyValid = validateFavoriteAdBody(bodyData, ad_id);
+    if (!isBodyValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
     // Ad is find from Generics collection    if body contains "Favourite"
@@ -1530,7 +1531,60 @@ module.exports = class AdService {
       distinct_id: ad_id,
       message: `viewed ${ad_id}`
     })
-    return { AdDetail, ownerDetails, isAdFav };
+    // two banner ads from business model with nearest location
+    const businessAdList = await BusinessAds.aggregate([
+      {
+        '$geoNear': {
+          'near': { type: 'Point', coordinates: [lng, lat] },
+          "distanceField": "dist.calculated",
+          'maxDistance': maxDistance,
+          "includeLocs": "dist.location",
+          'spherical': true
+        }
+      },
+      {
+        $match: {
+          adStatus: "Active",
+          adType: 'banner'
+        }
+      },
+      {
+        '$project': {
+          '_id': 1,
+          'parentID': 1,
+          'userID': 1,
+          'adStatus': 1,
+          'title': 1,
+          'description': 1,
+          "adType": 1,
+          'price': 1,
+          "imageUrl": 1,
+          'translateText': 1,
+          'redirectionUrl': 1,
+          'subAds': 1,
+          "dist": 1,
+          "createdAt": 1
+        }
+      },
+      {
+        $sort: {
+          "createdAt": -1,
+          "dist.calculated": -1
+        }
+      },
+      {
+        $limit: 2
+      }
+    ])
+
+    businessAdList.forEach(async ad=>{
+      await BusinessAds.updateOne({_id:ad._id},{
+        $inc:{
+          'impressions':1
+        }
+      })
+    })
+    return { AdDetail, ownerDetails, isAdFav, businessAdList };
   };
 
   // Get Premium Ads -- User is authentcated 1  1and Ads Are filtered
@@ -1978,10 +2032,10 @@ $skip and limit for pagination
 
     // only after payment is done 
     const isIdValid = validateMongoID(ad_id);
-    if(!isIdValid){
+    if (!isIdValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
-    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId ,ad_status:{$in:["Sold","Delete","Expired"]}});
+    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId, ad_status: { $in: ["Sold", "Delete", "Expired"] } });
 
     if (!adCopy) {
       throw ({ status: 401, message: 'Bad Request' });
@@ -2475,135 +2529,135 @@ Cloud Notification To firebase
 
   };
 
-    // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
-    static async getFeatureAdsService(userId, query) {
-      let lng = +query.lng;
-      let lat = +query.lat;
-      let maxDistance = +query.maxDistance;
-      let pageVal = +query.page || 1;
-      let limitval = +query.limit || 25;
-      if (pageVal == 0) pageVal = pageVal + 1
-  
-      if (!lng || !lat || !maxDistance) {
-        throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+  // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
+  static async getFeatureAdsService(userId, query) {
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 25;
+    if (pageVal == 0) pageVal = pageVal + 1
+
+    if (!lng || !lat || !maxDistance) {
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
+    /* 
+$geonear to find all the ads existing near the given coordinates
+$lookup for the relation between the profiles and Generics
+$unwind to extract the array from sample_result
+$addfeilds to join profile fields with sample result
+$project to show only the required fields
+$match for filtering only recent ads
+$sort to sort all the ads by order 
+$skip and limit for pagination
+*/
+    let Ads = await Generic.aggregate([
+      [
+        {
+          '$geoNear': {
+            'near': { type: 'Point', coordinates: [lng, lat] },
+            "distanceField": "dist.calculated",
+            'maxDistance': maxDistance,
+            "includeLocs": "dist.location",
+            'spherical': true
+          }
+        },
+        {
+          $match: {
+            isPrime: false,
+            ad_status: "Selling"
+          }
+        },
+        {
+          '$lookup': {
+            'from': 'profiles',
+            'localField': 'user_id',
+            'foreignField': '_id',
+            'as': 'sample_result'
+          }
+        },
+        {
+          '$unwind': {
+            'path': '$sample_result'
+          }
+        },
+        {
+          '$addFields': {
+            'Seller_Name': '$sample_result.name',
+            'Seller_Id': '$sample_result._id',
+            'Seller_Joined': '$sample_result.created_date',
+            'Seller_Image': '$sample_result.profile_url',
+            'Seller_verified': '$sample_result.is_email_verified',
+            'Seller_recommended': '$sample_result.is_recommended',
+
+          }
+        },
+        {
+          $sort: {
+            "is_Highlighted": -1,
+            "Highlighted_Date": -1,
+            "is_Boosted": -1,
+            "Boosted_Date": -1,
+            "created_at": -1,
+            "dist.calculated": -1,
+            "Seller_verified": -1,
+            "Seller_recommended": -1
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parent_id': 1,
+            "Seller_Id": 1,
+            'Seller_Name': 1,
+            "Seller_verified": 1,
+            "Seller_recommended": 1,
+            'category': 1,
+            'sub_category': 1,
+            'ad_status': 1,
+            'SelectFields': 1,
+            'title': 1,
+            "created_at": 1,
+            'price': 1,
+            "thumbnail_url": 1,
+            'textLanguages': 1,
+            'isPrime': 1,
+            "dist": 1,
+            "is_Boosted": 1,
+            "Boosted_Date": 1,
+            "is_Highlighted": 1,
+            "Highlighted_Date": 1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ])
+    Ads.forEach(async recentAd => {
+      const user = await Profile.find(
+        {
+          _id: userId,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": recentAd._id }
+          }
+        })
+      if (user.length == 0) {
+        recentAd.isAdFav = false
+      } else {
+        recentAd.isAdFav = true
       }
-      /* 
-  $geonear to find all the ads existing near the given coordinates
-  $lookup for the relation between the profiles and Generics
-  $unwind to extract the array from sample_result
-  $addfeilds to join profile fields with sample result
-  $project to show only the required fields
-  $match for filtering only recent ads
-  $sort to sort all the ads by order 
-  $skip and limit for pagination
-  */
-      let Ads = await Generic.aggregate([
-        [
-          {
-            '$geoNear': {
-              'near': { type: 'Point', coordinates: [lng, lat] },
-              "distanceField": "dist.calculated",
-              'maxDistance': maxDistance,
-              "includeLocs": "dist.location",
-              'spherical': true
-            }
-          },
-          {
-            $match: {
-              isPrime: false,
-              ad_status: "Selling"
-            }
-          },
-          {
-            '$lookup': {
-              'from': 'profiles',
-              'localField': 'user_id',
-              'foreignField': '_id',
-              'as': 'sample_result'
-            }
-          },
-          {
-            '$unwind': {
-              'path': '$sample_result'
-            }
-          },
-          {
-            '$addFields': {
-              'Seller_Name': '$sample_result.name',
-              'Seller_Id': '$sample_result._id',
-              'Seller_Joined': '$sample_result.created_date',
-              'Seller_Image': '$sample_result.profile_url',
-              'Seller_verified': '$sample_result.is_email_verified',
-              'Seller_recommended': '$sample_result.is_recommended',
-  
-            }
-          },
-          {
-            $sort: {
-              "is_Highlighted": -1,
-              "Highlighted_Date": -1,
-              "is_Boosted": -1,
-              "Boosted_Date": -1,
-              "created_at": -1,
-              "dist.calculated": -1,
-              "Seller_verified": -1,
-              "Seller_recommended": -1
-            }
-          },
-          {
-            '$project': {
-              '_id': 1,
-              'parent_id': 1,
-              "Seller_Id": 1,
-              'Seller_Name': 1,
-              "Seller_verified": 1,
-              "Seller_recommended": 1,
-              'category': 1,
-              'sub_category': 1,
-              'ad_status': 1,
-              'SelectFields': 1,
-              'title': 1,
-              "created_at": 1,
-              'price': 1,
-              "thumbnail_url": 1,
-              'textLanguages': 1,
-              'isPrime': 1,
-              "dist": 1,
-              "is_Boosted": 1,
-              "Boosted_Date": 1,
-              "is_Highlighted": 1,
-              "Highlighted_Date": 1
-            }
-          },
-          {
-            $skip: limitval * (pageVal - 1)
-          },
-          {
-            $limit: limitval
-          },
-        ]
-      ])
-      Ads.forEach(async recentAd => {
-        const user = await Profile.find(
-          {
-            _id: userId,
-            "favourite_ads": {
-              $elemMatch: { "ad_id": recentAd._id }
-            }
-          })
-        if (user.length == 0) {
-          recentAd.isAdFav = false
-        } else {
-          recentAd.isAdFav = true
-        }
-      })
-  
-      //mix panel track get recent ads 
-      await track('get recent Ads Successfully', {
-        distinct_id: userId
-      })
-        return Ads;
-    };
+    })
+
+    //mix panel track get recent ads 
+    await track('get recent Ads Successfully', {
+      distinct_id: userId
+    })
+    return Ads;
+  };
 
   /* 
   DRAFT ADS API SERVICES HERE
@@ -2612,7 +2666,7 @@ Cloud Notification To firebase
   // Create Draft Ad api
   static async draftAd(bodyData, userId) {
     const isAdBodyValid = ValidateDraftAdBody(bodyData);
-    if(!isAdBodyValid){
+    if (!isAdBodyValid) {
       throw ({ status: 401, message: 'Bad Request' })
     }
     // Generic AdDoc is created 
@@ -2659,7 +2713,7 @@ Cloud Notification To firebase
       image_url,
       video_url,
       thumbnail_url,
-      ad_status:"Draft",
+      ad_status: "Draft",
       ad_Draft_Date: currentDate,
       is_negotiable,
       created_at: currentDate

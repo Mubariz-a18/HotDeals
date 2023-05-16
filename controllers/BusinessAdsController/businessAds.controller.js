@@ -58,7 +58,6 @@ module.exports = class BusinessAdsController {
         }
     };
 
-
     static async getMyBusinessAds(req, res, next) {
         try {
             const { user_ID, body } = req;
@@ -133,6 +132,22 @@ module.exports = class BusinessAdsController {
                     message: "Successfully Reposted the Ad"
                 });
             }
+        } catch (e) {
+            errorHandler(e, res);
+        };
+    };
+
+    
+    static async GetBusinessAdsAndRelatedAds(req, res, next) {
+        try {
+            // Related are fetched from db and sent to response
+            const {FetureAndCustomised, HighLightAndPremiumAds} = await BusinessAdService.GetBusinessAdsAndRelatedAdsService( req.query,req.user_ID,req.body?.adID);
+            res.status(200).json({
+                    PremiumAds: HighLightAndPremiumAds,
+                    FeatureAds: FetureAndCustomised,
+                    TotalPremiumAds: HighLightAndPremiumAds.length,
+                    TotalFeaturedAds: FetureAndCustomised.length
+            });
         } catch (e) {
             errorHandler(e, res);
         };

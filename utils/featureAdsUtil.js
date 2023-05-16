@@ -35,7 +35,7 @@ const FeaturedBusinessAdsFunc = (FeatureAds,BusinessAds) => {
     const arr1 = FeatureAds;
     const arr2 = BusinessAds;
     let j = 0;
-    for (let i = 5; i < arr1.length; i += 5) {
+    for (let i = 6; i < arr1.length; i += 5) {
         arr1.splice(i, 0, arr2[j++]);
         if (j === arr2.length) break;
     }
