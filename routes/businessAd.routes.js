@@ -12,5 +12,6 @@ router.post('/repostBusinessAd', verifyJwtToken, BusinessAdsController.repostBus
 router.get('/getMyBusinessAds', verifyJwtToken, BusinessAdsController.getMyBusinessAds);
 router.get('/getInterstitialAd', verifyJwtToken, BusinessAdsController.getInterStatialBusinessAd);
 router.post('/getParticularBusinessAd',BusinessAdsController.getParticularBusinessAd);
+router.post('/checkBusinessAdCredits', verifyJwtToken,BusinessAdsController.checkBusinessAdCredits);
 
 module.exports = router;

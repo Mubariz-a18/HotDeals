@@ -13,10 +13,10 @@ const { durationInDays, expiry_date_func } = require("../utils/moment");
 const validateTransaction = require("../validators/transactionValidator");
 const {
   validateBoostMyAd,
-  validateCheckCreditBody,
   validateHighlightMyAdbody,
   validateCheckCreditBodyForArray,
-  ValidateMakeAdPremiumBody
+  ValidateMakeAdPremiumBody,
+  ValidateCheckBusinessCreditBody
 } = require("../validators/CreditValidations");
 
 const creditType = {
@@ -400,14 +400,10 @@ module.exports = class CreditService {
 
         }, {
           $set: {
-
             'universal_credit_bundles.$.number_of_credit': bundle.number_of_credit,
-
             'universal_credit_bundles.$.credit_status': bundle.number_of_credit == 0 ? "Empty" : "Active"
           }
         })
-
-
       });
 
       await Credit.updateOne({
@@ -415,11 +411,7 @@ module.exports = class CreditService {
         user_id: ObjectId(user_Id),
 
       }, {
-
         $inc: { "total_universal_credits": -creditValue_for_usage },
-
-
-
         $push: {
           credit_usage: {
             ad_id: ad_id,
@@ -970,6 +962,134 @@ module.exports = class CreditService {
       })
     }
     return "SUCCESSFULLY_HIGHLIGHTED"
+  };
+
+  static async CreditBusinessAdCheckFunction(userID, bodyData) {
+    const isBodyValid = ValidateCheckBusinessCreditBody(bodyData);
+    if (!isBodyValid) {
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+    const {
+      adType,
+      numberOfAds
+    } = bodyData;
+    const creditModel = await CreditValuesModel.findOne()
+    const baseValueForAdType = creditModel.businessAdBaseCreditValue;
+    const adTypeMultiplier = creditModel.businessAdMultiplier;
+    const creditsRequired = numberOfAds * (baseValueForAdType * adTypeMultiplier[adType]);
+    const user_credit_Document = await Credit.findOne({
+      user_id: userID
+    })
+    let universal_credit_bundles = user_credit_Document.universal_credit_bundles;
+
+    universal_credit_bundles = universal_credit_bundles.filter(elem => {
+      if (elem.credit_status !== "Expired") {
+        return elem
+      }
+    })
+    universal_credit_bundles.sort((a, b) => {
+      return new Date(a.credit_expiry_date) - new Date(b.credit_expiry_date)
+    })
+    let tempRequiredCredits = creditsRequired;
+    let tempBundles = universal_credit_bundles;
+    console.log(tempBundles.length)
+    let usingUniversalBundle = false;
+    for (var j = 0; j < tempBundles.length; j++) {
+      let bundle = tempBundles[j];
+      let creditCount = bundle["number_of_credit"];
+      if (creditCount >= tempRequiredCredits) {
+        creditCount = creditCount - tempRequiredCredits;
+        tempRequiredCredits = 0;
+        usingUniversalBundle = true;
+        tempBundles[j]['number_of_credit'] = creditCount;
+        break;
+      } else {
+        tempRequiredCredits = tempRequiredCredits - creditCount;
+        creditCount = 0;
+      }
+      tempBundles[j]['number_of_credit'] = creditCount;
+    }
+    if (usingUniversalBundle) {
+      return true;
+    }
+    return false;
+  };
+
+  static async deductBusinessAdCredits(userID, body) {
+    const {
+      adID,
+      title,
+      adType
+    } = body
+    const creditModel = await CreditValuesModel.findOne()
+    const baseValueForAdType = creditModel.businessAdBaseCreditValue;
+    const adTypeMultiplier = creditModel.businessAdMultiplier;
+    let creditValue_for_usage = 0
+    const creditsRequired = (baseValueForAdType * adTypeMultiplier[adType]);
+    creditValue_for_usage = creditValue_for_usage + creditsRequired
+    const user_credit_Document = await Credit.findOne({
+      user_id: userID
+    })
+    let universal_credit_bundles = user_credit_Document.universal_credit_bundles;
+    universal_credit_bundles = universal_credit_bundles.filter(elem => {
+      if (elem.credit_status !== "Expired") {
+        return elem
+      }
+    })
+    universal_credit_bundles.sort((a, b) => {
+      return new Date(a.credit_expiry_date) - new Date(b.credit_expiry_date)
+    })
+    let tempRequiredCredits = creditsRequired;
+    let tempBundles = universal_credit_bundles;
+    let usingUniversalBundle = false;
+    for (var j = 0; j < tempBundles.length; j++) {
+      let bundle = tempBundles[j];
+      let creditCount = bundle["number_of_credit"];
+      if (creditCount >= tempRequiredCredits) {
+        creditCount = creditCount - tempRequiredCredits;
+        tempRequiredCredits = 0;
+        usingUniversalBundle = true;
+        tempBundles[j]['number_of_credit'] = creditCount;
+        break;
+      } else {
+        /// else using all the credits of this bundle and move to the next after reducing required credits
+        tempRequiredCredits = tempRequiredCredits - creditCount;
+        creditCount = 0;
+      }
+      tempBundles[j]['number_of_credit'] = creditCount;
+    }
+    if (!usingUniversalBundle) {
+      return "NOT_ENOUGH_CREDITS"
+    }
+    universal_credit_bundles = tempBundles;
+    universal_credit_bundles.forEach(async bundle => {
+      await Credit.updateOne({
+        user_id: ObjectId(userID),
+        "universal_credit_bundles._id": bundle._id
+      }, {
+        $set: {
+          'universal_credit_bundles.$.number_of_credit': bundle.number_of_credit,
+          'universal_credit_bundles.$.credit_status': bundle.number_of_credit == 0 ? "Empty" : "Active"
+        }
+      })
+    });
+    const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+    await Credit.updateOne({
+      user_id: ObjectId(userID),
+    }, {
+      $inc: { "total_universal_credits": - creditValue_for_usage },
+      $push: {
+        credit_usage: {
+          ad_id: adID,
+          title: title,
+          number_of_credit: creditValue_for_usage,
+          adType,
+          isBusinessAd: true,
+          credited_on: currentDate
+        }
+      }
+    })
+
   };
 
 };

@@ -3,13 +3,27 @@ const BusinessInfoModel = require("../models/Profile/BusinessDetailSchema");
 const BusinessAds = require('../models/Ads/businessAdsShema');
 const { expiry_date_func } = require('../utils/moment');
 const { ObjectId } = require('mongodb');
-const { ValidateBusinessBody, ValidateUpdateBusinessBody, ValidateBusinessProfile, ValidateChangeStatusBody } = require('../validators/BusinessAds.Validators');
-const { ValidateQuery, validateMongoID } = require('../validators/Ads.Validator');
-const { getPremiumAdsService, getRecentAdsService, getFeatureAdsService } = require('./AdService');
-const { BusinessAdsFunc, FeaturedBusinessAdsFunc, featureAdsFunction } = require('../utils/featureAdsUtil');
+const {
+    ValidateBusinessBody,
+    ValidateUpdateBusinessBody,
+    ValidateBusinessProfile,
+    ValidateChangeStatusBody
+} = require('../validators/BusinessAds.Validators');
+const { 
+    ValidateQuery, 
+    validateMongoID } = require('../validators/Ads.Validator');
+const { 
+    getPremiumAdsService, 
+    getFeatureAdsService 
+} = require('./AdService');
+const { 
+    BusinessAdsFunc, 
+    FeaturedBusinessAdsFunc, 
+    featureAdsFunction 
+} = require('../utils/featureAdsUtil');
 const Generic = require('../models/Ads/genericSchema');
-const { track } = require('mixpanel/lib/mixpanel-node');
 const Profile = require('../models/Profile/Profile');
+const { deductBusinessAdCredits } = require('./CreditService');
 
 
 module.exports = class BusinessAdService {
@@ -139,6 +153,15 @@ module.exports = class BusinessAdService {
         for (let i = 0; i < primaryDetails.length; i++) {
             const adExist = await this.BusinessAd(primaryDetails[i].ad_id);
             if (adExist) {
+                throw ({ status: 400, message: 'Bad Request' });
+            }
+            const creditObj = {
+                adID: primaryDetails[i].ad_id,
+                title,
+                adType
+            }
+            const creditDeduction = await deductBusinessAdCredits(userID, creditObj)
+            if (creditDeduction === "NOT_ENOUGH_CREDITS") {
                 throw ({ status: 400, message: 'Bad Request' });
             }
             const BusinessAdDoc = await BusinessAds.create({
@@ -868,8 +891,8 @@ module.exports = class BusinessAdService {
 
         return { HighLightAndPremiumAds, FetureAndCustomised }
     };
-  
-    static async GetInterStatialAds(query){
+
+    static async GetInterStatialAds(query) {
         const isQueryValid = ValidateQuery(query);
         if (!isQueryValid) {
             throw ({ status: 400, message: 'Bad Request' });
@@ -920,7 +943,7 @@ module.exports = class BusinessAdService {
                 }
             ]
         ]);
-        if(BusinessAdsArray.length === 0){
+        if (BusinessAdsArray.length === 0) {
             throw ({ status: 404, message: 'No Ads Found' });
         }
         const RandomAdIndex = Math.floor(Math.random() * BusinessAdsArray.length);
@@ -929,5 +952,5 @@ module.exports = class BusinessAdService {
             { $inc: { impressions: 1 } }
         );
         return BusinessAdsArray[RandomAdIndex]
-    }
+    };
 }

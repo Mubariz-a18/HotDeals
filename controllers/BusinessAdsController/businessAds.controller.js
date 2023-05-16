@@ -1,5 +1,6 @@
 const errorHandler = require("../../middlewares/errorHandler");
 const BusinessAdService = require("../../services/BusinessAdService");
+const CreditService = require("../../services/CreditService");
 
 module.exports = class BusinessAdsController {
     static async createBusinessProfile(req, res, next) {
@@ -136,16 +137,16 @@ module.exports = class BusinessAdsController {
             errorHandler(e, res);
         };
     };
-    
+
     static async GetBusinessAdsAndRelatedAds(req, res, next) {
         try {
             // Related are fetched from db and sent to response
-            const {FetureAndCustomised, HighLightAndPremiumAds} = await BusinessAdService.GetBusinessAdsAndRelatedAdsService( req.query,req.user_ID,req.body?.adID);
+            const { FetureAndCustomised, HighLightAndPremiumAds } = await BusinessAdService.GetBusinessAdsAndRelatedAdsService(req.query, req.user_ID, req.body?.adID);
             res.status(200).json({
-                    PremiumAds: HighLightAndPremiumAds,
-                    FeatureAds: FetureAndCustomised,
-                    TotalPremiumAds: HighLightAndPremiumAds.length,
-                    TotalFeaturedAds: FetureAndCustomised.length
+                PremiumAds: HighLightAndPremiumAds,
+                FeatureAds: FetureAndCustomised,
+                TotalPremiumAds: HighLightAndPremiumAds.length,
+                TotalFeaturedAds: FetureAndCustomised.length
             });
         } catch (e) {
             errorHandler(e, res);
@@ -164,4 +165,15 @@ module.exports = class BusinessAdsController {
             errorHandler(e, res)
         }
     };
+
+    static async checkBusinessAdCredits(req, res, next) {
+        try {
+            const Value = await CreditService.CreditBusinessAdCheckFunction(req.user_ID, req.body);
+            res.status(200).send({
+                data: Value
+            });
+        } catch (e) {
+            errorHandler(e, res)
+        }
+    }
 }
