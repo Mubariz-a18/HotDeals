@@ -669,6 +669,174 @@ module.exports = class AdService {
 
   };
 
+  // static async postAd(bodyData, userId) {
+  //   for(let i =0; i<bodyData.primaryDetails.length;i++){
+  //     bodyData.primaryDetails[i].ad_id = new ObjectId().toString()
+  //   }
+  //   console.log(bodyData.primaryDetails);
+  //   const isbodyvalid = validateBody(bodyData);
+  //   if (!isbodyvalid) {
+  //     throw ({ status: 401, message: "Please Fill the Required Details properly" });
+  //   }
+
+  //   const userExist = await Profile.findById({ _id: userId });
+  //   if (!userExist) {
+  //     throw ({ status: 401, message: 'UnAuthorized' })
+  //   }
+
+  //   const { primaryDetails } = bodyData;
+
+  //   const durationForExpiryDate = await AdDurationModel.findOne();
+
+  //   for (let i = 0; i < primaryDetails.length; i++) {
+
+  //     const ad_id = primaryDetails[i]["ad_id"];
+
+  //     const AdExist = await Generic.findById({ _id: ad_id });
+
+  //     if (AdExist) {
+  //       throw ({ status: 401, message: "AD_ALREADY_EXIST" });
+  //     }
+  //   }
+
+  //   if (!primaryDetails || primaryDetails.length === 0) {
+  //     throw ({ status: 401, message: "Details Not Found" });
+  //   }
+
+  //   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+
+  //   const DefaultThumbnail = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"
+  //   let {
+  //     parent_id,
+  //     category,
+  //     sub_category,
+  //     description,
+  //     SelectFields,
+  //     special_mention,
+  //     title,
+  //     price,
+  //     image_url,
+  //     video_url,
+  //     ad_present_location,
+  //     ad_present_address,
+  //     ad_status,
+  //     is_negotiable,
+  //   } = bodyData;
+  //   async function doImageOperations() {
+  //     try {
+
+  //       const thumbnail_url = await imgCom(image_url[0]);
+
+  //       await imageWaterMark(image_url);
+
+  //       const { health, batch } = await detectSafeSearch(image_url);
+
+  //       return { thumbnail_url, health, batch }
+  //     } catch (e) {
+  //       return e
+  //     }
+  //   }
+
+  //   const imageoperations = await doImageOperations()
+
+  //   const { thumbnail_url, health, batch } = imageoperations;
+
+  //   const special_mention_string = special_mention.join(" ");
+
+  //   const isTextSafe = await safetext(title, description, special_mention_string);
+
+
+  //   let new_adStatus;
+  //   if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
+
+  //     new_adStatus = ad_status
+
+  //   } else {
+  //     new_adStatus = "Pending"
+  //   }
+  //   const textObj = {
+  //     title,
+  //     description,
+  //     special_mention
+  //   }
+  //   const translatedObj = await this.languageTranslation(textObj);
+
+  //   for (let i = 0; i < primaryDetails.length; i++) {
+  //     let adDetail = primaryDetails[i];
+  //     const {
+  //       ad_id,
+  //       ad_posted_location,
+  //       ad_posted_address,
+  //       isPrime,
+  //       AdsArray
+  //     } = adDetail;
+
+  //     const creditDuctConfig = {
+
+  //       title: title,
+  //       category: category,
+  //       AdsArray: AdsArray
+
+  //     }
+  //     const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
+
+  //     if (message === "NOT_ENOUGH_CREDITS") {
+
+  //       throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
+
+  //     }
+
+  //     const ad = await Generic.create({
+  //       user_id: ObjectId(userId),
+  //       _id: ObjectId(ad_id),
+  //       parent_id,
+  //       category,
+  //       sub_category,
+  //       description,
+  //       SelectFields,
+  //       special_mention,
+  //       title,
+  //       price,
+  //       image_url,
+  //       thumbnail_url: thumbnail_url ? thumbnail_url : DefaultThumbnail,
+  //       video_url,
+  //       ad_present_location,
+  //       ad_present_address,
+  //       ad_posted_location: ad_posted_location || {},
+  //       ad_posted_address: ad_posted_address,
+  //       isPrime: isPrime,
+  //       ad_type: isPrime == false ? "Free" : "Premium",
+  //       ad_Premium_Date: isPrime == true ? currentDate : "",
+  //       ad_status: new_adStatus,
+  //       detection: batch,
+  //       textLanguages: translatedObj ? translatedObj : {},
+  //       is_negotiable,
+  //       created_at: currentDate,
+  //       ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
+  //       updated_at: currentDate,
+  //     });
+
+  //     if (AdsArray.isHighlighted === true && new_adStatus === "Selling") {
+  //       await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
+  //         $set: {
+  //           is_Highlighted: true,
+  //           Highlight_Days: durationForExpiryDate.highlightAdDuration,
+  //           Highlighted_Date: currentDate,
+  //           Highlight_Expiry_Date: expiry_date_func(durationForExpiryDate.highlightAdDuration),
+  //         }
+  //       })
+  //     }
+  //     if (new_adStatus === "Pending") {
+  //       await AdService.AfterPendingAd(ad, userId)
+  //     } else {
+  //       await AdService.AfterAdIsPosted(ad, userId)
+  //     }
+
+  //   }
+  //   return true;
+
+  // };
+
   static async postAd(bodyData, userId) {
     const isbodyvalid = validateBody(bodyData);
     if (!isbodyvalid) {
@@ -833,7 +1001,8 @@ module.exports = class AdService {
 
   };
 
-  // Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
+  //Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
+ 
   static async getMyAds(userId) {
 
     const findUsr = await Profile.findOne({
