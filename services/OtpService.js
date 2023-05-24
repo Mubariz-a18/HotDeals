@@ -173,7 +173,7 @@ module.exports = class OtpService {
         email: email,
         message: `sent email to user : ${userId}  `
       })
-      return "OTP_SENT_TO_EMAIL_SUCCESSFULLY"
+      return "OTP_SENT_TO_EMAIL_SUCCESS"
     };
   };
 
