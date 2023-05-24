@@ -158,11 +158,12 @@ module.exports = class ProfileService {
       }
       const response = await axios.post(process.env.FIREBASE_DYNAMIC_URL, payload)
       const { shortLink } = response.data;
-      await Profile.updateOne({ _id: userID }, {
+      const updatedUser = await Profile.findByIdAndUpdate({ _id: userID }, {
         $set: {
           shortUrl: shortLink
         }
       })
+      return updatedUser
     }catch(e){
       throw ({ status: 400, message: 'Bad Request' });
     }
@@ -400,7 +401,7 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
-      const updateUsr = await Profile.findByIdAndUpdate(userId,
+      const updateUser = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
             name: bodyData.name,
@@ -434,7 +435,7 @@ module.exports = class ProfileService {
           new: true
         }
       );
-      await this.updateShortUrl(userId, bodyData.name, bodyData.profile_url || defaultProfileImage);
+      const  updateUsr = await this.updateShortUrl(userId, bodyData.name, bodyData.profile_url || defaultProfileImage);
       
       await track('User Profile updated  ', {
         distinct_id: userId,
