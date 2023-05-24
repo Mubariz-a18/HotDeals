@@ -2247,7 +2247,7 @@ $skip and limit for pagination
       category: category,
       AdsArray: {
 
-        "isPrime": isPrime,
+        "isPrime": false,
         "isHighlighted": false,
         "isBoosted": false
 
@@ -2278,7 +2278,7 @@ $skip and limit for pagination
       title,
       price,
       age: age,
-      isPrime,
+      isPrime:false,
       image_url,
       thumbnail_url,
       video_url,
@@ -2291,7 +2291,7 @@ $skip and limit for pagination
       is_ad_posted,
       created_at: currentDate,
       updated_at: currentDate,
-      ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
+      ad_expire_date: expiry_date_func(durationForExpiryDate.generalAdDuration),
     });
     if (newDoc) {
       //save the ad id in users profile in myads
