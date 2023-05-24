@@ -9,7 +9,7 @@ const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
 const navigateToTabs = require("../utils/navigationTabs");
-const { durationInDays, expiry_date_func } = require("../utils/moment");
+const { expiry_date_func } = require("../utils/moment");
 const validateTransaction = require("../validators/transactionValidator");
 const {
   validateBoostMyAd,
@@ -77,7 +77,7 @@ module.exports = class CreditService {
         source_of_credit: "Admin-Login",
         credit_created_date: currentDate,
         credit_status: status,
-        credit_duration: durationInDays(Free_credit_Expiry),
+        credit_duration: AdDuration.freeCreditDuration,
         credit_expiry_date: Free_credit_Expiry
 
       }
