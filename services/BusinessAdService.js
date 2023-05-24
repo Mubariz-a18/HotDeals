@@ -9,21 +9,23 @@ const {
     ValidateBusinessProfile,
     ValidateChangeStatusBody
 } = require('../validators/BusinessAds.Validators');
-const { 
-    ValidateQuery, 
+const {
+    ValidateQuery,
     validateMongoID } = require('../validators/Ads.Validator');
-const { 
-    getPremiumAdsService, 
-    getFeatureAdsService 
+const {
+    getPremiumAdsService,
+    getFeatureAdsService
 } = require('./AdService');
-const { 
-    BusinessAdsFunc, 
-    FeaturedBusinessAdsFunc, 
-    featureAdsFunction 
+const {
+    BusinessAdsFunc,
+    FeaturedBusinessAdsFunc,
+    featureAdsFunction
 } = require('../utils/featureAdsUtil');
 const Generic = require('../models/Ads/genericSchema');
 const Profile = require('../models/Profile/Profile');
 const { deductBusinessAdCredits } = require('./CreditService');
+const navigateToTabs = require('../utils/navigationTabs');
+const cloudMessage = require('../Firebase operations/cloudMessaging');
 
 
 module.exports = class BusinessAdService {
@@ -95,6 +97,13 @@ module.exports = class BusinessAdService {
             updatedAt: currentDate
         })
         if (BusinessPofileDoc) {
+            const messageBody = {
+                title: `Your Business Account is Created`,
+                body: "Click here to access it",
+                data: { navigateTo: navigateToTabs.home },
+                type: "Info"
+            }
+            await cloudMessage(userID.toString(), messageBody);
             return BusinessPofileDoc;
         }
         else throw ({ status: 400, message: 'Bad Request' });
@@ -191,6 +200,13 @@ module.exports = class BusinessAdService {
             });
         }
 
+        const messageBody = {
+            title: `Ad: ${title} is Successfully Posted`,
+            body: "Click here to access it",
+            data: { navigateTo: navigateToTabs.home },
+            type: "Info"
+        }
+        await cloudMessage(userID.toString(), messageBody);
         return true;
     };
 
