@@ -22,8 +22,12 @@ module.exports = class JsonDataService {
     static async getPlaces(input) {
         const key = process.env.GOOGLEAPIKEY;
         const token = Math.floor(Date.now() / 1000);
-        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${input}&key=${key}&sessiontoken=${token}&components=country:in`);
-        return response?.data
+        try{
+            const response = await axios.get(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${input}&key=${key}&sessiontoken=${token}&components=country:in`);
+            return response?.data
+        }catch(e){
+            ({ status: 400, message: 'Bad Request' })
+        }
     }
 
 };

@@ -18,8 +18,8 @@ const featureAdsFunction = (getRecentAds, premiumAds) => {
 }
 
 const BusinessAdsFunc = (PremiumAds,BusinessAds) => {
-    const arr1 = PremiumAds
-    const arr2 = BusinessAds
+    const arr1 = PremiumAds;
+    const arr2 = BusinessAds;
     let j = 0;
     for (let i = 2; i < arr1.length; i += 3) {
         arr1.splice(i, 0, arr2[j++]);
@@ -31,4 +31,18 @@ const BusinessAdsFunc = (PremiumAds,BusinessAds) => {
     return arr1
 }
 
-module.exports = { featureAdsFunction, BusinessAdsFunc }
+const FeaturedBusinessAdsFunc = (FeatureAds,BusinessAds) => {
+    const arr1 = FeatureAds;
+    const arr2 = BusinessAds;
+    let j = 0;
+    for (let i = 6; i < arr1.length; i += 5) {
+        arr1.splice(i, 0, arr2[j++]);
+        if (j === arr2.length) break;
+    }
+    if (j < arr2.length) {
+        arr1.push(...arr2.slice(j));
+    }
+    return arr1
+}
+
+module.exports = { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc }

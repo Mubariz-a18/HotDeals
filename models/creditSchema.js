@@ -59,6 +59,12 @@ const creditSchema = mongoose.Schema({
       category: {
         type: String
       },
+      adType:{
+        type:String
+      },
+      isBusinessAd:{
+        type:Boolean,
+      },
       Boost_expiry_date: {
         type: String
       },

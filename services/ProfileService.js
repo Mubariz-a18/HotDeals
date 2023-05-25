@@ -22,7 +22,9 @@ const OfferModel = require("../models/offerSchema");
 const { getReferralForPayouts } = require("./referCodeService");
 const HelpCenter = require("../models/helpCenterSchema");
 const BusinessAds = require("../models/Ads/businessAdsShema");
-const { BusinessProfile } = require("./BuisinessAdService");
+const { BusinessProfile } = require("./BusinessAdService");
+const { default: axios } = require("axios");
+const defaultProfileImage = "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb"
 
 
 module.exports = class ProfileService {
@@ -39,7 +41,6 @@ module.exports = class ProfileService {
     if (profileDoc) {
 
       const userProfile = await Profile.findById({ _id: userID })
-
       if (!userProfile) {
         let contactNumber = profileDoc.userNumber;
         // Creating Profile
@@ -66,6 +67,8 @@ module.exports = class ProfileService {
           created_date: currentDate,
           updated_date: currentDate
         });
+
+        await this.updateShortUrl(userID, bodyData.name, bodyData.profile_url || defaultProfileImage)
 
         // Create a new referralCode doc
         await Referral.create({
@@ -130,6 +133,41 @@ module.exports = class ProfileService {
 
     }
   };
+
+  static async updateShortUrl(userID, name, profileUrl) {
+    try{
+      const payload = {
+        "dynamicLinkInfo": {
+          "domainUriPrefix": "https://truelist.page.link",
+          "link": `https://truelist.in/userProfile/${userID}`,
+          "androidInfo": {
+            "androidPackageName": "in.truelist.app"
+          },
+          "iosInfo": {
+            "iosBundleId": "in.truelist.app",
+            "iosAppStoreId": "1666569292"
+          },
+          "socialMetaTagInfo": {
+            "socialTitle": name,
+            "socialImageLink": profileUrl
+          }
+        },
+        "suffix": {
+          "option": "SHORT"
+        }
+      }
+      const response = await axios.post(process.env.FIREBASE_DYNAMIC_URL, payload)
+      const { shortLink } = response.data;
+      const updatedUser = await Profile.findByIdAndUpdate({ _id: userID }, {
+        $set: {
+          shortUrl: shortLink
+        }
+      })
+      return updatedUser
+    }catch(e){
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+  }
 
   //DB Service to Get Profile By Phone Number
   static async getOthersProfile(user_id, user_ID) {
@@ -290,6 +328,7 @@ module.exports = class ProfileService {
           is_email_verified: 1,
           thumbnail_url: 1,
           profile_url: 1,
+          shortUrl:1,
           language_preference: 1,
           cover_photo_url: 1,
           followers_count: 1,
@@ -362,7 +401,7 @@ module.exports = class ProfileService {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' })
     }
     else {
-      const updateUsr = await Profile.findByIdAndUpdate(userId,
+      const updateUser = await Profile.findByIdAndUpdate(userId,
         {
           $set: {
             name: bodyData.name,
@@ -396,6 +435,8 @@ module.exports = class ProfileService {
           new: true
         }
       );
+      const  updateUsr = await this.updateShortUrl(userId, bodyData.name, bodyData.profile_url || defaultProfileImage);
+      
       await track('User Profile updated  ', {
         distinct_id: userId,
         $email: bodyData.email

@@ -146,20 +146,23 @@ const profileSchema = mongoose.Schema({
   profile_url: {
     type: String,
     required: true,
-    match:/^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
+    match: /^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
     default: "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb"
 
   },
   thumbnail_url: {
     type: String,
     required: true,
-    match:/^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
+    match: /^(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/,
     default: "https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/profileimages%2Fdefault_profile.jpg?alt=media&token=eca80b6f-a8a0-4968-9c29-daf57ee474bb"
   },
   cover_photo_url: {
     type: String,
     match: /^(http|https):\/\/[a-z0-9\-_]+\.[a-z0-9\-_]+\.[a-z0-9\-_]{2,}$/i,
     default: ""
+  },
+  shortUrl: {
+    type: String
   },
   followers: Array,
   followers_count: {

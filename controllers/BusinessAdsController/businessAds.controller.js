@@ -1,5 +1,6 @@
 const errorHandler = require("../../middlewares/errorHandler");
-const BusinessAdService = require("../../services/BuisinessAdService");
+const BusinessAdService = require("../../services/BusinessAdService");
+const CreditService = require("../../services/CreditService");
 
 module.exports = class BusinessAdsController {
     static async createBusinessProfile(req, res, next) {
@@ -37,6 +38,20 @@ module.exports = class BusinessAdsController {
             if (BusinessAdDoc) {
                 res.status(200).send({
                     message: "Successfully Created Business Ad"
+                })
+            }
+        } catch (e) {
+            errorHandler(e, res)
+        }
+    };
+
+    static async changeBusinessAdStatus(req, res, next) {
+        try {
+            const { user_ID, body } = req;
+            const BusinessAdDoc = await BusinessAdService.updateBusinessAdStatus(user_ID, body);
+            if (BusinessAdDoc) {
+                res.status(200).send({
+                    message: "Successfully Changed Business Ad Status"
                 })
             }
         } catch (e) {
@@ -86,15 +101,79 @@ module.exports = class BusinessAdsController {
         }
     };
 
-    static async getMyBusinessAdsByLocation(req, res, next){
+    static async getMyBusinessAdsByLocation(req, res, next) {
         try {
             // Premium ads are fetched from db and sent to response
-            const GetBusinessAdsDocs = await BusinessAdService.GetBusinessAds(req.user_ID, req.query);
-              res.status(200).json({
-                data:GetBusinessAdsDocs
-              });
-          } catch (e) {
+            const GetBusinessAdsDocs = await BusinessAdService.GetHighLightBusinessAds(req.user_ID, req.query);
+            res.status(200).json({
+                data: GetBusinessAdsDocs
+            });
+        } catch (e) {
             errorHandler(e, res);
-          };
+        };
+    };
+
+    static async getFeatureAdsBLocation(req, res, next) {
+        try {
+            // Premium ads are fetched from db and sent to response
+            const GetBusinessAdsDocs = await BusinessAdService.GetFeatureBusinessAds(req.user_ID, req.query);
+            res.status(200).json({
+                data: GetBusinessAdsDocs
+            });
+        } catch (e) {
+            errorHandler(e, res);
+        };
+    };
+
+    static async repostBusinessAd(req, res, next) {
+        try {
+            const RepostedAd = await BusinessAdService.repostBusinessAd(req.user_ID, req.body);
+            if (RepostedAd) {
+                res.status(200).json({
+                    message: "Successfully Reposted the Ad"
+                });
+            }
+        } catch (e) {
+            errorHandler(e, res);
+        };
+    };
+
+    static async GetBusinessAdsAndRelatedAds(req, res, next) {
+        try {
+            // Related are fetched from db and sent to response
+            const { FetureAndCustomised, HighLightAndPremiumAds } = await BusinessAdService.GetBusinessAdsAndRelatedAdsService(req.query, req.user_ID, req.body?.adID);
+            res.status(200).json({
+                PremiumAds: HighLightAndPremiumAds,
+                FeatureAds: FetureAndCustomised,
+                TotalPremiumAds: HighLightAndPremiumAds.length,
+                TotalFeaturedAds: FetureAndCustomised.length
+            });
+        } catch (e) {
+            errorHandler(e, res);
+        };
+    };
+
+    static async getInterStatialBusinessAd(req, res, next) {
+        try {
+            const BusinessAdDoc = await BusinessAdService.GetInterStatialAds(req.query);
+            if (BusinessAdDoc) {
+                res.status(200).send({
+                    data: BusinessAdDoc
+                });
+            }
+        } catch (e) {
+            errorHandler(e, res)
+        }
+    };
+
+    static async checkBusinessAdCredits(req, res, next) {
+        try {
+            const Value = await CreditService.CreditBusinessAdCheckFunction(req.user_ID, req.body);
+            res.status(200).send({
+                data: Value
+            });
+        } catch (e) {
+            errorHandler(e, res)
+        }
     }
 }

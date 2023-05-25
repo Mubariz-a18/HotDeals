@@ -131,7 +131,7 @@ module.exports = class AdController {
           AdDetails: [AdDetail]
         })
       } else {
-        const { AdDetail, ownerDetails, isAdFav } = await AdService.getParticularAd(req.body, req.query, req.user_ID)
+        const { AdDetail, ownerDetails, isAdFav, businessAdList } = await AdService.getParticularAd(req.body, req.query, req.user_ID)
         // Response is sent
         await track('viewed ad successfully', {
           distinct_id: req.user_ID,
@@ -141,7 +141,8 @@ module.exports = class AdController {
         res.status(200).json({
           AdDetails: AdDetail,
           Owner: ownerDetails,
-          isAdFav: isAdFav
+          isAdFav: isAdFav,
+          BusinessAds: businessAdList
         })
       }
     } catch (e) {

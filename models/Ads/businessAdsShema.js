@@ -50,7 +50,9 @@ const businessAdsSchema = mongoose.Schema({
     },
     imageUrl: {
         type: String,
-        required: true
+    },
+    redirectionUrl :{
+        type: String
     },
     adStatus: {
         type: String,

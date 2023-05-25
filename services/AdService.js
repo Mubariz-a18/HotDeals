@@ -21,29 +21,25 @@ const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
+const BusinessAds = require("../models/Ads/businessAdsShema");
 
 
 module.exports = class AdService {
   // Create Ad  - if user is authenticated Ad is created in  GENERICS COLLECTION  and also the same doc is created for GLOBALSEARCH collection
   static async createAd(bodyData, userId) {
-    //DONE: validate body
-
     const isAdBodyValid = ValidateCreateAdBody(bodyData);
-    if(!isAdBodyValid){
+    if (!isAdBodyValid) {
       throw ({ status: 401, message: 'Bad Request' })
     }
-    const userExist = await Profile.findById({_id:userId});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: userId });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
     const adExist = await Generic.findById({ _id: bodyData.ad_id });
     if (adExist) {
       throw ({ status: 401, message: 'AD_ALREADY_EXISTS' })
     }
-
-
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-
     const durationForExpiryDate = await AdDurationModel.findOne()
 
     // Generic AdDoc is created 
@@ -68,70 +64,31 @@ module.exports = class AdService {
       is_negotiable,
       is_ad_posted,
     } = bodyData;
-   async function doImageOperations(){
-     try{
- 
-       /*  
-       
-       *************************************************
-       IMAGE COMPRESSION FOR THUMBNAILS
-       *************************************************
-   
-   
-       */
-       const thumbnail_url = await imgCom(image_url[0]);
-   
-       /*
-   
-       *************************************************
-       IMAGE WATERMARK
-       *************************************************
-       
-       */
-   
-       await imageWaterMark(image_url)
-   
-       /* 
-       
-       **********************************************************
-       CHECKING IMAGES PROFANITY
-       **********************************************************
-       
-       */
-   
-       const { health, batch } = await detectSafeSearch(image_url);
-
-       return {
-        thumbnail_url,
-        health,
-        batch
-       }
-     }catch(e){
-       return error
-     }
-   }
-
-   const imageoperations = await doImageOperations()
-   const {
-    thumbnail_url,
-    health,
-    batch
-   } = imageoperations
-    /* 
-    
-    **********************************************************
-    CHECKING TITLE AND DESCRIPTION PROFANITY
-    **********************************************************
-    
-    */
+    async function doImageOperations() {
+      try {
+        const thumbnail_url = await imgCom(image_url[0]);
+        await imageWaterMark(image_url)
+        const { health, batch } = await detectSafeSearch(image_url);
+        return {
+          thumbnail_url,
+          health,
+          batch
+        }
+      } catch (e) {
+        return error
+      }
+    }
+    const imageoperations = await doImageOperations()
+    const {
+      thumbnail_url,
+      health,
+      batch
+    } = imageoperations
     const special_mention_string = special_mention.join(" ");
-
     const isTextSafe = await safetext(title, description, special_mention_string);
-
-
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
-
     const createAdFunc = async (status) => {
+      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description)
       let adDoc = await Generic.create({
         _id: ObjectId(ad_id),
         parent_id,
@@ -149,6 +106,7 @@ module.exports = class AdService {
         image_url,
         video_url,
         thumbnail_url: thumbnail_url ? thumbnail_url : "'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'",
+        shortUrl: shortUrl,
         ad_present_location: ad_present_location || {},
         ad_posted_location: ad_posted_location || {},
         ad_posted_address,
@@ -162,31 +120,20 @@ module.exports = class AdService {
         ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
         updated_at: currentDate,
       });
-
       return adDoc
     }
-
     const creditDuctConfig = {
-
       title: title,
       category: category,
       AdsArray: bodyData.AdsArray
-
     }
     const message = await creditDeductionFunction(creditDuctConfig, userId, ad_id);
-
     if (message === "NOT_ENOUGH_CREDITS") {
-
       throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
-
     }
 
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
-
-
       let adDoc = await createAdFunc(ad_status)
-
-      //***************************************************************************** BETA**********************************************
       if (bodyData.AdsArray.isHighlighted === true) {
         await Generic.findOneAndUpdate({ _id: ObjectId(ad_id) }, {
           $set: {
@@ -197,15 +144,10 @@ module.exports = class AdService {
           }
         })
       }
-
       return adDoc["_doc"];
-
     }
-
     else {
-
       let adDoc = await createAdFunc("Pending")
-
       return adDoc
     }
   };
@@ -219,6 +161,76 @@ module.exports = class AdService {
     } else {
       const referVal = Offer.referralCredits
       return referVal;
+    }
+  };
+
+  static async updateShortUrl(adID, title, url, description) {
+    try {
+      const payload = {
+        "dynamicLinkInfo": {
+          "domainUriPrefix": "https://truelist.page.link",
+          "link": `https://truelist.in/ad/${adID}`,
+          "androidInfo": {
+            "androidPackageName": "in.truelist.app"
+          },
+          "iosInfo": {
+            "iosBundleId": "in.truelist.app",
+            "iosAppStoreId": "1666569292"
+          },
+          "socialMetaTagInfo": {
+            "socialTitle": title,
+            "socialDescription": description,
+            "socialImageLink": url
+          }
+        },
+        "suffix": {
+          "option": "SHORT"
+        }
+      }
+      const response = await axios.post(process.env.FIREBASE_DYNAMIC_URL, payload)
+      const { shortLink } = response.data;
+      return shortLink
+    } catch (e) {
+      throw ({ status: 400, message: 'Bad Request' });
+    }
+  };
+
+  static async updateShortUrlForMultipleAds(parentID, title, url, description) {
+    try {
+      const AdsList = await Generic.find({ parent_id: parentID }, { _id: 1 });
+      for (let i = 0; i < AdsList.length; i++) {
+        const payload = {
+          "dynamicLinkInfo": {
+            "domainUriPrefix": "https://truelist.page.link",
+            "link": `https://truelist.in/ad/${AdsList[i]['_id']}`,
+            "androidInfo": {
+              "androidPackageName": "in.truelist.app"
+            },
+            "iosInfo": {
+              "iosBundleId": "in.truelist.app",
+              "iosAppStoreId": "1666569292"
+            },
+            "socialMetaTagInfo": {
+              "socialTitle": title,
+              "socialDescription": description,
+              "socialImageLink": url
+            }
+          },
+          "suffix": {
+            "option": "SHORT"
+          }
+        }
+        const response = await axios.post(process.env.FIREBASE_DYNAMIC_URL, payload)
+        const { shortLink } = response.data;
+        await Generic.updateOne({ _id: AdsList[i]['_id'] }, {
+          $set: {
+            shortLink: shortLink
+          }
+        });
+        return true
+      }
+    } catch (e) {
+      throw ({ status: 400, message: 'Bad Request' });
     }
   };
 
@@ -496,13 +508,11 @@ module.exports = class AdService {
 
   //Update Ad
   static async updateAd(bodyData, user_id) {
-
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const userExist = await Profile.findById({_id:user_id});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: user_id });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
-
     const {
       parent_id,
       description,
@@ -513,84 +523,40 @@ module.exports = class AdService {
       video_url,
       is_negotiable,
     } = bodyData;
-
     const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" });
-
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
     }
-
-    const isUpdateBodyValid = validateUpdateAd(bodyData,Ad.category,Ad.sub_category);
+    const isUpdateBodyValid = validateUpdateAd(bodyData, Ad.category, Ad.sub_category);
     if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
-
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
     }
-
-    async function doImageOperations(){
-      try{
- 
-        /*  
-        
-        *************************************************
-        IMAGE COMPRESSION FOR THUMBNAILS
-        *************************************************
-    
-    
-        */
+    async function doImageOperations() {
+      try {
         const thumbnail_url = await imgCom(image_url[0]);
-    
-        /*
-    
-        *************************************************
-        IMAGE WATERMARK
-        *************************************************
-        
-        */
-    
         await imageWaterMark(image_url)
-    
-        /* 
-        
-        **********************************************************
-        CHECKING IMAGES PROFANITY
-        **********************************************************
-        
-        */
-    
         const { health, batch } = await detectSafeSearch(image_url);
- 
-       return {
-         thumbnail_url,
-         health,
-         batch
+        return {
+          thumbnail_url,
+          health,
+          batch
         }
-      }catch(e){
+      } catch (e) {
         return error
       }
     }
-
-    
-   const imageoperations = await doImageOperations()
-   const {
-    thumbnail_url,
-    health,
-    batch
-   } = imageoperations
-
-    /* 
-    
-    **********************************************************
-    CHECKING TITLE AND DESCRIPTION PROFANITY
-    **********************************************************
-    
-    */
+    const imageoperations = await doImageOperations()
+    const {
+      thumbnail_url,
+      health,
+      batch
+    } = imageoperations;
     const special_mention_string = special_mention.join(" ");
-
     const isTextSafe = await safetext(" ", description, special_mention_string);
-
+    await this.updateShortUrlForMultipleAds(parent_id, Ad.title, thumbnail_url[0], description);
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" }, {
         $set: {
@@ -609,29 +575,17 @@ module.exports = class AdService {
       }, {
         new: true,
       });
-      /* 
-      
-      Cloud Notification To firebase
-      
-      */
       const messageBody = {
         title: `Ad: ${Ad.title} is successfully posted!`,
         body: "Click here to access it",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.particularAd },
         type: "Info"
-
       }
-
       await cloudMessage(user_id.toString(), messageBody);
-
       return updateAd;
-
     } else {
-
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
-
         $set: {
-
           description,
           SelectFields,
           special_mention,
@@ -640,29 +594,22 @@ module.exports = class AdService {
           image_url,
           detection: batch,
           thumbnail_url,
+          shortUrl: shortUrl,
           video_url,
           is_negotiable,
           updated_at: currentDate
-
         }
       }, {
         new: true,
       });
-      /* 
-      
-      Cloud Notification To firebase
-      
-      */
       const messageBody = {
         title: `Ad: '${Ad.title}' is pending`,
         body: "Click here to access it",
         data: { _id: parent_id.toString(), navigateTo: navigateToTabs.myads },
         type: "Info"
       }
-
       await cloudMessage(user_id.toString(), messageBody);
-
-      return updateAd
+      return updateAd;
     }
 
 
@@ -674,8 +621,8 @@ module.exports = class AdService {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
     }
 
-    const userExist = await Profile.findById({_id:userId});
-    if(!userExist){
+    const userExist = await Profile.findById({ _id: userId });
+    if (!userExist) {
       throw ({ status: 401, message: 'UnAuthorized' })
     }
 
@@ -717,24 +664,24 @@ module.exports = class AdService {
       ad_status,
       is_negotiable,
     } = bodyData;
-    async function doImageOperations(){
-      try{
+    async function doImageOperations() {
+      try {
 
         const thumbnail_url = await imgCom(image_url[0]);
-    
+
         await imageWaterMark(image_url);
-    
+
         const { health, batch } = await detectSafeSearch(image_url);
 
-        return {thumbnail_url , health, batch}
-      }catch(e){
+        return { thumbnail_url, health, batch }
+      } catch (e) {
         return e
       }
     }
 
     const imageoperations = await doImageOperations()
 
-    const {thumbnail_url , health, batch} = imageoperations;
+    const { thumbnail_url, health, batch } = imageoperations;
 
     const special_mention_string = special_mention.join(" ");
 
@@ -780,7 +727,7 @@ module.exports = class AdService {
         throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
 
       }
-
+      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description);
       const ad = await Generic.create({
         user_id: ObjectId(userId),
         _id: ObjectId(ad_id),
@@ -795,6 +742,7 @@ module.exports = class AdService {
         image_url,
         thumbnail_url: thumbnail_url ? thumbnail_url : DefaultThumbnail,
         video_url,
+        shortUrl: shortUrl,
         ad_present_location,
         ad_present_address,
         ad_posted_location: ad_posted_location || {},
@@ -832,7 +780,7 @@ module.exports = class AdService {
 
   };
 
-  // Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
+  //Get my Ads -- user is authenticated from token and  Aggregation  of Generics and Profile is created -- based on the _id in profile and generics -ads are fetched  
   static async getMyAds(userId) {
 
     const findUsr = await Profile.findOne({
@@ -1076,7 +1024,7 @@ module.exports = class AdService {
       "Reposted"
     ]
 
-    if(!statuses.includes(bodyData.status)){
+    if (!statuses.includes(bodyData.status)) {
       throw ({ status: 401, message: 'Access_Denied' });
     }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
@@ -1099,7 +1047,7 @@ module.exports = class AdService {
       throw ({ status: 401, message: 'Access_Denied' });
     }
     if (bodyData.status == "Archive") {
-      const adDoc = await Generic.findByIdAndUpdate(
+      const adDoc = await Generic.findOneAndUpdate(
         {
           _id: ad_id,
           ad_status: "Selling"
@@ -1120,7 +1068,7 @@ module.exports = class AdService {
     else if (bodyData.status == "Sold") {
       const adDoc = await Generic.updateMany(
         {
-          parent_id: ad_id,
+          parent_id: findAd.parent_id,
           ad_status: "Selling"
         },
         {
@@ -1188,8 +1136,8 @@ module.exports = class AdService {
   static async favouriteAds(bodyData, userId, ad_id) {
 
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-    const isBodyValid = validateFavoriteAdBody(bodyData,ad_id);
-    if(!isBodyValid){
+    const isBodyValid = validateFavoriteAdBody(bodyData, ad_id);
+    if (!isBodyValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
     // Ad is find from Generics collection    if body contains "Favourite"
@@ -1530,7 +1478,60 @@ module.exports = class AdService {
       distinct_id: ad_id,
       message: `viewed ${ad_id}`
     })
-    return { AdDetail, ownerDetails, isAdFav };
+    // two banner ads from business model with nearest location
+    const businessAdList = await BusinessAds.aggregate([
+      {
+        '$geoNear': {
+          'near': { type: 'Point', coordinates: [lng, lat] },
+          "distanceField": "dist.calculated",
+          'maxDistance': maxDistance,
+          "includeLocs": "dist.location",
+          'spherical': true
+        }
+      },
+      {
+        $match: {
+          adStatus: "Active",
+          adType: 'banner'
+        }
+      },
+      {
+        '$project': {
+          '_id': 1,
+          'parentID': 1,
+          'userID': 1,
+          'adStatus': 1,
+          'title': 1,
+          'description': 1,
+          "adType": 1,
+          'price': 1,
+          "imageUrl": 1,
+          'translateText': 1,
+          'redirectionUrl': 1,
+          'subAds': 1,
+          "dist": 1,
+          "createdAt": 1
+        }
+      },
+      {
+        $sort: {
+          "createdAt": -1,
+          "dist.calculated": -1
+        }
+      },
+      {
+        $limit: 2
+      }
+    ])
+
+    businessAdList.forEach(async ad => {
+      await BusinessAds.updateOne({ _id: ad._id }, {
+        $inc: {
+          'impressions': 1
+        }
+      })
+    })
+    return { AdDetail, ownerDetails, isAdFav, businessAdList };
   };
 
   // Get Premium Ads -- User is authentcated 1  1and Ads Are filtered
@@ -1793,7 +1794,6 @@ $skip and limit for pagination
 
     let premiumAds = await this.getPremiumAdsService(userId, query)
     const featureAds = featureAdsFunction(getRecentAds, premiumAds)
-
     return featureAds;
   };
 
@@ -1979,10 +1979,10 @@ $skip and limit for pagination
 
     // only after payment is done 
     const isIdValid = validateMongoID(ad_id);
-    if(!isIdValid){
+    if (!isIdValid) {
       throw ({ status: 401, message: 'Bad Request' });
     }
-    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId ,ad_status:{$in:["Sold","Delete","Expired"]}});
+    const adCopy = await Generic.findOne({ _id: ad_id, user_id: userId, ad_status: { $in: ["Sold", "Delete", "Expired"] } });
 
     if (!adCopy) {
       throw ({ status: 401, message: 'Bad Request' });
@@ -2025,7 +2025,7 @@ $skip and limit for pagination
       category: category,
       AdsArray: {
 
-        "isPrime": isPrime,
+        "isPrime": false,
         "isHighlighted": false,
         "isBoosted": false
 
@@ -2056,7 +2056,7 @@ $skip and limit for pagination
       title,
       price,
       age: age,
-      isPrime,
+      isPrime: false,
       image_url,
       thumbnail_url,
       video_url,
@@ -2069,7 +2069,7 @@ $skip and limit for pagination
       is_ad_posted,
       created_at: currentDate,
       updated_at: currentDate,
-      ad_expire_date: isPrime === true ? expiry_date_func(durationForExpiryDate.premiumAdDuration) : expiry_date_func(durationForExpiryDate.generalAdDuration),
+      ad_expire_date: expiry_date_func(durationForExpiryDate.generalAdDuration),
     });
     if (newDoc) {
       //save the ad id in users profile in myads
@@ -2476,6 +2476,136 @@ Cloud Notification To firebase
 
   };
 
+  // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
+  static async getFeatureAdsService(userId, query) {
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 25;
+    if (pageVal == 0) pageVal = pageVal + 1
+
+    if (!lng || !lat || !maxDistance) {
+      throw ({ status: 401, message: 'NO_COORDINATES_FOUND' });
+    }
+    /* 
+$geonear to find all the ads existing near the given coordinates
+$lookup for the relation between the profiles and Generics
+$unwind to extract the array from sample_result
+$addfeilds to join profile fields with sample result
+$project to show only the required fields
+$match for filtering only recent ads
+$sort to sort all the ads by order 
+$skip and limit for pagination
+*/
+    let Ads = await Generic.aggregate([
+      [
+        {
+          '$geoNear': {
+            'near': { type: 'Point', coordinates: [lng, lat] },
+            "distanceField": "dist.calculated",
+            'maxDistance': maxDistance,
+            "includeLocs": "dist.location",
+            'spherical': true
+          }
+        },
+        {
+          $match: {
+            isPrime: false,
+            ad_status: "Selling"
+          }
+        },
+        {
+          '$lookup': {
+            'from': 'profiles',
+            'localField': 'user_id',
+            'foreignField': '_id',
+            'as': 'sample_result'
+          }
+        },
+        {
+          '$unwind': {
+            'path': '$sample_result'
+          }
+        },
+        {
+          '$addFields': {
+            'Seller_Name': '$sample_result.name',
+            'Seller_Id': '$sample_result._id',
+            'Seller_Joined': '$sample_result.created_date',
+            'Seller_Image': '$sample_result.profile_url',
+            'Seller_verified': '$sample_result.is_email_verified',
+            'Seller_recommended': '$sample_result.is_recommended',
+
+          }
+        },
+        {
+          $sort: {
+            "is_Highlighted": -1,
+            "Highlighted_Date": -1,
+            "is_Boosted": -1,
+            "Boosted_Date": -1,
+            "created_at": -1,
+            "dist.calculated": -1,
+            "Seller_verified": -1,
+            "Seller_recommended": -1
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parent_id': 1,
+            "Seller_Id": 1,
+            'Seller_Name': 1,
+            "Seller_verified": 1,
+            "Seller_recommended": 1,
+            'category': 1,
+            'sub_category': 1,
+            'ad_status': 1,
+            'SelectFields': 1,
+            'title': 1,
+            "created_at": 1,
+            'price': 1,
+            "thumbnail_url": 1,
+            'textLanguages': 1,
+            'isPrime': 1,
+            "dist": 1,
+            "is_Boosted": 1,
+            "Boosted_Date": 1,
+            "is_Highlighted": 1,
+            "Highlighted_Date": 1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ])
+    Ads.forEach(async recentAd => {
+      const user = await Profile.find(
+        {
+          _id: userId,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": recentAd._id }
+          }
+        })
+      if (user.length == 0) {
+        recentAd.isAdFav = false
+      } else {
+        recentAd.isAdFav = true
+      }
+    })
+
+    //mix panel track get recent ads 
+    await track('get recent Ads Successfully', {
+      distinct_id: userId
+    })
+    return Ads;
+  };
+
   /* 
   DRAFT ADS API SERVICES HERE
   */
@@ -2483,7 +2613,7 @@ Cloud Notification To firebase
   // Create Draft Ad api
   static async draftAd(bodyData, userId) {
     const isAdBodyValid = ValidateDraftAdBody(bodyData);
-    if(!isAdBodyValid){
+    if (!isAdBodyValid) {
       throw ({ status: 401, message: 'Bad Request' })
     }
     // Generic AdDoc is created 
@@ -2530,7 +2660,7 @@ Cloud Notification To firebase
       image_url,
       video_url,
       thumbnail_url,
-      ad_status:"Draft",
+      ad_status: "Draft",
       ad_Draft_Date: currentDate,
       is_negotiable,
       created_at: currentDate

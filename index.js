@@ -30,6 +30,7 @@ var bodyParser = require("body-parser");
   const PORT = process.env.PORT || 3000;
   //Connecting to MongoDB
   const connectDB = require("./db/connectDatabase");
+const html = require("./utils/htmlForServerUrl");
 
 
 
@@ -61,7 +62,7 @@ var bodyParser = require("body-parser");
   app.use(BuinessAdRouter);
 
   app.get('/',(req,res)=>{
-    res.send("server is up and running").status(200)
+    res.send(html).status(200)
   });
 
   app.get('/health',(req,res)=>{

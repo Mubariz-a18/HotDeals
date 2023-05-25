@@ -75,31 +75,46 @@ router.get('/api/v1/getFavouriteAds',
     rateLimiter(getFavouriteAdsTime, getFavouriteAdsHits),
     verifyToken,
     AdController.apiGetFavouriteAds);
+
 router.post('/api/v1/get-particular-ad-details',
     rateLimiter(getParticularAdsTime, getParticularAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetParticularAdDetails);
+
 router.get('/api/v1/getPremiumAds',
     rateLimiter(getPremiumAdsTime, getPremiumAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetPremiumAds);
 
-    //version 2 of premium ads comes with business highlight ad
-
-    router.get('/api/v2/getPremiumAds',
+//version 2 of premium ads comes with business highlight ad
+router.get('/api/v2/getPremiumAds',
     rateLimiter(getPremiumAdsTime, getPremiumAdsHits),
     verifyJwtTokenForAds,
     BusinessAdsController.getMyBusinessAdsByLocation
-    );
+);
 
 router.get('/api/v1/getFeaturedAds',
     rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
     verifyJwtTokenForAds,
     AdController.apiGetRecentAds);
+
+//version 2 of feature ads with feature business ad
+router.get('/api/v2/getFeaturedAds',
+    rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
+    verifyJwtTokenForAds,
+    BusinessAdsController.getFeatureAdsBLocation);
+
 router.post('/api/v1/getRelatedAd',
     rateLimiter(getRelatedAdTime, getRelatedAdHits),
     verifyJwtTokenForAds,
     AdController.apiGetRelatedAds);
+
+ //version 2 of related ads with feature business ad   
+router.post('/api/v2/getRelatedAd',
+    rateLimiter(getRelatedAdTime, getRelatedAdHits),
+    verifyJwtTokenForAds,
+    BusinessAdsController.GetBusinessAdsAndRelatedAds);
+
 router.post('/api/v1/checkAdStatus',
     rateLimiter(getadStatusTime, getadStatusHits),
     AdController.apiCheckAdStatus);
@@ -119,9 +134,8 @@ router.post('/api/v1/claimPayout',
     verifyToken,
     AdController.apiClaimPayout);
 
-/* 
-Draft Ad Apis Here
-*/
+
+//* Draft Ad Apis Here
 
 router.post('/api/createDraftAd',
     rateLimiter(createAdTime, createAdHits),
@@ -142,4 +156,5 @@ router.post('/api/deleteDraft',
     rateLimiter(getMyAdTime, getMyAdHits),
     verifyToken,
     AdController.apiDeleteDraft);
+
 module.exports = router;

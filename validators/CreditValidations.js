@@ -41,8 +41,6 @@ function validateCheckCreditBodyForArray(body) {
 
     return true;
 }
-
-
 function validateBoostMyAd(body) {
     const {
         category,
@@ -55,8 +53,6 @@ function validateBoostMyAd(body) {
     if (typeof boost_duration !== 'string' || !boost_vales.General_Boost.hasOwnProperty(boost_duration) && !boost_vales.Premium_Boost.hasOwnProperty(boost_duration)) return false
     return true
 }
-
-
 function ValidateMakeAdPremiumBody(body) {
     const {
         ad_id,
@@ -74,8 +70,6 @@ function ValidateMakeAdPremiumBody(body) {
     }
     return true
 }
-
-
 function validateHighlightMyAdbody(body) {
     const {
         category,
@@ -88,15 +82,27 @@ function validateHighlightMyAdbody(body) {
     if (!HighLight_Duration || typeof HighLight_Duration !== 'number' || HighLight_Duration !== 15) return false
     return true
 }
+function ValidateCheckBusinessCreditBody(body) {
+    const adtypesArray = [
+        "highlighted",
+        "featured",
+        "customized",
+        "banner",
+        "interstitial"
+    ]
+    const {adType,numberOfAds}= body;
+    if(!adType||!numberOfAds) return false
+    if(typeof adType !== "string" || typeof numberOfAds !== 'number') return false;
+    if(!adtypesArray.includes(adType)) return false
 
-
-
-
+    return true
+}
 
 module.exports = {
     validateCheckCreditBody,
     validateBoostMyAd,
     ValidateMakeAdPremiumBody,
     validateHighlightMyAdbody,
-    validateCheckCreditBodyForArray
+    validateCheckCreditBodyForArray,
+    ValidateCheckBusinessCreditBody
 }

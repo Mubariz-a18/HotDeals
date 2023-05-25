@@ -58,6 +58,9 @@ const genericSchema = mongoose.Schema({
         type: Array,
         default: ["https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380"]
     },
+    shortUrl: {
+        type: String
+    },
     ad_present_location: {
         type: { type: String },
         coordinates: [],

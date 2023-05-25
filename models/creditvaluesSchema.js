@@ -12,6 +12,12 @@ const CreditValuesSchema = new mongoose.Schema({
     },
     typeMultiples: {
         type: Object
+    },
+    businessAdMultiplier: {
+        type:Object
+    },
+    businessAdBaseCreditValue: {
+        type:Number
     }
 });
 
