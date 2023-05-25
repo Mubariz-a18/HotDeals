@@ -162,6 +162,8 @@ module.exports = class ProfileService {
         $set: {
           shortUrl: shortLink
         }
+      },{
+        new:true
       })
       return updatedUser
     }catch(e){
