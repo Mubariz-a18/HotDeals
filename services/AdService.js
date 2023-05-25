@@ -88,7 +88,7 @@ module.exports = class AdService {
     const isTextSafe = await safetext(title, description, special_mention_string);
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
     const createAdFunc = async (status) => {
-      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url, description)
+      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description)
       let adDoc = await Generic.create({
         _id: ObjectId(ad_id),
         parent_id,
@@ -556,7 +556,7 @@ module.exports = class AdService {
     } = imageoperations;
     const special_mention_string = special_mention.join(" ");
     const isTextSafe = await safetext(" ", description, special_mention_string);
-    await this.updateShortUrlForMultipleAds(parent_id, Ad.title, thumbnail_url, description);
+    await this.updateShortUrlForMultipleAds(parent_id, Ad.title, thumbnail_url[0], description);
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" }, {
         $set: {
@@ -727,7 +727,7 @@ module.exports = class AdService {
         throw ({ status: 401, message: "NOT_ENOUGH_CREDITS" })
 
       }
-      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url, description);
+      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description);
       const ad = await Generic.create({
         user_id: ObjectId(userId),
         _id: ObjectId(ad_id),
