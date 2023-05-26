@@ -310,7 +310,6 @@ module.exports = class ProfileService {
 
   // api get my profile service
   static async getMyProfile(user_ID) {
-
     const MyProfile = await Profile.aggregate([
       {
         $match: { _id: mongoose.Types.ObjectId(user_ID) },
@@ -344,6 +343,11 @@ module.exports = class ProfileService {
     if (MyProfile.length === 0) {
       throw ({ status: 404, message: 'USER_NOT_EXISTS' });
     }
+    if(!MyProfile[0].shortUrl){
+      const updatedUser = await this.updateShortUrl(user_ID.toString(),MyProfile[0].name,MyProfile[0].profile_url)
+      MyProfile[0].shortUrl = updatedUser.shortUrl
+    }
+
     const Offer = await OfferModel.findOne({});
 
     const referral_code = await Referral.findOne({
