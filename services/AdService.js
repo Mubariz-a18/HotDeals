@@ -1085,6 +1085,9 @@ module.exports = class AdService {
       return adDoc;
     }
     else if (bodyData.status == "Sold") {
+      if(!bodyData.parent_id || !validateMongoID(bodyData.parent_id)){
+        throw ({ status: 400, message: 'Bad Request' });
+      }
       const adDoc = await Generic.updateMany(
         {
           parent_id: bodyData?.parent_id,
