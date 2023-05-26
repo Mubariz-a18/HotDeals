@@ -1048,14 +1048,24 @@ module.exports = class AdService {
     }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
-
-    const findAd = await Generic.findOne({
-      _id: ad_id,
-      user_id: userId,
-      ad_status: {
-        $ne: "Suspended"
-      }
-    });
+    let findAd;
+    if (bodyData.status != "Sold") {
+      findAd = await Generic.findOne({
+        _id: ad_id,
+        user_id: userId,
+        ad_status: {
+          $ne: "Suspended"
+        }
+      });
+    }else{
+      findAd = await Generic.findOne({
+        parent_id: ad_id,
+        user_id: userId,
+        ad_status: {
+          $ne: "Suspended"
+        }
+      });
+    }
 
     if (!findAd) {
       await track('failed !! to chaange ad status', {
@@ -1087,7 +1097,7 @@ module.exports = class AdService {
     else if (bodyData.status == "Sold") {
       const adDoc = await Generic.updateMany(
         {
-          parent_id: findAd.parent_id,
+          parent_id: ad_id,
           ad_status: "Selling"
         },
         {
@@ -1440,6 +1450,7 @@ module.exports = class AdService {
           'image_url': 1,
           'thumbnail_url': 1,
           'video_url': 1,
+          'shortUrl': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
           'ad_present_address': 1,
