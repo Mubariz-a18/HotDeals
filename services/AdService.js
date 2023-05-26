@@ -1048,14 +1048,24 @@ module.exports = class AdService {
     }
     const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
     const Ad_Historic_Duration = moment().add(183, 'd').format('YYYY-MM-DD HH:mm:ss');
-
-    const findAd = await Generic.findOne({
-      _id: ad_id,
-      user_id: userId,
-      ad_status: {
-        $ne: "Suspended"
-      }
-    });
+    let findAd;
+    if (bodyData.status != "Sold") {
+      findAd = await Generic.findOne({
+        _id: ad_id,
+        user_id: userId,
+        ad_status: {
+          $ne: "Suspended"
+        }
+      });
+    }else{
+      findAd = await Generic.findOne({
+        parent_id: ad_id,
+        user_id: userId,
+        ad_status: {
+          $ne: "Suspended"
+        }
+      });
+    }
 
     if (!findAd) {
       await track('failed !! to chaange ad status', {
@@ -1085,12 +1095,9 @@ module.exports = class AdService {
       return adDoc;
     }
     else if (bodyData.status == "Sold") {
-      if(!bodyData.parent_id || !validateMongoID(bodyData.parent_id)){
-        throw ({ status: 400, message: 'Bad Request' });
-      }
       const adDoc = await Generic.updateMany(
         {
-          parent_id: bodyData?.parent_id,
+          parent_id: ad_id,
           ad_status: "Selling"
         },
         {
