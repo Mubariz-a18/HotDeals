@@ -16,6 +16,8 @@ function validateAlert(body){
   if (keywords && (typeof keywords !== "object" || keywords.length > 5)) return false;
 
   if(!ArrayOfString(keywords,40)) return false
+
+  return true;
 }
 
 

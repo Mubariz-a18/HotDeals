@@ -18,4 +18,13 @@ router.get(
     GlobalSearchController.apiGetGlobalSearch
 );
 
+router.get('/api/v1/getAutoSuggestions',
+rateLimiter(
+    getGlobalsearchTime,
+    getGlobalsearchHits
+),
+verifyJwtTokenForAds,
+GlobalSearchController.apiGetAutoSuggestion
+)
+
 module.exports = router;

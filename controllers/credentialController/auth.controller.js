@@ -168,7 +168,6 @@ module.exports = class AuthController {
   // verification of email by otp from nodemailer
   static async apiEmailVerficationByOtp(req, res, next) {
     try {
-
       const userId = req.user_ID;
       const Otp = req.body.otp;
       const email = req.body.email;
