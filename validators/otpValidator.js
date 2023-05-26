@@ -15,12 +15,12 @@ function validatePhoneNumer(phoneNumber) {
 }
 
 function validateEmail(email) {
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+    const emailRegex =  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(email)) return false
     return true
 }
 
-function validateEmailOtp(email, otp) {
+function validateEmailOtp(otp, email) {
     if (!validateEmail(email)) return false
     if (!otp) return false
     if (typeof otp !== 'string' || otp.length !== 6) return false
