@@ -1087,7 +1087,7 @@ module.exports = class AdService {
     else if (bodyData.status == "Sold") {
       const adDoc = await Generic.updateMany(
         {
-          parent_id: findAd.parent_id,
+          parent_id: bodyData?.parent_id,
           ad_status: "Selling"
         },
         {
