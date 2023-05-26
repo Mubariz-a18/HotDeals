@@ -18,5 +18,17 @@ module.exports = class GlobalSearchController {
     } catch (e) {
       errorHandler(e, res)
     };
+  };
+
+  static async apiGetAutoSuggestion(req, res, next){
+    try {
+      const suggestions = await GlobalSearchService.getAutoSuggestion(req.query.keyword)
+      res.status(200).json({
+        success:true,
+        data:suggestions
+      })
+    } catch (e) {
+      errorHandler(e,res)
+    }
   }
 }

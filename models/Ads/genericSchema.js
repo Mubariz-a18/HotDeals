@@ -61,6 +61,9 @@ const genericSchema = mongoose.Schema({
     shortUrl: {
         type: String
     },
+    keywordList:{
+        type:Array
+    },
     ad_present_location: {
         type: { type: String },
         coordinates: [],

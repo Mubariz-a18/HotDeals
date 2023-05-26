@@ -22,6 +22,7 @@ const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
 const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
 const BusinessAds = require("../models/Ads/businessAdsShema");
+const insertKeywordsFunc = require("../utils/keywordList");
 
 
 module.exports = class AdService {
@@ -88,7 +89,8 @@ module.exports = class AdService {
     const isTextSafe = await safetext(title, description, special_mention_string);
     let age = age_func(SelectFields["Year of Purchase (MM/YYYY)"]) || bodyData.age
     const createAdFunc = async (status) => {
-      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description)
+      const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description);
+      const keywordList = insertKeywordsFunc(bodyData);
       let adDoc = await Generic.create({
         _id: ObjectId(ad_id),
         parent_id,
@@ -107,6 +109,7 @@ module.exports = class AdService {
         video_url,
         thumbnail_url: thumbnail_url ? thumbnail_url : "'https://firebasestorage.googleapis.com/v0/b/true-list.appspot.com/o/thumbnails%2Fdefault%20thumbnail.jpeg?alt=media&token=9b903695-9c36-4fc3-8b48-8d70a5cd4380'",
         shortUrl: shortUrl,
+        keywordList: keywordList,
         ad_present_location: ad_present_location || {},
         ad_posted_location: ad_posted_location || {},
         ad_posted_address,
@@ -523,17 +526,21 @@ module.exports = class AdService {
       video_url,
       is_negotiable,
     } = bodyData;
+
     const Ad = await Generic.findOne({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" });
     if (!Ad) {
       throw ({ status: 401, message: 'Access_Denied' });
-    }
+    };
+
     const isUpdateBodyValid = validateUpdateAd(bodyData, Ad.category, Ad.sub_category);
     if (!isUpdateBodyValid) {
       throw ({ status: 401, message: "Please Fill the Required Details properly" });
-    }
+    };
+
     if (image_url.length == 0) {
       throw ({ status: 401, message: 'NO_IMAGES_IN_THIS_AD' })
-    }
+    };
+
     async function doImageOperations() {
       try {
         const thumbnail_url = await imgCom(image_url[0]);
@@ -547,16 +554,24 @@ module.exports = class AdService {
       } catch (e) {
         return error
       }
-    }
+    };
+
     const imageoperations = await doImageOperations()
     const {
       thumbnail_url,
       health,
       batch
     } = imageoperations;
+
     const special_mention_string = special_mention.join(" ");
     const isTextSafe = await safetext(" ", description, special_mention_string);
     await this.updateShortUrlForMultipleAds(parent_id, Ad.title, thumbnail_url[0], description);
+
+    bodyData.title = Ad.title
+    bodyData.category = Ad.category
+    bodyData.sub_category = Ad.sub_category
+    const keywordList = insertKeywordsFunc(bodyData);
+
     if (health === "HEALTHY" && isTextSafe === "NotHarmFull") {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id, ad_status: "Selling" }, {
         $set: {
@@ -568,6 +583,7 @@ module.exports = class AdService {
           thumbnail_url,
           ad_status: "Selling",
           video_url,
+          keywordList,
           detection: batch,
           is_negotiable,
           updated_at: currentDate,
@@ -583,7 +599,8 @@ module.exports = class AdService {
       }
       await cloudMessage(user_id.toString(), messageBody);
       return updateAd;
-    } else {
+    }
+    else {
       const updateAd = await Generic.updateMany({ parent_id: parent_id, user_id: user_id }, {
         $set: {
           description,
@@ -728,6 +745,7 @@ module.exports = class AdService {
 
       }
       const shortUrl = await this.updateShortUrl(ad_id, title, thumbnail_url[0], description);
+      const keywordList = insertKeywordsFunc(bodyData);
       const ad = await Generic.create({
         user_id: ObjectId(userId),
         _id: ObjectId(ad_id),
@@ -743,6 +761,7 @@ module.exports = class AdService {
         thumbnail_url: thumbnail_url ? thumbnail_url : DefaultThumbnail,
         video_url,
         shortUrl: shortUrl,
+        keywordList,
         ad_present_location,
         ad_present_address,
         ad_posted_location: ad_posted_location || {},

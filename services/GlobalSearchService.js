@@ -50,11 +50,65 @@ module.exports = class GlobalSearchService {
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
+        if(!keyword){
+            throw({status:400,message:"Keyword is required"})
+        }
         //if user exist find ads using $search and $text
-        const result = await GlobalSearch.aggregate([
+        // const result = await GlobalSearch.aggregate([
+        //     {
+        //         $search: {
+        //             "index": "Global_search_Index",
+        //             "compound": {
+        //                 "filter": {
+        //                     "geoWithin": {
+        //                         "circle": {
+        //                             "center": {
+        //                                 "type": "Point",
+        //                                 "coordinates": [lng, lat]
+        //                             },
+        //                             "radius": maxDistance,
+        //                         },
+        //                         "path": "ad_posted_location"
+        //                     },
+        //                 },
+        //                 "must": {
+        //                     "autocomplete": {
+        //                         "query": keyword,
+        //                         "path": "Keyword"
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     },
+        //     {
+        //         $project: {
+        //             ad_id: 1,
+        //             Keyword: 1,
+        //             ad_posted_location: 1,
+        //             "score": { "$meta": "searchScore" }
+        //         }
+        //     }]
+        // );
+
+        // let GenericAds = [];
+        // result.forEach(item => {
+        //     GenericAds.push(item.ad_id)
+        // })
+        // const searched_ads = await Generic.find({ _id: GenericAds, ad_status: "Selling" }, {
+        //     _id: 1,
+        //     title: 1,
+        //     thumbnail_url: 1,
+        //     parent_id: 1,
+        //     textLanguages: 1,
+        //     price: 1,
+        //     created_at: 1,
+        //     isPrime: -1
+        // }).sort({ isPrime: -1, created_at: -1 })
+
+        const globalSearchResult = await Generic.aggregate([
             {
                 $search: {
-                    "index": "Global_search_Index",
+                    'index': "generic_search_index",
                     "compound": {
                         "filter": {
                             "geoWithin": {
@@ -71,42 +125,45 @@ module.exports = class GlobalSearchService {
                         "must": {
                             "autocomplete": {
                                 "query": keyword,
-                                "path": "Keyword"
+                                "path": "keywordList"
                             }
                         }
                     }
+                },
+            },
+            {
+                $match: {
+                    ad_status: "Selling"
+                }
+            },
+            {
+                $sort: {
+                    isPrime: -1,
+                    created_at: -1
                 }
             },
             {
                 $project: {
-                    ad_id: 1,
-                    Keyword: 1,
-                    ad_posted_location: 1,
-                    "score": { "$meta": "searchScore" }
+                    _id: 1,
+                    title: 1,
+                    thumbnail_url: 1,
+                    parent_id: 1,
+                    textLanguages: 1,
+                    price: 1,
+                    created_at: 1,
+                    isPrime: -1
                 }
-            }]
-        );
 
-        let GenericAds = [];
-        result.forEach(item => {
-            GenericAds.push(item.ad_id)
-        })
-        const searched_ads = await Generic.find({ _id: GenericAds , ad_status:"Selling"}, {
-            _id:1,
-            title: 1,
-            thumbnail_url:1,
-            parent_id: 1,
-            textLanguages:1,
-            price: 1,
-            created_at: 1,
-            isPrime: -1
-        }).sort({ isPrime: -1, created_at: -1 })
+            }
+        ]);
+
+
         // mix panel track for Global search api
         await track('Global search  success !! ', {
-            distinct_id:user_id,
+            distinct_id: user_id || "",
             keywords: keyword
         });
-        return searched_ads
+        return globalSearchResult
     };
 
     // Api create Analytics keywords
@@ -186,7 +243,7 @@ module.exports = class GlobalSearchService {
     };
 
     // api Create Analytics for Non Users
-    static async createAnalyticsForNonUsers(result ,queries){
+    static async createAnalyticsForNonUsers(result, queries) {
         const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
         const { keyword } = queries;
         if (result.length == 0) {
@@ -209,5 +266,39 @@ module.exports = class GlobalSearchService {
             });
             return createAnalytics
         }
-    }
+    };
+
+    static async getAutoSuggestion(keyword) {
+        if (!keyword || keyword.length < 3) {
+            throw ({ status: 400, message: "Keyword of atleast 3 letter is required" })
+        }
+        const result = await Generic.aggregate([
+            {
+                $search: {
+                    'index': "generic_search_index",
+                    "autocomplete": {
+                        "query": keyword,
+                        "path": "keywordList"
+                    }
+                }
+            },
+            {
+                $project: { "keywordList": 1 }
+
+            }
+        ])
+        let suggestions = []
+        for (let i = 0; i < result.length; i++) {
+            for (let j = 0; j < result[i].keywordList.length; j++) {
+                if (result[i].keywordList[j].toLowerCase().includes(keyword.toLowerCase())) {
+                    suggestions.push(result[i].keywordList[j])
+                }
+            }
+        }
+        function removeDuplicates(arr) {
+            return [...new Set(arr)];
+        }
+
+        return removeDuplicates(suggestions)
+    };
 };
