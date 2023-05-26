@@ -1450,6 +1450,7 @@ module.exports = class AdService {
           'image_url': 1,
           'thumbnail_url': 1,
           'video_url': 1,
+          'shortUrl': 1,
           'SelectFields': 1,
           'ad_posted_address': 1,
           'ad_present_address': 1,
