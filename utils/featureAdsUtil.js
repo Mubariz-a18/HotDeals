@@ -28,7 +28,14 @@ const BusinessAdsFunc = (PremiumAds,BusinessAds) => {
     if (j < arr2.length) {
         arr1.push(...arr2.slice(j));
     }
-    return arr1
+    const FilteredArray = arr1.filter(Boolean);
+    return FilteredArray
+}
+
+const countAds = (totalHighlights,positionOfBusinessAd)=>{
+
+    const countOfBusinessAds = Math.floor(totalHighlights/positionOfBusinessAd);
+    return countOfBusinessAds
 }
 
 const FeaturedBusinessAdsFunc = (FeatureAds,BusinessAds) => {
@@ -42,7 +49,8 @@ const FeaturedBusinessAdsFunc = (FeatureAds,BusinessAds) => {
     if (j < arr2.length) {
         arr1.push(...arr2.slice(j));
     }
-    return arr1
+    const FilteredArray = arr1.filter(Boolean)
+    return FilteredArray
 }
 
-module.exports = { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc }
+module.exports = { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc, countAds }

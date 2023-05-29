@@ -9,7 +9,7 @@ const { track, failedTrack } = require('./mixpanel-service.js');
 const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-const { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc } = require("../utils/featureAdsUtil");
+const { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc, countAds } = require("../utils/featureAdsUtil");
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -2741,11 +2741,12 @@ $skip and limit for pagination
     if (category) {
       HighLightPipeline.push({ $match: { category: category } });
     };
-    HighLightPipeline.push({
-      '$sample': {
-        'size': limitval
-      }
-    },
+    HighLightPipeline.push(
+      {
+        '$sample': {
+          'size': 10
+        }
+      },
       {
         '$lookup': lookup
       },
@@ -2765,7 +2766,8 @@ $skip and limit for pagination
       });
 
     let HighlightedAdsArray = await Generic.aggregate(HighLightPipeline);
-    await this.isAdFavFunc(HighlightedAdsArray, userId)
+    await this.isAdFavFunc(HighlightedAdsArray, userId);
+    const HighLightsampleSize = countAds(HighlightedAdsArray.length, 2);
     const HighLightBusinessAdsArray = await BusinessAds.aggregate([
       [
         {
@@ -2773,8 +2775,13 @@ $skip and limit for pagination
         },
         {
           $match: {
+            adType: 'highlighted',
             adStatus: "Active",
-            adType: 'highlighted'
+          }
+        },
+        {
+          '$sample': {
+            'size': HighLightsampleSize
           }
         },
         {
@@ -2794,25 +2801,9 @@ $skip and limit for pagination
             "dist": 1,
             "createdAt": 1
           }
-        },
-        {
-          $sort: {
-            "createdAt": -1,
-            "dist.calculated": -1
-          }
-        },
-        {
-          $skip: limitval * (pageVal - 1)
-        },
-        {
-          $limit: limitval
-        },
+        }
       ]
     ]);
-
-    if (HighLightBusinessAdsArray.length === 0) {
-      return PremiumAdsArray
-    }
     for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
       HighLightBusinessAdsArray[i].isBusinessAd = true
     }
@@ -2821,7 +2812,6 @@ $skip and limit for pagination
       { _id: { $in: adIds } },
       { $inc: { impressions: 1 } }
     );
-
     const HighlightedAds = BusinessAdsFunc(HighlightedAdsArray, HighLightBusinessAdsArray);
 
     function pipeLine(isPrime) {
@@ -2869,7 +2859,8 @@ $skip and limit for pagination
       });
 
     let FeaturedAdsArray = await Generic.aggregate(FeaturedPipeLine);
-    await this.isAdFavFunc(FeaturedAdsArray, userId)
+    await this.isAdFavFunc(FeaturedAdsArray, userId);
+    const FeaturedsampleSize = countAds(FeaturedAdsArray.length, 6);
     const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
       [
         {
@@ -2881,6 +2872,11 @@ $skip and limit for pagination
             adType: {
               $in: ['featured', 'customized']
             }
+          }
+        },
+        {
+          '$sample': {
+            'size': FeaturedsampleSize
           }
         },
         {
@@ -2915,6 +2911,7 @@ $skip and limit for pagination
         },
       ]
     ]);
+
 
     for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
       FeaturedBusinessAdsArray[i].isBusinessAd = true
@@ -2956,7 +2953,8 @@ $skip and limit for pagination
     const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
     const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
     if (FeaturedBusinessAdsArray.length === 0) {
-      return FeaturedAdsArray;
+      const FeaturedAds = AdsList
+      return { HighlightedAds, FeaturedAds };
     }
     const FeaturedAds = FeaturedBusinessAdsFunc(AdsList, FeaturedBusinessAdsArray);
     return { HighlightedAds, FeaturedAds };
