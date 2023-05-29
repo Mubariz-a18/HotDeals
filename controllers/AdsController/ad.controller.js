@@ -69,7 +69,6 @@ module.exports = class AdController {
   }
 
   // Update  Ads Status -- Ads are Updated  and returned from Adservice to updatedDoc
-
   static async apiChangeAdStatus(req, res, next) {
     try {
       const ad_id = req.body.ad_id;
@@ -212,7 +211,6 @@ module.exports = class AdController {
     };
   };
 
-
   static async apiGetRelatedAds(req, res, next) {
     try {
       // Premium ads are fetched from db and sent to response
@@ -315,7 +313,7 @@ module.exports = class AdController {
     } catch (e) {
       errorHandler(e, res);
     };
-  }
+  };
 
   // Get Ads -- Ads are Fetched and Returned from Adservice 
   static async apiGetMyAdsForPayout(req, res, next) {
@@ -330,7 +328,7 @@ module.exports = class AdController {
     } catch (e) {
       errorHandler(e, res);
     };
-  }
+  };
 
   static async apiClaimPayout(req, res, next) {
     try {
@@ -339,6 +337,18 @@ module.exports = class AdController {
       res.status(200).send({
         message: "successfully claimed",
         // PayoutClaim
+      });
+    } catch (e) {
+      errorHandler(e, res);
+    };
+  };
+
+  static async apiGetDashBoard(req, res, next) {
+    try {
+      const { HighlightedAds, FeaturedAds } = await AdService.GetDashBoard(req.user_ID, req.query);
+      res.status(200).send({
+        HighlightedAds,
+        FeaturedAds,
       });
     } catch (e) {
       errorHandler(e, res);

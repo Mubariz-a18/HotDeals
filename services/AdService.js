@@ -9,7 +9,7 @@ const { track, failedTrack } = require('./mixpanel-service.js');
 const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-const { featureAdsFunction } = require("../utils/featureAdsUtil");
+const { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc } = require("../utils/featureAdsUtil");
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -20,7 +20,7 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
+const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody, ValidateQuery } = require("../validators/Ads.Validator");
 const BusinessAds = require("../models/Ads/businessAdsShema");
 const insertKeywordsFunc = require("../utils/keywordList");
 
@@ -1057,7 +1057,7 @@ module.exports = class AdService {
           $ne: "Suspended"
         }
       });
-    }else{
+    } else {
       findAd = await Generic.findOne({
         parent_id: ad_id,
         user_id: userId,
@@ -2506,6 +2506,23 @@ Cloud Notification To firebase
 
   };
 
+  static isAdFavFunc = async (Ads, user_id) => {
+    Ads.forEach(async relatedAd => {
+      const user = await Profile.find(
+        {
+          _id: user_id,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": relatedAd._id }
+          }
+        })
+      if (user.length == 0) {
+        relatedAd.isAdFav = false
+      } else {
+        relatedAd.isAdFav = true
+      }
+    })
+  }
+
   // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
   static async getFeatureAdsService(userId, query) {
     let lng = +query.lng;
@@ -2634,6 +2651,315 @@ $skip and limit for pagination
       distinct_id: userId
     })
     return Ads;
+  };
+
+  static async GetDashBoard(userId, query) {
+    const isQueriesValid = ValidateQuery(query);
+    if (!isQueriesValid) {
+      throw ({ status: 400, message: 'Bad Reqesut' });
+    }
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 25;
+    if (pageVal == 0) pageVal = pageVal + 1
+    const category = query?.category;
+    const projection = {
+      '_id': 1,
+      'parent_id': 1,
+      "Seller_Id": 1,
+      'Seller_Name': 1,
+      "Seller_verified": 1,
+      "Seller_recommended": 1,
+      'category': 1,
+      'sub_category': 1,
+      'ad_status': 1,
+      'SelectFields': 1,
+      'title': 1,
+      "created_at": 1,
+      'price': 1,
+      "thumbnail_url": 1,
+      'textLanguages': 1,
+      'isPrime': 1,
+      "dist": 1,
+      "is_Boosted": 1,
+      "Boosted_Date": 1,
+      "is_Highlighted": 1,
+      "Highlighted_Date": 1
+    };
+    const sorting = {
+      "is_Highlighted": -1,
+      "Highlighted_Date": -1,
+      "is_Boosted": -1,
+      "Boosted_Date": -1,
+      "created_at": -1,
+      "dist.calculated": -1,
+      "Seller_verified": -1,
+      "Seller_recommended": -1
+    };
+    const geoNear = {
+      'near': { type: 'Point', coordinates: [lng, lat] },
+      "distanceField": "dist.calculated",
+      'maxDistance': maxDistance,
+      "includeLocs": "dist.location",
+      'spherical': true
+    };
+    const lookup = {
+      'from': 'profiles',
+      'localField': 'user_id',
+      'foreignField': '_id',
+      'as': 'sample_result'
+    };
+    const addFields = {
+      'Seller_Name': '$sample_result.name',
+      'Seller_Id': '$sample_result._id',
+      'Seller_Joined': '$sample_result.created_date',
+      'Seller_Image': '$sample_result.profile_url',
+      'Seller_verified': '$sample_result.is_email_verified',
+      'Seller_recommended': '$sample_result.is_recommended',
+
+    };
+    const HighLightPipeline = [
+      {
+        '$geoNear': {
+          'near': { type: 'Point', coordinates: [lng, lat] },
+          "distanceField": "dist.calculated",
+          'maxDistance': maxDistance,
+          "includeLocs": "dist.location",
+          'spherical': true
+        }
+      },
+      {
+        '$match': {
+          'isPrime': true,
+          'ad_status': "Selling"
+        }
+      }
+    ];
+
+    if (category) {
+      HighLightPipeline.push({ $match: { category: category } });
+    };
+    HighLightPipeline.push({
+      '$sample': {
+        'size': limitval
+      }
+    },
+      {
+        '$lookup': lookup
+      },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        '$project': projection
+      },
+      {
+        $sort: sorting
+      });
+
+    let HighlightedAdsArray = await Generic.aggregate(HighLightPipeline);
+    await this.isAdFavFunc(HighlightedAdsArray, userId)
+    const HighLightBusinessAdsArray = await BusinessAds.aggregate([
+      [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            adStatus: "Active",
+            adType: 'highlighted'
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parentID': 1,
+            'userID': 1,
+            'adStatus': 1,
+            'title': 1,
+            'description': 1,
+            "adType": 1,
+            'price': 1,
+            "imageUrl": 1,
+            'translateText': 1,
+            'redirectionUrl': 1,
+            'subAds': 1,
+            "dist": 1,
+            "createdAt": 1
+          }
+        },
+        {
+          $sort: {
+            "createdAt": -1,
+            "dist.calculated": -1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ]);
+
+    if (HighLightBusinessAdsArray.length === 0) {
+      return PremiumAdsArray
+    }
+    for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
+      HighLightBusinessAdsArray[i].isBusinessAd = true
+    }
+    const adIds = HighLightBusinessAdsArray.map((ad) => ad._id);
+    await BusinessAds.updateMany(
+      { _id: { $in: adIds } },
+      { $inc: { impressions: 1 } }
+    );
+
+    const HighlightedAds = BusinessAdsFunc(HighlightedAdsArray, HighLightBusinessAdsArray);
+
+    function pipeLine(isPrime) {
+      const pipeLine = [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            isPrime: isPrime,
+            ad_status: "Selling"
+          }
+        }
+      ];
+      return pipeLine;
+    }
+
+    const FeaturedPipeLine = pipeLine(false)
+    if (category) {
+      FeaturedPipeLine.push({ $match: { category: category } });
+    };
+
+    FeaturedPipeLine.push({
+      '$lookup': lookup
+    },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        $sort: sorting
+      },
+      {
+        '$project': projection
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      });
+
+    let FeaturedAdsArray = await Generic.aggregate(FeaturedPipeLine);
+    await this.isAdFavFunc(FeaturedAdsArray, userId)
+    const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
+      [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            adStatus: "Active",
+            adType: {
+              $in: ['featured', 'customized']
+            }
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parentID': 1,
+            'userID': 1,
+            'adStatus': 1,
+            'title': 1,
+            'description': 1,
+            "adType": 1,
+            'price': 1,
+            "imageUrl": 1,
+            'translateText': 1,
+            'redirectionUrl': 1,
+            'subAds': 1,
+            "dist": 1,
+            "createdAt": 1
+          }
+        },
+        {
+          $sort: {
+            "createdAt": -1,
+            "dist.calculated": -1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ]);
+
+    for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
+      FeaturedBusinessAdsArray[i].isBusinessAd = true
+    };
+
+    const AdIds = FeaturedBusinessAdsArray.map((ad) => ad._id);
+    await BusinessAds.updateMany(
+      { _id: { $in: AdIds } },
+      { $inc: { impressions: 1 } }
+    );
+
+    const PremiumAdsPipeLine = pipeLine(true)
+    if (category) {
+      PremiumAdsPipeLine.push({ $match: { category: category } });
+    };
+    PremiumAdsPipeLine.push({
+      '$lookup': lookup
+    },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        $sort: sorting
+      },
+      {
+        '$project': projection
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      });
+    const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
+    const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
+    if (FeaturedBusinessAdsArray.length === 0) {
+      return FeaturedAdsArray;
+    }
+    const FeaturedAds = FeaturedBusinessAdsFunc(AdsList, FeaturedBusinessAdsArray);
+    return { HighlightedAds, FeaturedAds };
   };
 
   /* 
