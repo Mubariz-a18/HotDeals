@@ -2859,8 +2859,36 @@ $skip and limit for pagination
       });
 
     let FeaturedAdsArray = await Generic.aggregate(FeaturedPipeLine);
-    await this.isAdFavFunc(FeaturedAdsArray, userId);
-    const FeaturedsampleSize = countAds(FeaturedAdsArray.length, 6);
+    const PremiumAdsPipeLine = pipeLine(true)
+    if (category) {
+      PremiumAdsPipeLine.push({ $match: { category: category } });
+    };
+    PremiumAdsPipeLine.push({
+      '$lookup': lookup
+    },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        $sort: sorting
+      },
+      {
+        '$project': projection
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      });
+    const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
+    const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
+    const FeaturedsampleSize = countAds(AdsList.length, 6);
     const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
       [
         {
@@ -2911,51 +2939,16 @@ $skip and limit for pagination
         },
       ]
     ]);
-
+    await this.isAdFavFunc(AdsList, userId);
 
     for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
       FeaturedBusinessAdsArray[i].isBusinessAd = true
     };
-
     const AdIds = FeaturedBusinessAdsArray.map((ad) => ad._id);
     await BusinessAds.updateMany(
       { _id: { $in: AdIds } },
       { $inc: { impressions: 1 } }
     );
-
-    const PremiumAdsPipeLine = pipeLine(true)
-    if (category) {
-      PremiumAdsPipeLine.push({ $match: { category: category } });
-    };
-    PremiumAdsPipeLine.push({
-      '$lookup': lookup
-    },
-      {
-        '$unwind': {
-          'path': '$sample_result'
-        }
-      },
-      {
-        '$addFields': addFields
-      },
-      {
-        $sort: sorting
-      },
-      {
-        '$project': projection
-      },
-      {
-        $skip: limitval * (pageVal - 1)
-      },
-      {
-        $limit: limitval
-      });
-    const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
-    const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
-    if (FeaturedBusinessAdsArray.length === 0) {
-      const FeaturedAds = AdsList
-      return { HighlightedAds, FeaturedAds };
-    }
     const FeaturedAds = FeaturedBusinessAdsFunc(AdsList, FeaturedBusinessAdsArray);
     return { HighlightedAds, FeaturedAds };
   };
