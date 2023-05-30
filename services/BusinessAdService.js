@@ -26,6 +26,7 @@ const Profile = require('../models/Profile/Profile');
 const { deductBusinessAdCredits } = require('./CreditService');
 const navigateToTabs = require('../utils/navigationTabs');
 const cloudMessage = require('../Firebase operations/cloudMessaging');
+const calculateDistance = require('../utils/distanceCalc');
 
 
 module.exports = class BusinessAdService {
@@ -451,6 +452,7 @@ module.exports = class BusinessAdService {
                             "adType": 1,
                             'price': 1,
                             "imageUrl": 1,
+                            "location":1,
                             'translateText': 1,
                             'redirectionUrl': 1,
                             'subAds': 1,
@@ -479,6 +481,8 @@ module.exports = class BusinessAdService {
                 return PremiumAdsArray
             }
             for (let i = 0; i < BusinessAdsArray.length; i++) {
+                const [lng2,lat2] = BusinessAdsArray[i].location.coordinates;
+                BusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
                 BusinessAdsArray[i].isBusinessAd = true
             }
             const adIds = BusinessAdsArray.map((ad) => ad._id);
@@ -537,6 +541,7 @@ module.exports = class BusinessAdService {
                             'description': 1,
                             "adType": 1,
                             'price': 1,
+                            "location":1,
                             "imageUrl": 1,
                             'translateText': 1,
                             'redirectionUrl': 1,
@@ -561,6 +566,8 @@ module.exports = class BusinessAdService {
             ]);
 
             for (let i = 0; i < BusinessAdsArray.length; i++) {
+                const [lng2,lat2] = BusinessAdsArray[i].location.coordinates;
+                BusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
                 BusinessAdsArray[i].isBusinessAd = true
             }
             const adIds = BusinessAdsArray.map((ad) => ad._id);
@@ -743,6 +750,7 @@ module.exports = class BusinessAdService {
                     'textLanguages': 1,
                     "thumbnail_url": 1,
                     'ad_posted_address': 1,
+                    "ad_present_location": 1,
                     'ad_status': 1,
                     'SelectFields': 1,
                     'ad_type': 1,
@@ -779,6 +787,9 @@ module.exports = class BusinessAdService {
 
         const isAdFavFunc = async (AdToCheck) => {
             AdToCheck.forEach(async relatedAd => {
+
+                const [lng2, lat2] = relatedAd.ad_present_location.coordinates;
+                relatedAd.distance = calculateDistance(lat, lng, lat2, lng2)
                 const user = await Profile.find(
                     {
                         _id: user_id,
@@ -833,6 +844,7 @@ module.exports = class BusinessAdService {
                         "adType": 1,
                         'price': 1,
                         "imageUrl": 1,
+                        "location":1,
                         'translateText': 1,
                         'redirectionUrl': 1,
                         'subAds': 1,
@@ -855,6 +867,8 @@ module.exports = class BusinessAdService {
             ]
         ]);
         for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
+            const [lng2,lat2] = HighLightBusinessAdsArray[i].location.coordinates;
+            HighLightBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
             HighLightBusinessAdsArray[i].isBusinessAd = true
         }
         const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
@@ -887,6 +901,7 @@ module.exports = class BusinessAdService {
                         "adType": 1,
                         'price': 1,
                         "imageUrl": 1,
+                        "location":1,
                         'translateText': 1,
                         'redirectionUrl': 1,
                         'subAds': 1,
@@ -910,6 +925,8 @@ module.exports = class BusinessAdService {
             ]
         ]);
         for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
+            const [lng2,lat2] = FeaturedBusinessAdsArray[i].location.coordinates;
+            FeaturedBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
             FeaturedBusinessAdsArray[i].isBusinessAd = true
         }
 

@@ -23,6 +23,7 @@ const AdDurationModel = require("../models/durationSchema");
 const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody, ValidateQuery } = require("../validators/Ads.Validator");
 const BusinessAds = require("../models/Ads/businessAdsShema");
 const insertKeywordsFunc = require("../utils/keywordList");
+const calculateDistance = require("../utils/distanceCalc");
 
 
 module.exports = class AdService {
@@ -1481,6 +1482,9 @@ module.exports = class AdService {
       AdDetail[0].views = AdDetail[0].views + 1
     }
 
+    const [lng2,lat2] = AdDetail[0].ad_present_location.coordinates;
+    AdDetail[0].distance = calculateDistance(lat,lng,lat2,lng2)
+
     const ownerDetails = await Profile.findById({ _id: AdDetail[0].user_id }, {
       _id: 1,
       name: 1,
@@ -1648,6 +1652,7 @@ module.exports = class AdService {
             'title': 1,
             'SelectFields': 1,
             "created_at": 1,
+            "ad_present_location":1,
             'price': 1,
             "thumbnail_url": 1,
             'textLanguages': 1,
@@ -1679,7 +1684,11 @@ module.exports = class AdService {
         },
       ]
     ])
+
+
     premiumAdsData.forEach(async premiumAd => {
+      const [lng2,lat2] = premiumAd.ad_present_location.coordinates;
+      premiumAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -1796,6 +1805,7 @@ $skip and limit for pagination
             'ad_status': 1,
             'SelectFields': 1,
             'title': 1,
+            "ad_present_location":1,
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
@@ -1817,6 +1827,8 @@ $skip and limit for pagination
       ]
     ])
     getRecentAds.forEach(async recentAd => {
+      const [lng2,lat2] = recentAd.ad_present_location.coordinates;
+      recentAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -1937,6 +1949,7 @@ $skip and limit for pagination
           'ad_posted_address': 1,
           'ad_status': 1,
           'SelectFields': 1,
+          "ad_present_location":1,
           'ad_type': 1,
           'created_at': 1,
           'isPrime': 1,
@@ -1971,6 +1984,8 @@ $skip and limit for pagination
 
     const isAdFavFunc = async (AdToCheck) => {
       AdToCheck.forEach(async relatedAd => {
+        const [lng2,lat2] = relatedAd.ad_present_location.coordinates;
+        relatedAd.distance = calculateDistance(lat,lng,lat2,lng2)
         const user = await Profile.find(
           {
             _id: user_id,
@@ -2643,6 +2658,7 @@ $skip and limit for pagination
             'title': 1,
             "created_at": 1,
             'price': 1,
+            "ad_present_location":1,
             "thumbnail_url": 1,
             'textLanguages': 1,
             'isPrime': 1,
@@ -2662,6 +2678,8 @@ $skip and limit for pagination
       ]
     ])
     Ads.forEach(async recentAd => {
+      const [lng2,lat2] = recentAd.ad_present_location.coordinates;
+      recentAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -2709,6 +2727,7 @@ $skip and limit for pagination
       'title': 1,
       "created_at": 1,
       'price': 1,
+      "ad_present_location":1,
       "thumbnail_url": 1,
       'textLanguages': 1,
       'isPrime': 1,
@@ -2798,6 +2817,10 @@ $skip and limit for pagination
 
     let HighlightedAdsArray = await Generic.aggregate(HighLightPipeline);
     await this.isAdFavFunc(HighlightedAdsArray, userId);
+    HighlightedAdsArray.forEach(ad=>{
+      const [lng2,lat2] = ad.ad_present_location.coordinates;
+      ad.distance = calculateDistance(lat,lng,lat2,lng2)
+    })
     const HighLightsampleSize = countAds(HighlightedAdsArray.length, 2);
     const HighLightBusinessAdsArray = await BusinessAds.aggregate([
       [
@@ -2826,6 +2849,7 @@ $skip and limit for pagination
             "adType": 1,
             'price': 1,
             "imageUrl": 1,
+            "location":1,
             'translateText': 1,
             'redirectionUrl': 1,
             'subAds': 1,
@@ -2836,6 +2860,8 @@ $skip and limit for pagination
       ]
     ]);
     for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
+      const [lng2,lat2] = HighLightBusinessAdsArray[i].location.coordinates;
+      HighLightBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
       HighLightBusinessAdsArray[i].isBusinessAd = true
     }
     const adIds = HighLightBusinessAdsArray.map((ad) => ad._id);
@@ -2895,8 +2921,8 @@ $skip and limit for pagination
       {
         $limit: limitval
       });
-
     let FeaturedAdsArray = await Generic.aggregate(FeaturedPipeLine);
+
     const PremiumAdsPipeLine = pipeLine(true)
     if (category) {
       PremiumAdsPipeLine.push({ $match: { category: category } });
@@ -2927,6 +2953,10 @@ $skip and limit for pagination
     const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
     const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
     const FeaturedsampleSize = countAds(AdsList.length, 6);
+    AdsList.forEach(ad=>{
+      const [lng2,lat2] = ad.ad_present_location.coordinates;
+      ad.distance = calculateDistance(lat,lng,lat2,lng2)
+    })
     const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
       [
         {
@@ -2956,6 +2986,7 @@ $skip and limit for pagination
             "adType": 1,
             'price': 1,
             "imageUrl": 1,
+            "location":1,
             'translateText': 1,
             'redirectionUrl': 1,
             'subAds': 1,
@@ -2978,8 +3009,9 @@ $skip and limit for pagination
       ]
     ]);
     await this.isAdFavFunc(AdsList, userId);
-
     for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
+      const [lng2,lat2] = FeaturedBusinessAdsArray[i].location.coordinates;
+      FeaturedBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
       FeaturedBusinessAdsArray[i].isBusinessAd = true
     };
     const AdIds = FeaturedBusinessAdsArray.map((ad) => ad._id);
