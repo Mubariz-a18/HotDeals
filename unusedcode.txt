@@ -23,3 +23,152 @@ admin.initializeApp({
       .catch((error) => {
         console.error('Error deleting image:', error);
       });
+
+
+
+      
+    console.log(await Generic.aggregate([
+      {
+        $group: {
+          _id: '$parent_id',
+          doc: { $first: '$$ROOT' } // Retrieve the first document for each unique parent_id
+        }
+      },
+      {
+        $replaceRoot: { newRoot: '$doc' } // Replace the root with the document
+      },
+      {
+        $limit:100
+      },
+      {
+        $project:{
+          parent_id:1
+        }
+      }
+    ]))
+
+
+    /search indexes
+
+    {
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "Keyword": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      },
+      "ad_posted_location": {
+        "type": "geo"
+      }
+    }
+  }
+}
+
+
+// generic search 
+
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "SelectFields": {
+        "dynamic": false,
+        "fields": {
+          "Brand": {
+            "foldDiacritics": false,
+            "maxGrams": 15,
+            "minGrams": 2,
+            "tokenization": "edgeGram",
+            "type": "autocomplete"
+          },
+          "Color": {
+            "foldDiacritics": false,
+            "maxGrams": 15,
+            "minGrams": 2,
+            "tokenization": "edgeGram",
+            "type": "autocomplete"
+          },
+          "Condition": {
+            "foldDiacritics": false,
+            "maxGrams": 15,
+            "minGrams": 2,
+            "tokenization": "edgeGram",
+            "type": "autocomplete"
+          },
+          "Device": {
+            "foldDiacritics": false,
+            "maxGrams": 15,
+            "minGrams": 2,
+            "tokenization": "edgeGram",
+            "type": "autocomplete"
+          },
+          "Gated Community": {
+            "foldDiacritics": false,
+            "maxGrams": 15,
+            "minGrams": 2,
+            "tokenization": "edgeGram",
+            "type": "autocomplete"
+          }
+        },
+        "type": "document"
+      },
+      "ad_posted_address": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      },
+      "ad_posted_location": {
+        "type": "geo"
+      },
+      "ad_status": {
+        "type": "string"
+      },
+      "category": {
+        "type": "string"
+      },
+      "description": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      },
+      "keywordList": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      },
+      "price": {
+        "type": "number"
+      },
+      "special_mention": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      },
+      "sub_category": {
+        "type": "string"
+      },
+      "title": {
+        "foldDiacritics": false,
+        "maxGrams": 15,
+        "minGrams": 2,
+        "tokenization": "edgeGram",
+        "type": "autocomplete"
+      }
+    }
+  }
+}
+
+
+

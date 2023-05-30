@@ -1605,6 +1605,13 @@ module.exports = class AdService {
           }
         },
         {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -1734,6 +1741,13 @@ $skip and limit for pagination
           }
         },
         {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -1857,6 +1871,13 @@ $skip and limit for pagination
           'spherical': true
         }
       },
+      {
+        $group: {
+          _id: '$parent_id',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      { $replaceRoot: { newRoot: '$doc' } },
       {
         '$lookup': {
           'from': 'profiles',
@@ -2563,6 +2584,15 @@ $skip and limit for pagination
           }
         },
         {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' } // Retrieve the first document for each unique parent_id
+          }
+        },
+        {
+          $replaceRoot: { newRoot: '$doc' } // Replace the root with the document
+        },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -2722,20 +2752,21 @@ $skip and limit for pagination
     };
     const HighLightPipeline = [
       {
-        '$geoNear': {
-          'near': { type: 'Point', coordinates: [lng, lat] },
-          "distanceField": "dist.calculated",
-          'maxDistance': maxDistance,
-          "includeLocs": "dist.location",
-          'spherical': true
-        }
+        '$geoNear': geoNear
       },
       {
         '$match': {
           'isPrime': true,
           'ad_status': "Selling"
         }
-      }
+      },
+      {
+        $group: {
+          _id: '$parent_id',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      { $replaceRoot: { newRoot: '$doc' } },
     ];
 
     if (category) {
@@ -2824,7 +2855,14 @@ $skip and limit for pagination
             isPrime: isPrime,
             ad_status: "Selling"
           }
-        }
+        },
+        {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
       ];
       return pipeLine;
     }

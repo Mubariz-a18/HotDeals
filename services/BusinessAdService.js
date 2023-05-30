@@ -676,6 +676,17 @@ module.exports = class BusinessAdService {
                 }
             },
             {
+                $group: {
+                    _id: '$parent_id',
+                    doc: { $first: '$$ROOT' }
+                }
+            },
+            {
+                $replaceRoot: {
+                    newRoot: '$doc'
+                }
+            },
+            {
                 '$lookup': {
                     'from': 'profiles',
                     'localField': 'user_id',
