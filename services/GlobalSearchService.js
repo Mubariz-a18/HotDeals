@@ -2,10 +2,10 @@
 const Analytics = require("../models/Analytics");
 const { track } = require("./mixpanel-service");
 const Generic = require("../models/Ads/genericSchema");
-const Profile = require("../models/Profile/Profile");
 const GlobalSearch = require("../models/GlobalSearch");
 const ObjectId = require('mongodb').ObjectId;
 const moment = require('moment');
+const UtilModel = require("../models/utilValuesSchema");
 module.exports = class GlobalSearchService {
 
     static async createGlobalSearch(body) {
@@ -48,7 +48,8 @@ module.exports = class GlobalSearchService {
     static async getGlobalSearch(queries, user_id) {
         let lng = +queries.lng;
         let lat = +queries.lat;
-        let maxDistance = +queries.maxDistance;
+        const UtilValues = await UtilModel.findOne();
+        let maxDistance = UtilValues.maxDistance;
         const { keyword } = queries;
         if (!keyword) {
             throw ({ status: 400, message: "Keyword is required" })

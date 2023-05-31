@@ -27,6 +27,7 @@ const { deductBusinessAdCredits } = require('./CreditService');
 const navigateToTabs = require('../utils/navigationTabs');
 const cloudMessage = require('../Firebase operations/cloudMessaging');
 const calculateDistance = require('../utils/distanceCalc');
+const UtilModel = require('../models/utilValuesSchema');
 
 
 module.exports = class BusinessAdService {
@@ -420,7 +421,8 @@ module.exports = class BusinessAdService {
 
             let lng = +query.lng;
             let lat = +query.lat;
-            let maxDistance = +query.maxDistance;
+            const UtilValues = await UtilModel.findOne();
+            let maxDistance = UtilValues.maxDistance;
             let pageVal = +query.page;
             if (pageVal == 0) pageVal = pageVal + 1
             let limitval = +query.limit || 25;
@@ -508,7 +510,8 @@ module.exports = class BusinessAdService {
 
             let lng = +query.lng;
             let lat = +query.lat;
-            let maxDistance = +query.maxDistance;
+            const UtilValues = await UtilModel.findOne();
+            let maxDistance = UtilValues.maxDistance;
             let pageVal = +query.page;
             if (pageVal == 0) pageVal = pageVal + 1
             let limitval = +query.limit || 25;
@@ -658,7 +661,8 @@ module.exports = class BusinessAdService {
         let sub_category = query.sub_category;
         let lng = +query.lng;
         let lat = +query.lat;
-        let maxDistance = 100000;
+        const UtilValues = await UtilModel.findOne();
+        let maxDistance = UtilValues.maxDistance;
         let pageVal = +query.page;
         if (pageVal == 0) pageVal = pageVal + 1
         let limitval = +query.limit || 10;
@@ -943,7 +947,8 @@ module.exports = class BusinessAdService {
         }
         let lng = +query.lng;
         let lat = +query.lat;
-        let maxDistance = +query.maxDistance;
+        const UtilValues = await UtilModel.findOne();
+        let maxDistance = UtilValues.maxDistance;
         const BusinessAdsArray = await BusinessAds.aggregate([
             [
                 {
