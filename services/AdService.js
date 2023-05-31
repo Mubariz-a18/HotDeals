@@ -24,6 +24,7 @@ const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID,
 const BusinessAds = require("../models/Ads/businessAdsShema");
 const insertKeywordsFunc = require("../utils/keywordList");
 const calculateDistance = require("../utils/distanceCalc");
+const UtilModel = require("../models/utilValuesSchema");
 
 
 module.exports = class AdService {
@@ -1401,14 +1402,11 @@ module.exports = class AdService {
 
   // Get particular Ad Detail with distance and user details
   static async getParticularAd(bodyData, query, user_id) {
-
-
     const ad_id = bodyData.ad_id;
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = +query.maxDistance;
-
-
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     if (bodyData.ad_status === "Pending") {
       return await Generic.findById({ _id: ad_id });
     }
@@ -1573,7 +1571,8 @@ module.exports = class AdService {
     // input from parameters (longitute , latitude , maxDistance ,page ,limit )
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = +query.maxDistance;
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 25;
@@ -1712,9 +1711,10 @@ module.exports = class AdService {
 
   // Get Recent Ads  -- User is authentcated and Ads Are filtered
   static async getRecentAdsService(userId, query) {
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = +query.maxDistance;
     let pageVal = +query.page || 1;
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
@@ -1859,7 +1859,8 @@ $skip and limit for pagination
     let sub_category = query.sub_category;
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = 100000;
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     let pageVal = +query.page;
     if (pageVal == 0) pageVal = pageVal + 1
     let limitval = +query.limit || 10;
@@ -2563,7 +2564,8 @@ Cloud Notification To firebase
   static async getFeatureAdsService(userId, query) {
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = +query.maxDistance;
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     let pageVal = +query.page || 1;
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1
@@ -2708,7 +2710,8 @@ $skip and limit for pagination
     }
     let lng = +query.lng;
     let lat = +query.lat;
-    let maxDistance = +query.maxDistance;
+    const UtilValues = await UtilModel.findOne();
+    let maxDistance = UtilValues.maxDistance;
     let pageVal = +query.page || 1;
     let limitval = +query.limit || 25;
     if (pageVal == 0) pageVal = pageVal + 1

@@ -356,15 +356,10 @@ function ValidateQuery(queries) {
   const {
     lng,
     lat,
-    maxDistance
   } = queries;
   if (!lng || !lat) {
     return false
   }
-  if (!maxDistance) {
-    return false
-  }
-
   return true
 }
 
