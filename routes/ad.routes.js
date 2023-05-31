@@ -109,7 +109,7 @@ router.post('/api/v1/getRelatedAd',
     verifyJwtTokenForAds,
     AdController.apiGetRelatedAds);
 
- //version 2 of related ads with feature business ad   
+//version 2 of related ads with feature business ad   
 router.post('/api/v2/getRelatedAd',
     rateLimiter(getRelatedAdTime, getRelatedAdHits),
     verifyJwtTokenForAds,
@@ -118,6 +118,11 @@ router.post('/api/v2/getRelatedAd',
 router.post('/api/v1/checkAdStatus',
     rateLimiter(getadStatusTime, getadStatusHits),
     AdController.apiCheckAdStatus);
+
+router.get('/api/v1/dashboard',
+    rateLimiter(getFeaturedAdsTime, getFeaturedAdsHits),
+    verifyJwtTokenForAds,
+    AdController.apiGetDashBoard)
 
 router.post('/api/repostAd',
     rateLimiter(createAdTime, createAdHits),

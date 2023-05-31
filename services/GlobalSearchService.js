@@ -50,8 +50,8 @@ module.exports = class GlobalSearchService {
         let lat = +queries.lat;
         let maxDistance = +queries.maxDistance;
         const { keyword } = queries;
-        if(!keyword){
-            throw({status:400,message:"Keyword is required"})
+        if (!keyword) {
+            throw ({ status: 400, message: "Keyword is required" })
         }
         //if user exist find ads using $search and $text
         // const result = await GlobalSearch.aggregate([
@@ -136,6 +136,13 @@ module.exports = class GlobalSearchService {
                     ad_status: "Selling"
                 }
             },
+                {
+                    $group: {
+                        _id: '$parent_id',
+                        doc: { $first: '$$ROOT' }
+                    }
+                },
+                { $replaceRoot: { newRoot: '$doc' } },
             {
                 $sort: {
                     isPrime: -1,

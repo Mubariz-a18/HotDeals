@@ -9,7 +9,7 @@ const { track, failedTrack } = require('./mixpanel-service.js');
 const { age_func, expiry_date_func } = require("../utils/moment");
 const { creditDeductionFunction } = require("./CreditService");
 const { createGlobalSearch } = require("./GlobalSearchService");
-const { featureAdsFunction } = require("../utils/featureAdsUtil");
+const { featureAdsFunction, BusinessAdsFunc, FeaturedBusinessAdsFunc, countAds } = require("../utils/featureAdsUtil");
 const { detectSafeSearch, safetext } = require("../Firebase operations/image.controller");
 const imgCom = require("../Firebase operations/imageCompression");
 const cloudMessage = require("../Firebase operations/cloudMessaging");
@@ -20,9 +20,10 @@ const imageWaterMark = require("../Firebase operations/waterMarkImages");
 const PayoutModel = require("../models/payoutSchema");
 const OfferModel = require("../models/offerSchema");
 const AdDurationModel = require("../models/durationSchema");
-const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody } = require("../validators/Ads.Validator");
+const { validateBody, validateUpdateAd, validateFavoriteAdBody, validateMongoID, ValidateCreateAdBody, ValidateDraftAdBody, ValidateQuery } = require("../validators/Ads.Validator");
 const BusinessAds = require("../models/Ads/businessAdsShema");
 const insertKeywordsFunc = require("../utils/keywordList");
+const calculateDistance = require("../utils/distanceCalc");
 
 
 module.exports = class AdService {
@@ -1057,7 +1058,7 @@ module.exports = class AdService {
           $ne: "Suspended"
         }
       });
-    }else{
+    } else {
       findAd = await Generic.findOne({
         parent_id: ad_id,
         user_id: userId,
@@ -1481,6 +1482,9 @@ module.exports = class AdService {
       AdDetail[0].views = AdDetail[0].views + 1
     }
 
+    const [lng2,lat2] = AdDetail[0].ad_present_location.coordinates;
+    AdDetail[0].distance = calculateDistance(lat,lng,lat2,lng2)
+
     const ownerDetails = await Profile.findById({ _id: AdDetail[0].user_id }, {
       _id: 1,
       name: 1,
@@ -1605,6 +1609,13 @@ module.exports = class AdService {
           }
         },
         {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -1641,6 +1652,7 @@ module.exports = class AdService {
             'title': 1,
             'SelectFields': 1,
             "created_at": 1,
+            "ad_present_location":1,
             'price': 1,
             "thumbnail_url": 1,
             'textLanguages': 1,
@@ -1672,7 +1684,11 @@ module.exports = class AdService {
         },
       ]
     ])
+
+
     premiumAdsData.forEach(async premiumAd => {
+      const [lng2,lat2] = premiumAd.ad_present_location.coordinates;
+      premiumAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -1734,6 +1750,13 @@ $skip and limit for pagination
           }
         },
         {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
+        {
           '$lookup': {
             'from': 'profiles',
             'localField': 'user_id',
@@ -1782,6 +1805,7 @@ $skip and limit for pagination
             'ad_status': 1,
             'SelectFields': 1,
             'title': 1,
+            "ad_present_location":1,
             "created_at": 1,
             'price': 1,
             "thumbnail_url": 1,
@@ -1803,6 +1827,8 @@ $skip and limit for pagination
       ]
     ])
     getRecentAds.forEach(async recentAd => {
+      const [lng2,lat2] = recentAd.ad_present_location.coordinates;
+      recentAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -1857,6 +1883,13 @@ $skip and limit for pagination
           'spherical': true
         }
       },
+      {
+        $group: {
+          _id: '$parent_id',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      { $replaceRoot: { newRoot: '$doc' } },
       {
         '$lookup': {
           'from': 'profiles',
@@ -1916,6 +1949,7 @@ $skip and limit for pagination
           'ad_posted_address': 1,
           'ad_status': 1,
           'SelectFields': 1,
+          "ad_present_location":1,
           'ad_type': 1,
           'created_at': 1,
           'isPrime': 1,
@@ -1950,6 +1984,8 @@ $skip and limit for pagination
 
     const isAdFavFunc = async (AdToCheck) => {
       AdToCheck.forEach(async relatedAd => {
+        const [lng2,lat2] = relatedAd.ad_present_location.coordinates;
+        relatedAd.distance = calculateDistance(lat,lng,lat2,lng2)
         const user = await Profile.find(
           {
             _id: user_id,
@@ -2506,6 +2542,23 @@ Cloud Notification To firebase
 
   };
 
+  static isAdFavFunc = async (Ads, user_id) => {
+    Ads.forEach(async relatedAd => {
+      const user = await Profile.find(
+        {
+          _id: user_id,
+          "favourite_ads": {
+            $elemMatch: { "ad_id": relatedAd._id }
+          }
+        })
+      if (user.length == 0) {
+        relatedAd.isAdFav = false
+      } else {
+        relatedAd.isAdFav = true
+      }
+    })
+  }
+
   // Get Feature Ads Ads  -- User is authentcated and Ads Are filtered
   static async getFeatureAdsService(userId, query) {
     let lng = +query.lng;
@@ -2544,6 +2597,15 @@ $skip and limit for pagination
             isPrime: false,
             ad_status: "Selling"
           }
+        },
+        {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' } // Retrieve the first document for each unique parent_id
+          }
+        },
+        {
+          $replaceRoot: { newRoot: '$doc' } // Replace the root with the document
         },
         {
           '$lookup': {
@@ -2596,6 +2658,7 @@ $skip and limit for pagination
             'title': 1,
             "created_at": 1,
             'price': 1,
+            "ad_present_location":1,
             "thumbnail_url": 1,
             'textLanguages': 1,
             'isPrime': 1,
@@ -2615,6 +2678,8 @@ $skip and limit for pagination
       ]
     ])
     Ads.forEach(async recentAd => {
+      const [lng2,lat2] = recentAd.ad_present_location.coordinates;
+      recentAd.distance = calculateDistance(lat,lng,lat2,lng2)
       const user = await Profile.find(
         {
           _id: userId,
@@ -2634,6 +2699,328 @@ $skip and limit for pagination
       distinct_id: userId
     })
     return Ads;
+  };
+
+  static async GetDashBoard(userId, query) {
+    const isQueriesValid = ValidateQuery(query);
+    if (!isQueriesValid) {
+      throw ({ status: 400, message: 'Bad Reqesut' });
+    }
+    let lng = +query.lng;
+    let lat = +query.lat;
+    let maxDistance = +query.maxDistance;
+    let pageVal = +query.page || 1;
+    let limitval = +query.limit || 25;
+    if (pageVal == 0) pageVal = pageVal + 1
+    const category = query?.category;
+    const projection = {
+      '_id': 1,
+      'parent_id': 1,
+      "Seller_Id": 1,
+      'Seller_Name': 1,
+      "Seller_verified": 1,
+      "Seller_recommended": 1,
+      'category': 1,
+      'sub_category': 1,
+      'ad_status': 1,
+      'SelectFields': 1,
+      'title': 1,
+      "created_at": 1,
+      'price': 1,
+      "ad_present_location":1,
+      "thumbnail_url": 1,
+      'textLanguages': 1,
+      'isPrime': 1,
+      "dist": 1,
+      "is_Boosted": 1,
+      "Boosted_Date": 1,
+      "is_Highlighted": 1,
+      "Highlighted_Date": 1
+    };
+    const sorting = {
+      "is_Highlighted": -1,
+      "Highlighted_Date": -1,
+      "is_Boosted": -1,
+      "Boosted_Date": -1,
+      "created_at": -1,
+      "dist.calculated": -1,
+      "Seller_verified": -1,
+      "Seller_recommended": -1
+    };
+    const geoNear = {
+      'near': { type: 'Point', coordinates: [lng, lat] },
+      "distanceField": "dist.calculated",
+      'maxDistance': maxDistance,
+      "includeLocs": "dist.location",
+      'spherical': true
+    };
+    const lookup = {
+      'from': 'profiles',
+      'localField': 'user_id',
+      'foreignField': '_id',
+      'as': 'sample_result'
+    };
+    const addFields = {
+      'Seller_Name': '$sample_result.name',
+      'Seller_Id': '$sample_result._id',
+      'Seller_Joined': '$sample_result.created_date',
+      'Seller_Image': '$sample_result.profile_url',
+      'Seller_verified': '$sample_result.is_email_verified',
+      'Seller_recommended': '$sample_result.is_recommended',
+
+    };
+    const HighLightPipeline = [
+      {
+        '$geoNear': geoNear
+      },
+      {
+        '$match': {
+          'isPrime': true,
+          'ad_status': "Selling"
+        }
+      },
+      {
+        $group: {
+          _id: '$parent_id',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      { $replaceRoot: { newRoot: '$doc' } },
+    ];
+
+    if (category) {
+      HighLightPipeline.push({ $match: { category: category } });
+    };
+    HighLightPipeline.push(
+      {
+        '$sample': {
+          'size': 10
+        }
+      },
+      {
+        '$lookup': lookup
+      },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        '$project': projection
+      },
+      {
+        $sort: sorting
+      });
+
+    let HighlightedAdsArray = await Generic.aggregate(HighLightPipeline);
+    await this.isAdFavFunc(HighlightedAdsArray, userId);
+    HighlightedAdsArray.forEach(ad=>{
+      const [lng2,lat2] = ad.ad_present_location.coordinates;
+      ad.distance = calculateDistance(lat,lng,lat2,lng2)
+    })
+    const HighLightsampleSize = countAds(HighlightedAdsArray.length, 2);
+    const HighLightBusinessAdsArray = await BusinessAds.aggregate([
+      [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            adType: 'highlighted',
+            adStatus: "Active",
+          }
+        },
+        {
+          '$sample': {
+            'size': HighLightsampleSize
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parentID': 1,
+            'userID': 1,
+            'adStatus': 1,
+            'title': 1,
+            'description': 1,
+            "adType": 1,
+            'price': 1,
+            "imageUrl": 1,
+            "location":1,
+            'translateText': 1,
+            'redirectionUrl': 1,
+            'subAds': 1,
+            "dist": 1,
+            "createdAt": 1
+          }
+        }
+      ]
+    ]);
+    for (let i = 0; i < HighLightBusinessAdsArray.length; i++) {
+      const [lng2,lat2] = HighLightBusinessAdsArray[i].location.coordinates;
+      HighLightBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
+      HighLightBusinessAdsArray[i].isBusinessAd = true
+    }
+    const adIds = HighLightBusinessAdsArray.map((ad) => ad._id);
+    await BusinessAds.updateMany(
+      { _id: { $in: adIds } },
+      { $inc: { impressions: 1 } }
+    );
+    const HighlightedAds = BusinessAdsFunc(HighlightedAdsArray, HighLightBusinessAdsArray);
+
+    function pipeLine(isPrime) {
+      const pipeLine = [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            isPrime: isPrime,
+            ad_status: "Selling"
+          }
+        },
+        {
+          $group: {
+            _id: '$parent_id',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$doc' } },
+      ];
+      return pipeLine;
+    }
+
+    const FeaturedPipeLine = pipeLine(false)
+    if (category) {
+      FeaturedPipeLine.push({ $match: { category: category } });
+    };
+
+    FeaturedPipeLine.push({
+      '$lookup': lookup
+    },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        $sort: sorting
+      },
+      {
+        '$project': projection
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      });
+    let FeaturedAdsArray = await Generic.aggregate(FeaturedPipeLine);
+
+    const PremiumAdsPipeLine = pipeLine(true)
+    if (category) {
+      PremiumAdsPipeLine.push({ $match: { category: category } });
+    };
+    PremiumAdsPipeLine.push({
+      '$lookup': lookup
+    },
+      {
+        '$unwind': {
+          'path': '$sample_result'
+        }
+      },
+      {
+        '$addFields': addFields
+      },
+      {
+        $sort: sorting
+      },
+      {
+        '$project': projection
+      },
+      {
+        $skip: limitval * (pageVal - 1)
+      },
+      {
+        $limit: limitval
+      });
+    const PremiumAdsArray = await Generic.aggregate(PremiumAdsPipeLine);
+    const AdsList = featureAdsFunction(FeaturedAdsArray, PremiumAdsArray);
+    const FeaturedsampleSize = countAds(AdsList.length, 6);
+    AdsList.forEach(ad=>{
+      const [lng2,lat2] = ad.ad_present_location.coordinates;
+      ad.distance = calculateDistance(lat,lng,lat2,lng2)
+    })
+    const FeaturedBusinessAdsArray = await BusinessAds.aggregate([
+      [
+        {
+          '$geoNear': geoNear
+        },
+        {
+          $match: {
+            adStatus: "Active",
+            adType: {
+              $in: ['featured', 'customized']
+            }
+          }
+        },
+        {
+          '$sample': {
+            'size': FeaturedsampleSize
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'parentID': 1,
+            'userID': 1,
+            'adStatus': 1,
+            'title': 1,
+            'description': 1,
+            "adType": 1,
+            'price': 1,
+            "imageUrl": 1,
+            "location":1,
+            'translateText': 1,
+            'redirectionUrl': 1,
+            'subAds': 1,
+            "dist": 1,
+            "createdAt": 1
+          }
+        },
+        {
+          $sort: {
+            "createdAt": -1,
+            "dist.calculated": -1
+          }
+        },
+        {
+          $skip: limitval * (pageVal - 1)
+        },
+        {
+          $limit: limitval
+        },
+      ]
+    ]);
+    await this.isAdFavFunc(AdsList, userId);
+    for (let i = 0; i < FeaturedBusinessAdsArray.length; i++) {
+      const [lng2,lat2] = FeaturedBusinessAdsArray[i].location.coordinates;
+      FeaturedBusinessAdsArray[i].distance = calculateDistance(lat,lng,lat2,lng2)
+      FeaturedBusinessAdsArray[i].isBusinessAd = true
+    };
+    const AdIds = FeaturedBusinessAdsArray.map((ad) => ad._id);
+    await BusinessAds.updateMany(
+      { _id: { $in: AdIds } },
+      { $inc: { impressions: 1 } }
+    );
+    const FeaturedAds = FeaturedBusinessAdsFunc(AdsList, FeaturedBusinessAdsArray);
+    return { HighlightedAds, FeaturedAds };
   };
 
   /* 
