@@ -11,6 +11,7 @@ const PayoutModel = require('../models/payoutSchema');
 const InstallPayoutModel = require('../models/InstallsPayoutSchema');
 const Referral = require('../models/referelSchema');
 const db = app.database(process.env.DATABASEURL);
+const moment = require('moment')
 
 const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20,22 * * *', async () => {
   const Alerts = await Alert.find({ activate_status: true });
@@ -213,16 +214,36 @@ const Schedule_Task_Alert_6am_to_10pm = cron.schedule('0 06,08,10,12,14,16,18,20
 
 //(Schedule_Task_Monthly_credits) will credit monthly credits into users credit doc "0 0 01 * *"  "* * * * *"
 const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
-
+try {
+  
   const Credits = await Credit.find({});
   const Offer = await OfferModel.findOne({});
+  const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+  await Credit.updateMany({}, {
+
+    $inc: { total_universal_credits: Offer.monthlyCredits },
+
+    $push: {
+
+      universal_credit_bundles:
+      {
+
+        number_of_credit: Offer.monthlyCredits,
+        source_of_credit: "Admin-Monthly",
+        credit_status: "Active",
+        credit_created_date: currentDate,
+        credit_duration: 30,
+        credit_expiry_date: moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss')
+
+      }
+    }
+  })
 
   Credits.forEach(async creditDoc => {
-
     /* 
- 
+
   Cloud Notification To firebase
- 
+
     */
 
     const messageBody = {
@@ -237,8 +258,38 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
     await cloudMessage(creditDoc.user_id.toString(), messageBody);
 
   })
+} catch (error) {
+  
+}
+
 });
 
+// exports = async function () {
+//   const moment = require("moment");
+//   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
+//   const Credits = context.services.get("truelist-development").db("True_Dev").collection("credits");
+
+//       await Credits.updateMany({}, {
+
+//       $inc: { total_universal_credits: 100 },
+
+//       $push: {
+
+//         universal_credit_bundles:
+//         {
+
+//           number_of_credit: 100,
+//           source_of_credit: "Admin-Monthly",
+//           credit_status: "Active",
+//           credit_created_date: currentDate,
+//           credit_duration: 30,
+//           credit_expiry_date: moment().add(30, 'd').format('YYYY-MM-DD HH:mm:ss')
+
+//         }
+//       }
+//     }, { new: true })
+
+// }
 
 //'0 0 0 * * *'
 // const banuser = cron.schedule("* * * * * *", async () => {
@@ -389,197 +440,7 @@ const Schedule_Task_Monthly_credits = cron.schedule("0 0 01 * *", async () => {
 //************************************************************** */
 
 
-const payoutStatusChangeCron =
-  // cron.schedule("0 * * * *",
-  async () => {
-    try {
-
-      const username = process.env.LIVE_KEY_ID;
-      const password = process.env.LIVE_KEY_SECRET;
-
-      const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-          'Accept': 'application/json',
-        }
-      };
-      const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}&count=100`, config);
-
-      const Data = response?.data?.items;
-
-      const updates = Data.map(transaction => ({
-        payout_id: transaction.source.id,
-        paymentStatus: transaction.source.status
-      }));
-
-      const filteredArr = updates.filter(obj => obj.paymentStatus !== undefined);
-
-
-      function statusFunc(status) {
-        switch (status) {
-          case "pending":
-          case "queued":
-          case "processing":
-            return "processing";
-          case 'processed':
-            return "Paid";
-          case 'reversed':
-          case "cancelled":
-          case "rejected":
-            return "Failed"
-        }
-      }
-
-      filteredArr.forEach(async update => {
-        const returnedStatus = statusFunc(update.paymentStatus);
-        if (returnedStatus === "Failed") {
-
-          const payoutDoc = await PayoutModel.findOne({ payout_id: update.payout_id });
-
-          await PayoutModel.updateOne({
-            payout_id: update.payout_id,
-          }, {
-            $set: {
-              payment_status: 'Not_Claimed'
-            },
-            $unset: {
-              "contact_id": "",
-              "failure_reason": "",
-              "fund_account_id": "",
-              "razorpayPayoutStatus": "",
-              "reference_id": "",
-              "payout_id": "",
-              "payment_initate_date": "",
-              "vpa": ""
-            }
-          });
-          if (payoutDoc) {
-            await Generic.updateOne({ _id: payoutDoc.ad_id }, {
-              $set: {
-                isClaimed: false
-              }
-            })
-          }
-        }
-        await PayoutModel.updateOne({
-          payout_id: update.payout_id,
-          payment_status: "processing"
-        }, {
-          $set: {
-            razorpayPayoutStatus: update.paymentStatus ? update.paymentStatus : "processing",
-            payment_status: returnedStatus
-          }
-        });
-      })
-
-    } catch (e) {
-      console.log(e)
-    }
-  }
-// })
-
-async function installpayoutStatus() {
-  try {
-
-    const username = process.env.LIVE_KEY_ID;
-    const password = process.env.LIVE_KEY_SECRET;
-
-    const authHeader = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-        'Accept': 'application/json',
-      }
-    };
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    const yesterdayTimestamp = currentTimestamp - 86400;
-    const response = await axios.get(`https://api.razorpay.com/v1/transactions?account_number=${process.env.LIVE_ACC_NUMBER}&count=100&from=${yesterdayTimestamp}&to=${currentTimestamp}`, config);
-
-    const Data = response?.data?.items;
-
-    const updates = Data.map(transaction => ({
-      payout_id: transaction.source.id,
-      paymentStatus: transaction.source.status
-    }));
-
-    const paymentArray = updates.filter(obj => obj.paymentStatus !== undefined);
-
-
-    function statusFunc(status) {
-      switch (status) {
-        case "pending":
-        case "queued":
-        case "processing":
-          return "processing";
-        case 'processed':
-          return "Paid";
-        case 'reversed':
-        case "cancelled":
-        case "rejected":
-          return "Failed"
-      }
-    }
-
-    paymentArray.forEach(async update => {
-      const returnedStatus = statusFunc(update.paymentStatus);
-      if (returnedStatus === "Failed") {
-
-        const payoutDocs = await InstallPayoutModel.find({ payout_id: update.payout_id });
-
-        await InstallPayoutModel.updateMany({
-          payout_id: update.payout_id,
-        }, {
-          $set: {
-            payment_status: 'Not_Claimed'
-          },
-          $unset: {
-            "contact_id": "",
-            "failure_reason": "",
-            "fund_account_id": "",
-            "razorpayPayoutStatus": "",
-            "reference_id": "",
-            "payout_id": "",
-            "payment_initate_date": "",
-            "vpa": ""
-          }
-        });
-        if (payoutDocs || payoutDocs.length > 0) {
-          for(let i=0; i< payoutDocs.length; i++){
-            let payoutDoc = payoutDocs[i];
-            await Referral.updateOne({ user_Id:  payoutDoc.user_id, "used_by.userId": payoutDoc.referredTo }, {
-              $set: {
-                "used_by.$.isClaimed": false
-              }
-            })
-          }
-        }
-      }
-      await InstallPayoutModel.updateMany({
-        payout_id: update.payout_id,
-        payment_status: "processing"
-      }, {
-        $set: {
-          razorpayPayoutStatus: update.paymentStatus ? update.paymentStatus : "processing",
-          payment_status: returnedStatus
-        }
-      });
-    })
-
-  } catch (e) {
-    console.log(e)
-  }
-}
-
-
-
-
 module.exports = {
   Schedule_Task_Alert_6am_to_10pm,
-  Schedule_Task_Monthly_credits,
-  // banuser
-  // payoutStatusChangeCron
-  installpayoutStatus
+  Schedule_Task_Monthly_credits
 }
