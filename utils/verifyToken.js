@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const { sendAttackReport } = require("../controllers/CredentialController/email.controller");
+const BusinessInfoModel = require("../models/Profile/BusinessDetailSchema");
 const { JWT_SECRET_KEY } = process.env;
 
 // Verification Of Token 
@@ -73,4 +74,35 @@ exports.verifyWebHook = async (req, res, next) => {
   }catch(e){
     console.log(e)
   }
+};
+
+
+exports.verifyJwtTokenForBusiness = async (req, res, next) => {
+
+  // check for auth header from client
+  const header = req.headers.authorization;
+  if (!header) {
+    return res.status(403).send("auth header is missing");
+  }
+  // verify  auth token
+  const token = header.split("Bearer ")[1];
+
+  if (!token) {
+    return res.status(403).send("A token is required for authentication");
+  }
+  try {
+    const { user_ID, user_phoneNumber } = jwt.verify(
+      token,
+      JWT_SECRET_KEY
+    );
+    const profile = await BusinessInfoModel.findOne({userID:user_ID,isBusinessVerified:true});
+    if(!profile){
+      return res.status(401).send("Unauthorized to use this resource");
+    }
+    req.user_ID = user_ID;
+    req.user_phoneNumber = user_phoneNumber;
+  } catch (error) {
+    return res.status(401).send("Invalid Token");
+  }
+  return next();
 };

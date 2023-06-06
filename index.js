@@ -22,7 +22,8 @@ var bodyParser = require("body-parser");
   const TransactionRouter = require("./routes/transaction.routes");
   const SuggestionRouter = require('./routes/suggestion.routes');
   const PlacesRouter = require('./routes/googleApi.routes');
-  const BuinessAdRouter = require('./routes/businessAd.routes')
+  const BuinessAdRouter = require('./routes/businessAd.routes');
+  const ChatTranslateRouter = require('./routes/chatTranslate.routes')
   //Middlewares
   const errorHandlerMiddleware = require('./middlewares/errorHandlerMiddleware');
 
@@ -60,6 +61,7 @@ const html = require("./utils/htmlForServerUrl");
   app.use(SuggestionRouter);
   app.use(PlacesRouter);
   app.use(BuinessAdRouter);
+  app.use(ChatTranslateRouter)
 
   app.get('/',(req,res)=>{
     res.send(html).status(200)
