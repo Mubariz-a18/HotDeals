@@ -13,7 +13,7 @@ module.exports = class EmailController {
                     </p>
                     <span>Thank you for choosing our service.</span><br>
                     <span> Best regards,</span><br>
-                    <span> TrueList</span>`,
+                    <span> HotDeals</span>`,
 
         }
 

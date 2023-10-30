@@ -173,13 +173,13 @@ module.exports = class AdService {
     try {
       const payload = {
         "dynamicLinkInfo": {
-          "domainUriPrefix": "https://truelist.page.link",
-          "link": `https://truelist.in/ad/${adID}`,
+          "domainUriPrefix": "https://HotDeals.page.link",
+          "link": `https://HotDeals.in/ad/${adID}`,
           "androidInfo": {
-            "androidPackageName": "in.truelist.app"
+            "androidPackageName": "in.HotDeals.app"
           },
           "iosInfo": {
-            "iosBundleId": "in.truelist.app",
+            "iosBundleId": "in.HotDeals.app",
             "iosAppStoreId": "1666569292"
           },
           "socialMetaTagInfo": {
@@ -206,13 +206,13 @@ module.exports = class AdService {
       for (let i = 0; i < AdsList.length; i++) {
         const payload = {
           "dynamicLinkInfo": {
-            "domainUriPrefix": "https://truelist.page.link",
-            "link": `https://truelist.in/ad/${AdsList[i]['_id']}`,
+            "domainUriPrefix": "https://HotDeals.page.link",
+            "link": `https://HotDeals.in/ad/${AdsList[i]['_id']}`,
             "androidInfo": {
-              "androidPackageName": "in.truelist.app"
+              "androidPackageName": "in.HotDeals.app"
             },
             "iosInfo": {
-              "iosBundleId": "in.truelist.app",
+              "iosBundleId": "in.HotDeals.app",
               "iosAppStoreId": "1666569292"
             },
             "socialMetaTagInfo": {
@@ -2442,7 +2442,7 @@ $skip and limit for pagination
           },
           "queue_if_low_balance": true,
           "reference_id": reference_id,
-          "narration": "Truelist Cash Reward"
+          "narration": "HotDeals Cash Reward"
         };
 
         const config = {

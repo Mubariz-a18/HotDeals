@@ -267,7 +267,7 @@ try {
 // exports = async function () {
 //   const moment = require("moment");
 //   const currentDate = moment().utcOffset("+05:30").format('YYYY-MM-DD HH:mm:ss');
-//   const Credits = context.services.get("truelist-development").db("True_Dev").collection("credits");
+//   const Credits = context.services.get("HotDeals-development").db("True_Dev").collection("credits");
 
 //       await Credits.updateMany({}, {
 

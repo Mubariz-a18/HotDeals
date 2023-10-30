@@ -138,13 +138,13 @@ module.exports = class ProfileService {
     try{
       const payload = {
         "dynamicLinkInfo": {
-          "domainUriPrefix": "https://truelist.page.link",
-          "link": `https://truelist.in/userProfile/${userID}`,
+          "domainUriPrefix": "https://HotDeals.page.link",
+          "link": `https://HotDeals.in/userProfile/${userID}`,
           "androidInfo": {
-            "androidPackageName": "in.truelist.app"
+            "androidPackageName": "in.HotDeals.app"
           },
           "iosInfo": {
-            "iosBundleId": "in.truelist.app",
+            "iosBundleId": "in.HotDeals.app",
             "iosAppStoreId": "1666569292"
           },
           "socialMetaTagInfo": {

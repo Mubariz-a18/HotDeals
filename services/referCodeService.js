@@ -479,7 +479,7 @@ module.exports = class ReferCodeService {
                     },
                     "queue_if_low_balance": true,
                     "reference_id": reference_id,
-                    "narration": "Truelist Cash Reward"
+                    "narration": "HotDeals Cash Reward"
                 };
 
                 const config = {

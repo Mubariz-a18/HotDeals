@@ -2,7 +2,7 @@ const html = `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Welcome to Truelist</title>
+    <title>Welcome to HotDeals</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -53,11 +53,11 @@ const html = `
   </head>
   <body>
     <div class="container">
-      <h1>Welcome to Truelist</h1>
+      <h1>Welcome to HotDeals</h1>
       <p>Thank you for visiting!</p>
       <div class="download-links">
-        <a href="https://play.google.com/store/apps/details?id=in.truelist.app" target="_blank">Download from Play Store</a>
-        <a href="https://apps.apple.com/in/app/truelist-best-buy-sell-app/id1666569292" target="_blank">Download from App Store</a>
+        <a href="https://play.google.com/store/apps/details?id=in.HotDeals.app" target="_blank">Download from Play Store</a>
+        <a href="https://apps.apple.com/in/app/HotDeals-best-buy-sell-app/id1666569292" target="_blank">Download from App Store</a>
       </div>
     </div>
   </body>
